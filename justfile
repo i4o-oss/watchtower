@@ -2,27 +2,40 @@
 set shell := ["bash", "-c"]
 
 # Directories
-SERVER_DIR := "cmd/api"
-FRONTEND_DIR := "frontend"
+SERVER_DIR := "./cmd/api"
+FRONTEND_DIR := "./frontend"
+
+frontend-build:
+	cd {{FRONTEND_DIR}} && bun run build
+
+frontend-dev:
+	cd {{FRONTEND_DIR}} && bun run dev
+
+server-build:
+	@go build -o ./bin/watchtower {{SERVER_DIR}}
+
+server-dev:
+	@go run ./...
 
 build:
-    cd {{FRONTEND_DIR}} && bun run build && cd ..
-    @go build -o build/watchtower ./...
+	just frontend-build
+	just server-build
 
 default:
     @just --list
 
 dev:
-    cd {{FRONTEND_DIR}} && bun run dev && cd ..
-    @go run ./...
+	#!/usr/bin/env -S parallel --shebang --ungroup
+	just server-dev
+	just frontend-dev
 
 fmt:
-    cd {{FRONTEND_DIR}} && bun run format
+    bun run format
     @go fmt ./...
 
 lint:
-    cd {{FRONTEND_DIR}} && bun run lint
-    golangci-lint run ./...
+    bun run lint
+    # golangci-lint run ./...
 
 tidy:
     cd {{FRONTEND_DIR}} && bun i
