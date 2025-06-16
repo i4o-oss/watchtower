@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/justinas/alice"
 )
 
 func (app *Application) routes() http.Handler {
@@ -10,7 +12,9 @@ func (app *Application) routes() http.Handler {
 	// mux.Handle("GET /api/v1/", app.indexHandler)
 	mux.HandleFunc("GET /health", health)
 
-	return mux
+	standard := alice.New(app.RequestLogger)
+
+	return standard.Then(mux)
 }
 
 func health(w http.ResponseWriter, r *http.Request) {
