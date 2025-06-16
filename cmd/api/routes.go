@@ -3,18 +3,18 @@ package main
 import (
 	"net/http"
 
-	"github.com/justinas/alice"
+	"github.com/go-chi/chi/v5"
 )
 
 func (app *Application) routes() http.Handler {
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
+
+	r.Use(app.RequestLogger)
 
 	// mux.Handle("GET /api/v1/", app.indexHandler)
-	mux.HandleFunc("GET /health", health)
+	r.Get("/health", health)
 
-	standard := alice.New(app.RequestLogger)
-
-	return standard.Then(mux)
+	return r
 }
 
 func health(w http.ResponseWriter, r *http.Request) {
