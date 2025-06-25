@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -13,6 +14,7 @@ func (app *Application) routes() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(app.RequestLogger)
+	r.Use(app.CORS)
 
 	// API routes with /api/v1 prefix
 	r.Route("/api/v1", func(r chi.Router) {
@@ -80,5 +82,7 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 }
 
 func health(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("OK"))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status": "ok", "timestamp": "` + time.Now().Format(time.RFC3339) + `"}`))
 }

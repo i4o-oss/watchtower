@@ -18,8 +18,9 @@ type AuthRequest struct {
 }
 
 type AuthResponse struct {
-	Message string     `json:"message"`
+	Message string     `json:"message,omitempty"`
 	User    *data.User `json:"user,omitempty"`
+	Token   string     `json:"token,omitempty"` // For consistency, but not used with HTTP-only cookies
 }
 
 // Session management
@@ -47,7 +48,8 @@ func initSessionStore() {
 		MaxAge:   86400 * 7, // 7 days
 		HttpOnly: true,
 		Secure:   isSecure,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode, // Better CSRF protection
+		Domain:   "",                      // Let browser handle domain
 	}
 }
 
@@ -106,8 +108,7 @@ func (app *Application) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.writeJSON(w, http.StatusCreated, AuthResponse{
-		Message: "User registered successfully",
-		User:    user,
+		User: user,
 	})
 }
 
@@ -152,8 +153,7 @@ func (app *Application) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.writeJSON(w, http.StatusOK, AuthResponse{
-		Message: "Login successful",
-		User:    user,
+		User: user,
 	})
 }
 
@@ -168,8 +168,8 @@ func (app *Application) logout(w http.ResponseWriter, r *http.Request) {
 		app.logger.Error("Error clearing session", "err", err.Error())
 	}
 
-	app.writeJSON(w, http.StatusOK, AuthResponse{
-		Message: "Logout successful",
+	app.writeJSON(w, http.StatusOK, map[string]string{
+		"message": "Logout successful",
 	})
 }
 
@@ -181,10 +181,7 @@ func (app *Application) me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, AuthResponse{
-		Message: "User information retrieved",
-		User:    user,
-	})
+	app.writeJSON(w, http.StatusOK, user)
 }
 
 // Authentication middleware
