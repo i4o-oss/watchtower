@@ -107,6 +107,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize session store
+	initSessionStore()
+
 	app := &Application{
 		config: config,
 		logger: logger,

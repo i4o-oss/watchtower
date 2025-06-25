@@ -14,8 +14,20 @@ func (app *Application) routes() http.Handler {
 
 	r.Use(app.RequestLogger)
 
-	// API routes
-	r.Get("/health", health)
+	// API routes with /api/v1 prefix
+	r.Route("/api/v1", func(r chi.Router) {
+		// Public routes
+		r.Get("/health", health)
+		r.Post("/auth/register", app.register)
+		r.Post("/auth/login", app.login)
+		r.Post("/auth/logout", app.logout)
+
+		// Protected routes
+		r.Group(func(r chi.Router) {
+			r.Use(app.requireAuth)
+			r.Get("/auth/me", app.me)
+		})
+	})
 
 	// Serve static files from React build
 	workDir, _ := os.Getwd()
