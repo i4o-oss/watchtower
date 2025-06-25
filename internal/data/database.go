@@ -3,7 +3,9 @@ package data
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 
+	"github.com/pressly/goose/v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -31,7 +33,17 @@ func NewDatabase(host, user, password, dbname string, port int, sslmode string) 
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	log.Println("Successfully connected to database")
+	// Run migrations on startup
+	if err := goose.SetDialect("postgres"); err != nil {
+		return nil, fmt.Errorf("failed to set goose dialect: %w", err)
+	}
+
+	migrationsDir := filepath.Join("internal", "migrations")
+	if err := goose.Up(sqlDB, migrationsDir); err != nil {
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	log.Println("Successfully connected to database and ran migrations")
 
 	return &DB{db}, nil
 }
