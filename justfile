@@ -26,7 +26,6 @@ default:
 
 dev:
 	#!/usr/bin/env -S parallel --shebang --ungroup
-	just db-migrate-up
 	just server-dev
 	just frontend-dev
 
