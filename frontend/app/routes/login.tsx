@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Form, redirect, useNavigation, useActionData } from 'react-router'
+import {
+	Form,
+	redirect,
+	useNavigation,
+	useActionData,
+	Link,
+} from 'react-router'
 import type { Route } from './+types/login'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -66,7 +72,7 @@ export default function Login() {
 		if (navigation.state === 'idle' && !actionData?.error) {
 			checkAuth()
 		}
-	}, [navigation.state, actionData, checkAuth])
+	}, [navigation.state, actionData])
 
 	// If already authenticated, redirect to home
 	if (isAuthenticated) {
@@ -130,12 +136,12 @@ export default function Login() {
 
 					<div className='mt-4 text-center text-sm'>
 						Don't have an account?{' '}
-						<a
-							href='/register'
+						<Link
+							to='/register'
 							className='text-primary hover:underline'
 						>
 							Create one
-						</a>
+						</Link>
 					</div>
 				</CardContent>
 			</Card>

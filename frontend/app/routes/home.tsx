@@ -1,4 +1,5 @@
 import type { Route } from './+types/home'
+import { Link } from 'react-router'
 import { Welcome } from '../welcome/welcome'
 import { Button } from '~/components/ui/button'
 import {
@@ -47,7 +48,7 @@ export default function Home() {
 						</div>
 						<div className='flex gap-2'>
 							<Button asChild>
-								<a href='/dashboard'>Go to Dashboard</a>
+								<Link to='/dashboard'>Go to Dashboard</Link>
 							</Button>
 							<Button
 								variant='outline'
@@ -75,7 +76,7 @@ export default function Home() {
 									your settings.
 								</p>
 								<Button asChild>
-									<a href='/dashboard'>Open Dashboard</a>
+									<Link to='/dashboard'>Open Dashboard</Link>
 								</Button>
 							</CardContent>
 						</Card>
@@ -125,10 +126,10 @@ export default function Home() {
 					</CardHeader>
 					<CardContent className='space-y-4'>
 						<Button asChild className='w-full'>
-							<a href='/login'>Sign In</a>
+							<Link to='/login'>Sign In</Link>
 						</Button>
 						<Button asChild variant='outline' className='w-full'>
-							<a href='/register'>Create Account</a>
+							<Link to='/register'>Create Account</Link>
 						</Button>
 					</CardContent>
 				</Card>

@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Form, redirect, useNavigation, useActionData } from 'react-router'
+import {
+	Form,
+	redirect,
+	useNavigation,
+	useActionData,
+	Link,
+} from 'react-router'
 import type { Route } from './+types/register'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -67,7 +73,7 @@ export default function Register() {
 		if (navigation.state === 'idle' && !actionData?.error) {
 			checkAuth()
 		}
-	}, [navigation.state, actionData, checkAuth])
+	}, [navigation.state, actionData])
 
 	// If already authenticated, redirect to home
 	if (isAuthenticated) {
@@ -144,12 +150,12 @@ export default function Register() {
 
 					<div className='mt-4 text-center text-sm'>
 						Already have an account?{' '}
-						<a
-							href='/login'
+						<Link
+							to='/login'
 							className='text-primary hover:underline'
 						>
 							Sign in
-						</a>
+						</Link>
 					</div>
 				</CardContent>
 			</Card>

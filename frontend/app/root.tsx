@@ -38,6 +38,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<AuthProvider>{children}</AuthProvider>
+				{/* {children} */}
 				<ScrollRestoration />
 				<Scripts />
 			</body>
