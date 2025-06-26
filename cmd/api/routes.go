@@ -2,6 +2,9 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -26,6 +29,34 @@ func (app *Application) routes() http.Handler {
 			r.Use(app.requireAuth)
 			r.Get("/auth/me", app.me)
 		})
+	})
+
+	// Serve static files from the React build
+	workDir, _ := os.Getwd()
+	staticDir := filepath.Join(workDir, "frontend", "build", "client")
+
+	// Static files route - serve assets from the build directory
+	assetsDir := filepath.Join(staticDir, "assets")
+	r.Get("/assets/*", func(w http.ResponseWriter, r *http.Request) {
+		fs := http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsDir)))
+		fs.ServeHTTP(w, r)
+	})
+
+	// Serve other static files (favicon, etc.)
+	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(staticDir, "favicon.ico"))
+	})
+
+	// SPA catch-all route - serves index.html for all non-API routes
+	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+		// Don't serve SPA for API routes
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		indexPath := filepath.Join(workDir, "frontend", "build", "client", "index.html")
+		http.ServeFile(w, r, indexPath)
 	})
 
 	return r
