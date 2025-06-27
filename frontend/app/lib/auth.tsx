@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { redirect } from 'react-router'
 
 // Types
 export interface User {
@@ -99,9 +100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					isAuthenticated: true,
 				})
 				return { success: true }
-			} else {
-				return { success: false, error: data.message || 'Login failed' }
 			}
+			return { success: false, error: data.message || 'Login failed' }
 		} catch (error) {
 			console.error('Login error:', error)
 			return { success: false, error: 'Network error occurred' }
@@ -132,11 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					isAuthenticated: true,
 				})
 				return { success: true }
-			} else {
-				return {
-					success: false,
-					error: data.message || 'Registration failed',
-				}
+			}
+			return {
+				success: false,
+				error: data.message || 'Registration failed',
 			}
 		} catch (error) {
 			console.error('Registration error:', error)
@@ -166,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	}
 
 	// Check auth on mount
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		checkAuth()
 	}, [])
@@ -211,7 +211,7 @@ export function withAuth<T extends Record<string, unknown>>(
 			return (
 				<div className='flex items-center justify-center min-h-screen'>
 					<div className='text-center'>
-						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto'></div>
+						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto' />
 						<p className='mt-2 text-muted-foreground'>Loading...</p>
 					</div>
 				</div>
@@ -237,4 +237,73 @@ export function withAuth<T extends Record<string, unknown>>(
 
 		return <Component {...props} />
 	}
+}
+
+// ClientLoader utility functions for authentication
+export interface AuthCheckResult {
+	isAuthenticated: boolean
+	user?: User
+}
+
+/**
+ * Checks if the user is authenticated by calling the auth API
+ * Returns authentication status and user data if authenticated
+ */
+export async function checkAuthStatus(): Promise<AuthCheckResult> {
+	try {
+		const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+			method: 'GET',
+			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		})
+
+		if (response.ok) {
+			const user = await response.json()
+			return { isAuthenticated: true, user }
+		}
+
+		return { isAuthenticated: false }
+	} catch (error) {
+		console.error('Auth check failed:', error)
+		return { isAuthenticated: false }
+	}
+}
+
+/**
+ * ClientLoader utility that redirects authenticated users to a specified route
+ * Use this for login/register pages that should redirect if user is already logged in
+ */
+export async function requireGuest(redirectTo = '/') {
+	const authResult = await checkAuthStatus()
+
+	if (authResult.isAuthenticated) {
+		throw redirect(redirectTo)
+	}
+
+	return null
+}
+
+/**
+ * ClientLoader utility that redirects unauthenticated users to login
+ * Use this for protected pages that require authentication
+ */
+export async function requireAuth(redirectTo = '/login') {
+	const authResult = await checkAuthStatus()
+
+	if (!authResult.isAuthenticated) {
+		throw redirect(redirectTo)
+	}
+
+	return authResult.user
+}
+
+/**
+ * ClientLoader utility that checks auth but doesn't redirect
+ * Use this when you need to know auth status but want to handle it in the component
+ */
+export async function getAuthUser(): Promise<User | null> {
+	const authResult = await checkAuthStatus()
+	return authResult.user || null
 }

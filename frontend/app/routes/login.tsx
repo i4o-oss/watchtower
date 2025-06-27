@@ -4,6 +4,7 @@ import {
 	redirect,
 	useNavigation,
 	useActionData,
+	useLoaderData,
 	Link,
 } from 'react-router'
 import type { Route } from './+types/login'
@@ -18,13 +19,17 @@ import {
 	CardTitle,
 } from '~/components/ui/card'
 import { Alert, AlertDescription } from '~/components/ui/alert'
-import { useAuth } from '~/lib/auth'
+import { requireGuest } from '~/lib/auth'
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
 	return [
 		{ title: 'Login - Watchtower' },
 		{ name: 'description', content: 'Sign in to your Watchtower account' },
 	]
+}
+
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+	return await requireGuest('/')
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -50,10 +55,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 		if (response.ok) {
 			// Login successful, redirect to home or dashboard
 			return redirect('/')
-		} else {
-			// Return error to be handled by the component
-			return { error: data.message || 'Login failed' }
 		}
+		// Return error to be handled by the component
+		return { error: data.message || 'Login failed' }
 	} catch (error) {
 		console.error('Login error:', error)
 		return { error: 'Network error occurred' }
@@ -63,22 +67,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 export default function Login() {
 	const navigation = useNavigation()
 	const actionData = useActionData<typeof clientAction>()
-	const { isAuthenticated, checkAuth } = useAuth()
+	const loaderData = useLoaderData<typeof clientLoader>()
 
 	const isSubmitting = navigation.state === 'submitting'
-
-	// Refresh auth state after successful login
-	useEffect(() => {
-		if (navigation.state === 'idle' && !actionData?.error) {
-			checkAuth()
-		}
-	}, [navigation.state, actionData])
-
-	// If already authenticated, redirect to home
-	if (isAuthenticated) {
-		window.location.href = '/'
-		return null
-	}
 
 	return (
 		<div className='min-h-screen flex items-center justify-center bg-background px-4'>
