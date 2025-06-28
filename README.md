@@ -1,3 +1,3 @@
 # Watchtower
 
-Open Source Status Monitor and Page
+Open source status page and monitor
