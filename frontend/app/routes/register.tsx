@@ -6,6 +6,7 @@ import {
 	useActionData,
 	useLoaderData,
 	Link,
+	useNavigate,
 } from 'react-router'
 import type { Route } from './+types/register'
 import { Button } from '~/components/ui/button'
@@ -19,7 +20,7 @@ import {
 	CardTitle,
 } from '~/components/ui/card'
 import { Alert, AlertDescription } from '~/components/ui/alert'
-import { requireGuest } from '~/lib/auth'
+import { requireGuest, useAuth } from '~/lib/auth'
 
 export function meta() {
 	return [
@@ -33,44 +34,45 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
-	const formData = await request.formData()
-	const email = formData.get('email') as string
-	const password = formData.get('password') as string
-	const name = formData.get('name') as string
-
-	try {
-		const response = await fetch(
-			`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register`,
-			{
-				method: 'POST',
-				credentials: 'include',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ email, password, name }),
-			},
-		)
-
-		const data = await response.json()
-
-		if (response.ok) {
-			// Registration successful, redirect to home or dashboard
-			return redirect('/')
-		}
-		// Return error to be handled by the component
-		return { error: data.message || 'Registration failed' }
-	} catch (error) {
-		console.error('Registration error:', error)
-		return { error: 'Network error occurred' }
-	}
+	// We'll handle the registration in the component instead of here
+	// to ensure AuthProvider state is updated properly
+	return null
 }
 
 export default function Register() {
 	const navigation = useNavigation()
 	const actionData = useActionData<typeof clientAction>()
 	const loaderData = useLoaderData<typeof clientLoader>()
+	const navigate = useNavigate()
+	const { register } = useAuth()
 
-	const isSubmitting = navigation.state === 'submitting'
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		setIsSubmitting(true)
+		setError(null)
+
+		const formData = new FormData(event.currentTarget)
+		const email = formData.get('email') as string
+		const password = formData.get('password') as string
+		const name = formData.get('name') as string
+
+		try {
+			const result = await register(email, password, name)
+			if (result.success) {
+				// Navigate to home after successful registration
+				navigate('/', { replace: true })
+			} else {
+				setError(result.error || 'Registration failed')
+			}
+		} catch (err) {
+			setError('Network error occurred')
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
 
 	return (
 		<div className='min-h-screen flex items-center justify-center bg-background px-4'>
@@ -84,12 +86,10 @@ export default function Register() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<Form method='post' className='space-y-4'>
-						{actionData?.error && (
+					<form onSubmit={handleSubmit} className='space-y-4'>
+						{error && (
 							<Alert variant='destructive'>
-								<AlertDescription>
-									{actionData.error}
-								</AlertDescription>
+								<AlertDescription>{error}</AlertDescription>
 							</Alert>
 						)}
 
@@ -137,7 +137,7 @@ export default function Register() {
 								? 'Creating Account...'
 								: 'Create Account'}
 						</Button>
-					</Form>
+					</form>
 
 					<div className='mt-4 text-center text-sm'>
 						Already have an account?{' '}

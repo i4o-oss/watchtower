@@ -6,6 +6,7 @@ import {
 	useActionData,
 	useLoaderData,
 	Link,
+	useNavigate,
 } from 'react-router'
 import type { Route } from './+types/login'
 import { Button } from '~/components/ui/button'
@@ -19,7 +20,7 @@ import {
 	CardTitle,
 } from '~/components/ui/card'
 import { Alert, AlertDescription } from '~/components/ui/alert'
-import { requireGuest } from '~/lib/auth'
+import { requireGuest, useAuth } from '~/lib/auth'
 
 export function meta() {
 	return [
@@ -33,43 +34,44 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
-	const formData = await request.formData()
-	const email = formData.get('email') as string
-	const password = formData.get('password') as string
-
-	try {
-		const response = await fetch(
-			`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/login`,
-			{
-				method: 'POST',
-				credentials: 'include',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ email, password }),
-			},
-		)
-
-		const data = await response.json()
-
-		if (response.ok) {
-			// Login successful, redirect to home or dashboard
-			return redirect('/')
-		}
-		// Return error to be handled by the component
-		return { error: data.message || 'Login failed' }
-	} catch (error) {
-		console.error('Login error:', error)
-		return { error: 'Network error occurred' }
-	}
+	// We'll handle the login in the component instead of here
+	// to ensure AuthProvider state is updated properly
+	return null
 }
 
 export default function Login() {
 	const navigation = useNavigation()
 	const actionData = useActionData<typeof clientAction>()
 	const loaderData = useLoaderData<typeof clientLoader>()
+	const navigate = useNavigate()
+	const { login } = useAuth()
 
-	const isSubmitting = navigation.state === 'submitting'
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		setIsSubmitting(true)
+		setError(null)
+
+		const formData = new FormData(event.currentTarget)
+		const email = formData.get('email') as string
+		const password = formData.get('password') as string
+
+		try {
+			const result = await login(email, password)
+			if (result.success) {
+				// Navigate to home after successful login
+				navigate('/', { replace: true })
+			} else {
+				setError(result.error || 'Login failed')
+			}
+		} catch (err) {
+			setError('Network error occurred')
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
 
 	return (
 		<div className='min-h-screen flex items-center justify-center bg-background px-4'>
@@ -83,12 +85,10 @@ export default function Login() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<Form method='post' className='space-y-4'>
-						{actionData?.error && (
+					<form onSubmit={handleSubmit} className='space-y-4'>
+						{error && (
 							<Alert variant='destructive'>
-								<AlertDescription>
-									{actionData.error}
-								</AlertDescription>
+								<AlertDescription>{error}</AlertDescription>
 							</Alert>
 						)}
 
@@ -123,7 +123,7 @@ export default function Login() {
 						>
 							{isSubmitting ? 'Signing In...' : 'Sign In'}
 						</Button>
-					</Form>
+					</form>
 
 					<div className='mt-4 text-center text-sm'>
 						Don't have an account?{' '}
