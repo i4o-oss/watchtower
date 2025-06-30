@@ -54,3 +54,13 @@ func (db *DB) GetUserByID(id uint) (*User, error) {
 	}
 	return &user, nil
 }
+
+// UserExists checks if a user exists by email without logging "record not found" errors
+func (db *DB) UserExists(email string) (bool, error) {
+	var count int64
+	err := db.DB.Model(&User{}).Where("email = ?", email).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}

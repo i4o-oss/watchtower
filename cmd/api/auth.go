@@ -68,14 +68,14 @@ func (app *Application) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if user already exists
-	_, err := app.db.GetUserByEmail(req.Email)
-	if err == nil {
-		app.errorResponse(w, http.StatusConflict, "User with this email already exists")
+	exists, err := app.db.UserExists(req.Email)
+	if err != nil {
+		app.logger.Error("Database error checking user existence", "err", err.Error())
+		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		app.logger.Error("Database error checking user", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+	if exists {
+		app.errorResponse(w, http.StatusConflict, "User with this email already exists")
 		return
 	}
 
