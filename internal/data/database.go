@@ -9,6 +9,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 )
 
 type DB struct {
@@ -21,6 +22,9 @@ func NewDatabase(host, user, password, dbname string, port int, sslmode string) 
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Error),
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true, // Use singular table names
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)

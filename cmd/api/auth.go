@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/i4o-oss/watchtower/internal/data"
 	"gorm.io/gorm"
@@ -101,7 +102,7 @@ func (app *Application) register(w http.ResponseWriter, r *http.Request) {
 
 	// Create session
 	session, _ := store.Get(r, sessionName)
-	session.Values["user_id"] = user.ID
+	session.Values["user_id"] = user.ID.String()
 	session.Values["authenticated"] = true
 	if err := session.Save(r, w); err != nil {
 		app.logger.Error("Error saving session", "err", err.Error())
@@ -146,7 +147,7 @@ func (app *Application) login(w http.ResponseWriter, r *http.Request) {
 
 	// Create session
 	session, _ := store.Get(r, sessionName)
-	session.Values["user_id"] = user.ID
+	session.Values["user_id"] = user.ID.String()
 	session.Values["authenticated"] = true
 	if err := session.Save(r, w); err != nil {
 		app.logger.Error("Error saving session", "err", err.Error())
@@ -195,8 +196,14 @@ func (app *Application) requireAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		userID, ok := session.Values["user_id"].(uint)
+		userIDStr, ok := session.Values["user_id"].(string)
 		if !ok {
+			app.errorResponse(w, http.StatusUnauthorized, "Invalid session")
+			return
+		}
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
 			app.errorResponse(w, http.StatusUnauthorized, "Invalid session")
 			return
 		}

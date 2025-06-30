@@ -3,16 +3,22 @@ package data
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
+	ID        uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
 	Email     string    `json:"email" gorm:"uniqueIndex;not null"`
 	Password  string    `json:"-" gorm:"not null"` // Don't include in JSON responses
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// TableName sets the table name to singular form
+func (User) TableName() string {
+	return "user"
 }
 
 // HashPassword hashes the user's password using bcrypt
@@ -46,7 +52,7 @@ func (db *DB) GetUserByEmail(email string) (*User, error) {
 }
 
 // GetUserByID retrieves a user by ID
-func (db *DB) GetUserByID(id uint) (*User, error) {
+func (db *DB) GetUserByID(id uuid.UUID) (*User, error) {
 	var user User
 	err := db.DB.First(&user, id).Error
 	if err != nil {
