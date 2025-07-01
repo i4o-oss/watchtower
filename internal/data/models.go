@@ -1,6 +1,9 @@
 package data
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -69,4 +72,226 @@ func (db *DB) UserExists(email string) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+// HTTPHeaders represents JSON headers for HTTP requests
+type HTTPHeaders map[string]string
+
+// Value implements the driver.Valuer interface for database storage
+func (h HTTPHeaders) Value() (driver.Value, error) {
+	if h == nil {
+		return "{}", nil
+	}
+	return json.Marshal(h)
+}
+
+// Scan implements the sql.Scanner interface for database retrieval
+func (h *HTTPHeaders) Scan(value interface{}) error {
+	if value == nil {
+		*h = make(HTTPHeaders)
+		return nil
+	}
+
+	switch v := value.(type) {
+	case []byte:
+		return json.Unmarshal(v, h)
+	case string:
+		return json.Unmarshal([]byte(v), h)
+	default:
+		return errors.New("cannot scan non-string value into HTTPHeaders")
+	}
+}
+
+// Endpoint represents a monitoring target
+type Endpoint struct {
+	ID                   uuid.UUID   `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	Name                 string      `json:"name" gorm:"not null"`
+	Description          string      `json:"description"`
+	URL                  string      `json:"url" gorm:"not null"`
+	Method               string      `json:"method" gorm:"default:GET"`
+	Headers              HTTPHeaders `json:"headers" gorm:"type:jsonb;default:'{}'"`
+	Body                 string      `json:"body"`
+	ExpectedStatusCode   int         `json:"expected_status_code" gorm:"default:200"`
+	TimeoutSeconds       int         `json:"timeout_seconds" gorm:"default:30"`
+	CheckIntervalSeconds int         `json:"check_interval_seconds" gorm:"default:300"`
+	Enabled              bool        `json:"enabled" gorm:"default:true"`
+	CreatedAt            time.Time   `json:"created_at"`
+	UpdatedAt            time.Time   `json:"updated_at"`
+}
+
+// TableName sets the table name to singular form
+func (Endpoint) TableName() string {
+	return "endpoint"
+}
+
+// MonitoringLog represents a monitoring check result
+type MonitoringLog struct {
+	ID                 uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	EndpointID         uuid.UUID `json:"endpoint_id" gorm:"type:uuid;not null"`
+	Endpoint           *Endpoint `json:"endpoint,omitempty" gorm:"foreignKey:EndpointID"`
+	Timestamp          time.Time `json:"timestamp" gorm:"default:now()"`
+	StatusCode         *int      `json:"status_code"`
+	ResponseTimeMs     *int      `json:"response_time_ms"`
+	ErrorMessage       *string   `json:"error_message"`
+	Success            bool      `json:"success" gorm:"not null"`
+	ResponseBodySample *string   `json:"response_body_sample"`
+	CreatedAt          time.Time `json:"created_at"`
+}
+
+// TableName sets the table name to singular form
+func (MonitoringLog) TableName() string {
+	return "monitoring_log"
+}
+
+// Endpoint database operations
+func (db *DB) CreateEndpoint(endpoint *Endpoint) error {
+	return db.DB.Create(endpoint).Error
+}
+
+func (db *DB) GetEndpoint(id uuid.UUID) (*Endpoint, error) {
+	var endpoint Endpoint
+	err := db.DB.First(&endpoint, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &endpoint, nil
+}
+
+func (db *DB) GetEndpoints() ([]Endpoint, error) {
+	var endpoints []Endpoint
+	err := db.DB.Find(&endpoints).Error
+	return endpoints, err
+}
+
+func (db *DB) GetEnabledEndpoints() ([]Endpoint, error) {
+	var endpoints []Endpoint
+	err := db.DB.Where("enabled = ?", true).Find(&endpoints).Error
+	return endpoints, err
+}
+
+func (db *DB) UpdateEndpoint(endpoint *Endpoint) error {
+	return db.DB.Save(endpoint).Error
+}
+
+func (db *DB) DeleteEndpoint(id uuid.UUID) error {
+	return db.DB.Delete(&Endpoint{}, id).Error
+}
+
+// MonitoringLog database operations
+func (db *DB) CreateMonitoringLog(log *MonitoringLog) error {
+	return db.DB.Create(log).Error
+}
+
+func (db *DB) GetMonitoringLogs(endpointID uuid.UUID, limit int) ([]MonitoringLog, error) {
+	var logs []MonitoringLog
+	query := db.DB.Where("endpoint_id = ?", endpointID).Order("timestamp DESC")
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	err := query.Find(&logs).Error
+	return logs, err
+}
+
+func (db *DB) GetRecentMonitoringLogs(hours int) ([]MonitoringLog, error) {
+	var logs []MonitoringLog
+	cutoff := time.Now().Add(-time.Duration(hours) * time.Hour)
+	err := db.DB.Where("timestamp > ?", cutoff).Order("timestamp DESC").Find(&logs).Error
+	return logs, err
+}
+
+// Incident represents a system incident
+type Incident struct {
+	ID          uuid.UUID  `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	Title       string     `json:"title" gorm:"not null"`
+	Description string     `json:"description"`
+	Severity    string     `json:"severity" gorm:"default:medium"`
+	Status      string     `json:"status" gorm:"default:open"`
+	StartTime   time.Time  `json:"start_time" gorm:"default:now()"`
+	EndTime     *time.Time `json:"end_time"`
+	CreatedBy   *uuid.UUID `json:"created_by" gorm:"type:uuid"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+
+	// Relationships
+	Creator           *User              `json:"creator,omitempty" gorm:"foreignKey:CreatedBy"`
+	EndpointIncidents []EndpointIncident `json:"endpoint_incidents,omitempty" gorm:"foreignKey:IncidentID"`
+}
+
+// TableName sets the table name to singular form
+func (Incident) TableName() string {
+	return "incident"
+}
+
+// EndpointIncident represents the junction table linking incidents to endpoints
+type EndpointIncident struct {
+	ID            uuid.UUID  `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	EndpointID    uuid.UUID  `json:"endpoint_id" gorm:"type:uuid;not null"`
+	IncidentID    uuid.UUID  `json:"incident_id" gorm:"type:uuid;not null"`
+	AffectedStart time.Time  `json:"affected_start" gorm:"default:now()"`
+	AffectedEnd   *time.Time `json:"affected_end"`
+	CreatedAt     time.Time  `json:"created_at"`
+
+	// Relationships
+	Endpoint *Endpoint `json:"endpoint,omitempty" gorm:"foreignKey:EndpointID"`
+	Incident *Incident `json:"incident,omitempty" gorm:"foreignKey:IncidentID"`
+}
+
+// TableName sets the table name to singular form
+func (EndpointIncident) TableName() string {
+	return "endpoint_incident"
+}
+
+// Incident database operations
+func (db *DB) CreateIncident(incident *Incident) error {
+	return db.DB.Create(incident).Error
+}
+
+func (db *DB) GetIncident(id uuid.UUID) (*Incident, error) {
+	var incident Incident
+	err := db.DB.Preload("Creator").Preload("EndpointIncidents.Endpoint").First(&incident, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &incident, nil
+}
+
+func (db *DB) GetIncidents() ([]Incident, error) {
+	var incidents []Incident
+	err := db.DB.Preload("Creator").Order("created_at DESC").Find(&incidents).Error
+	return incidents, err
+}
+
+func (db *DB) GetOpenIncidents() ([]Incident, error) {
+	var incidents []Incident
+	err := db.DB.Where("status != ?", "resolved").Preload("Creator").Order("created_at DESC").Find(&incidents).Error
+	return incidents, err
+}
+
+func (db *DB) UpdateIncident(incident *Incident) error {
+	return db.DB.Save(incident).Error
+}
+
+func (db *DB) DeleteIncident(id uuid.UUID) error {
+	return db.DB.Delete(&Incident{}, id).Error
+}
+
+// EndpointIncident database operations
+func (db *DB) CreateEndpointIncident(endpointIncident *EndpointIncident) error {
+	return db.DB.Create(endpointIncident).Error
+}
+
+func (db *DB) GetEndpointIncidents(incidentID uuid.UUID) ([]EndpointIncident, error) {
+	var endpointIncidents []EndpointIncident
+	err := db.DB.Where("incident_id = ?", incidentID).Preload("Endpoint").Find(&endpointIncidents).Error
+	return endpointIncidents, err
+}
+
+func (db *DB) GetIncidentsByEndpoint(endpointID uuid.UUID) ([]Incident, error) {
+	var incidents []Incident
+	err := db.DB.Joins("JOIN endpoint_incident ON incident.id = endpoint_incident.incident_id").
+		Where("endpoint_incident.endpoint_id = ?", endpointID).
+		Preload("Creator").
+		Order("incident.created_at DESC").
+		Find(&incidents).Error
+	return incidents, err
 }
