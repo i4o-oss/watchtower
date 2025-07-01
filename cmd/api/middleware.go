@@ -5,7 +5,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 type responseWriter struct {
@@ -48,6 +51,85 @@ func (app *Application) RequestLogger(next http.Handler) http.Handler {
 		}()
 
 		next.ServeHTTP(wrapped, r)
+	})
+}
+
+// Rate limiter store
+var (
+	rateLimiters  = make(map[string]*rate.Limiter)
+	rateLimiterMu sync.RWMutex
+)
+
+// getRateLimiter returns a rate limiter for the given IP address
+func getRateLimiter(ip string) *rate.Limiter {
+	rateLimiterMu.RLock()
+	limiter, exists := rateLimiters[ip]
+	rateLimiterMu.RUnlock()
+
+	if !exists {
+		rateLimiterMu.Lock()
+		// Check again after acquiring write lock
+		if limiter, exists = rateLimiters[ip]; !exists {
+			// Allow 5 requests per minute for login attempts
+			limiter = rate.NewLimiter(rate.Every(time.Minute), 5)
+			rateLimiters[ip] = limiter
+		}
+		rateLimiterMu.Unlock()
+	}
+
+	return limiter
+}
+
+// RateLimitAuth middleware for rate limiting authentication endpoints
+func (app *Application) RateLimitAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get client IP (handle X-Forwarded-For header for proxies)
+		ip := r.Header.Get("X-Forwarded-For")
+		if ip == "" {
+			ip = r.Header.Get("X-Real-IP")
+		}
+		if ip == "" {
+			ip = r.RemoteAddr
+		}
+
+		// Get rate limiter for this IP
+		limiter := getRateLimiter(ip)
+
+		if !limiter.Allow() {
+			app.errorResponse(w, http.StatusTooManyRequests, "Too many requests. Please try again later.")
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// SecurityHeaders middleware adds security headers
+func (app *Application) SecurityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Prevent clickjacking
+		w.Header().Set("X-Frame-Options", "DENY")
+
+		// Prevent MIME type sniffing
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+
+		// Enable XSS protection
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+
+		// Enforce HTTPS in production
+		env := os.Getenv("ENV")
+		if env == "production" {
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+
+		// Content Security Policy
+		csp := "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'"
+		w.Header().Set("Content-Security-Policy", csp)
+
+		// Referrer Policy
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+
+		next.ServeHTTP(w, r)
 	})
 }
 

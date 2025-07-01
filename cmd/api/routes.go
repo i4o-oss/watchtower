@@ -14,20 +14,54 @@ func (app *Application) routes() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(app.RequestLogger)
+	r.Use(app.SecurityHeaders)
 	r.Use(app.CORS)
 
 	// API routes with /api/v1 prefix
 	r.Route("/api/v1", func(r chi.Router) {
 		// Public routes
 		r.Get("/health", health)
-		r.Post("/auth/register", app.register)
-		r.Post("/auth/login", app.login)
+
+		// Authentication routes with rate limiting
+		r.Group(func(r chi.Router) {
+			r.Use(app.RateLimitAuth)
+			r.Post("/auth/register", app.register)
+			r.Post("/auth/login", app.login)
+		})
+
 		r.Post("/auth/logout", app.logout)
 
 		// Protected routes
 		r.Group(func(r chi.Router) {
 			r.Use(app.requireAuth)
 			r.Get("/auth/me", app.me)
+		})
+
+		// Admin routes
+		r.Route("/admin", func(r chi.Router) {
+			r.Use(app.requireAuth)
+
+			// Endpoint management
+			r.Route("/endpoints", func(r chi.Router) {
+				r.Get("/", app.listEndpoints)
+				r.Post("/", app.createEndpoint)
+				r.Get("/{id}", app.getEndpoint)
+				r.Put("/{id}", app.updateEndpoint)
+				r.Delete("/{id}", app.deleteEndpoint)
+				r.Get("/{id}/logs", app.getEndpointLogs)
+			})
+
+			// Monitoring logs
+			r.Get("/monitoring-logs", app.listMonitoringLogs)
+
+			// Incident management
+			r.Route("/incidents", func(r chi.Router) {
+				r.Get("/", app.listIncidents)
+				r.Post("/", app.createIncident)
+				r.Get("/{id}", app.getIncident)
+				r.Put("/{id}", app.updateIncident)
+				r.Delete("/{id}", app.deleteIncident)
+			})
 		})
 	})
 
