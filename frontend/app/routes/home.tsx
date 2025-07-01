@@ -62,20 +62,39 @@ export default function Home() {
 						</div>
 					</div>
 
-					<div className='grid gap-6 md:grid-cols-2'>
+					<div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
 						<Card>
 							<CardHeader>
-								<CardTitle>Dashboard</CardTitle>
+								<CardTitle>Admin Dashboard</CardTitle>
 								<CardDescription>
-									Access your main dashboard
+									System administration
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
 								<p className='text-muted-foreground mb-4'>
-									View your account information and manage
-									your settings.
+									Manage endpoints, monitor system health, and
+									track incidents.
 								</p>
 								<Button asChild>
+									<Link to='/admin'>
+										Open Admin Dashboard
+									</Link>
+								</Button>
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardHeader>
+								<CardTitle>User Dashboard</CardTitle>
+								<CardDescription>
+									Personal dashboard
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<p className='text-muted-foreground mb-4'>
+									View your profile and access quick actions.
+								</p>
+								<Button asChild variant='outline'>
 									<Link to='/dashboard'>Open Dashboard</Link>
 								</Button>
 							</CardContent>

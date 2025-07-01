@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { Button } from '~/components/ui/button'
 import {
 	Card,
@@ -99,32 +100,56 @@ export default function Dashboard() {
 
 					<Card>
 						<CardHeader>
-							<CardTitle>Quick Stats</CardTitle>
+							<CardTitle>Admin Access</CardTitle>
 							<CardDescription>
-								Overview of your activity
+								System administration
 							</CardDescription>
 						</CardHeader>
-						<CardContent>
-							<p className='text-muted-foreground'>
-								This is a protected route that requires
-								authentication. You can expand this with your
-								app-specific content.
+						<CardContent className='space-y-3'>
+							<p className='text-muted-foreground text-sm'>
+								Manage endpoints, incidents, and monitoring logs
 							</p>
+							<Link to='/admin'>
+								<Button className='w-full'>
+									Go to Admin Dashboard
+								</Button>
+							</Link>
 						</CardContent>
 					</Card>
 
 					<Card>
 						<CardHeader>
-							<CardTitle>Recent Activity</CardTitle>
-							<CardDescription>
-								Your latest actions
-							</CardDescription>
+							<CardTitle>Quick Actions</CardTitle>
+							<CardDescription>Common tasks</CardDescription>
 						</CardHeader>
-						<CardContent>
-							<p className='text-muted-foreground'>
-								No recent activity to display. This section can
-								be customized based on your app's needs.
-							</p>
+						<CardContent className='space-y-2'>
+							<Link to='/admin/endpoints/new' className='block'>
+								<Button
+									variant='outline'
+									size='sm'
+									className='w-full'
+								>
+									Add Endpoint
+								</Button>
+							</Link>
+							<Link to='/admin/monitoring' className='block'>
+								<Button
+									variant='outline'
+									size='sm'
+									className='w-full'
+								>
+									View Logs
+								</Button>
+							</Link>
+							<Link to='/admin/incidents' className='block'>
+								<Button
+									variant='outline'
+									size='sm'
+									className='w-full'
+								>
+									View Incidents
+								</Button>
+							</Link>
 						</CardContent>
 					</Card>
 				</div>
@@ -132,23 +157,32 @@ export default function Dashboard() {
 				<div className='mt-8'>
 					<Card>
 						<CardHeader>
-							<CardTitle>Getting Started</CardTitle>
+							<CardTitle>Watchtower Monitoring</CardTitle>
 							<CardDescription>
-								Welcome to your protected dashboard
+								Monitor your endpoints and track incidents
 							</CardDescription>
 						</CardHeader>
 						<CardContent className='space-y-4'>
 							<p className='text-muted-foreground'>
-								This is a simple protected route that
-								demonstrates authentication in your React Router
-								v7 app. You can customize this page with your
-								own content and functionality.
+								Watchtower helps you monitor your web endpoints,
+								track response times, and manage incidents. Use
+								the admin dashboard to configure your monitoring
+								endpoints and view detailed analytics.
 							</p>
-							<div className='flex gap-2'>
-								<Button size='sm'>Action 1</Button>
-								<Button size='sm' variant='outline'>
-									Action 2
-								</Button>
+							<div className='flex flex-wrap gap-2'>
+								<Link to='/admin'>
+									<Button>Admin Dashboard</Button>
+								</Link>
+								<Link to='/admin/endpoints'>
+									<Button variant='outline'>
+										Manage Endpoints
+									</Button>
+								</Link>
+								<Link to='/admin/monitoring'>
+									<Button variant='outline'>
+										View Monitoring
+									</Button>
+								</Link>
 							</div>
 						</CardContent>
 					</Card>
