@@ -33,6 +33,7 @@ type Application struct {
 	config Config
 	logger *log.Logger
 	db     *data.DB
+	wsHub  *WebSocketHub
 }
 
 var (
@@ -110,11 +111,19 @@ func main() {
 	// Initialize session store
 	initSessionStore()
 
+	// Initialize WebSocket hub
+	wsHub := NewWebSocketHub()
+	go wsHub.Run()
+
 	app := &Application{
 		config: config,
 		logger: logger,
 		db:     db,
+		wsHub:  wsHub,
 	}
+
+	// Start status broadcaster
+	app.StartStatusBroadcaster()
 
 	server := app.NewServer()
 

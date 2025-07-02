@@ -199,6 +199,67 @@ func (db *DB) GetRecentMonitoringLogs(hours int) ([]MonitoringLog, error) {
 	return logs, err
 }
 
+// GetMonitoringLogsByDateRange gets monitoring logs for an endpoint within a date range
+func (db *DB) GetMonitoringLogsByDateRange(endpointID uuid.UUID, startDate, endDate time.Time) ([]MonitoringLog, error) {
+	var logs []MonitoringLog
+	err := db.DB.Where("endpoint_id = ? AND timestamp BETWEEN ? AND ?", endpointID, startDate, endDate).
+		Order("timestamp ASC").Find(&logs).Error
+	return logs, err
+}
+
+// GetUptimeStats calculates uptime statistics for an endpoint over a period
+func (db *DB) GetUptimeStats(endpointID uuid.UUID, days int) (float64, error) {
+	cutoff := time.Now().AddDate(0, 0, -days)
+
+	var total, successful int64
+
+	// Count total checks
+	err := db.DB.Model(&MonitoringLog{}).
+		Where("endpoint_id = ? AND timestamp > ?", endpointID, cutoff).
+		Count(&total).Error
+	if err != nil {
+		return 0, err
+	}
+
+	// Count successful checks
+	err = db.DB.Model(&MonitoringLog{}).
+		Where("endpoint_id = ? AND timestamp > ? AND success = true", endpointID, cutoff).
+		Count(&successful).Error
+	if err != nil {
+		return 0, err
+	}
+
+	if total == 0 {
+		return 100.0, nil
+	}
+
+	return (float64(successful) / float64(total)) * 100.0, nil
+}
+
+// GetLatestMonitoringStatus gets the latest monitoring status for all endpoints
+func (db *DB) GetLatestMonitoringStatus() (map[uuid.UUID]MonitoringLog, error) {
+	var logs []MonitoringLog
+
+	// Get the latest log for each endpoint
+	err := db.DB.Raw(`
+		SELECT DISTINCT ON (endpoint_id) endpoint_id, id, timestamp, status_code, 
+		       response_time_ms, error_message, success, response_body_sample, created_at
+		FROM monitoring_log
+		ORDER BY endpoint_id, timestamp DESC
+	`).Scan(&logs).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[uuid.UUID]MonitoringLog)
+	for _, log := range logs {
+		result[log.EndpointID] = log
+	}
+
+	return result, nil
+}
+
 // Incident represents a system incident
 type Incident struct {
 	ID          uuid.UUID  `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`

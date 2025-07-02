@@ -22,6 +22,14 @@ func (app *Application) routes() http.Handler {
 		// Public routes
 		r.Get("/health", health)
 
+		// Public status API endpoints
+		r.Get("/status", app.getPublicStatus)
+		r.Get("/uptime/{endpoint_id}", app.getUptimeData)
+		r.Get("/incidents", app.getPublicIncidents)
+
+		// WebSocket endpoint
+		r.Get("/ws", app.handleWebSocket)
+
 		// Authentication routes with rate limiting
 		r.Group(func(r chi.Router) {
 			r.Use(app.RateLimitAuth)
