@@ -27,8 +27,8 @@ func (app *Application) routes() http.Handler {
 		r.Get("/uptime/{endpoint_id}", app.getUptimeData)
 		r.Get("/incidents", app.getPublicIncidents)
 
-		// WebSocket endpoint
-		r.Get("/ws", app.handleWebSocket)
+		// Real-time updates via Server-Sent Events
+		r.Get("/events", app.handleSSE)
 
 		// Authentication routes with rate limiting
 		r.Group(func(r chi.Router) {
