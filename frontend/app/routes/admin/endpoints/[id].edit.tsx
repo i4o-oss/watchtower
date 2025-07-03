@@ -161,265 +161,249 @@ export default function EditEndpoint({
 				</div>
 			</div>
 
-				<Card>
-					<CardHeader>
-						<CardTitle>Endpoint Configuration</CardTitle>
-						<CardDescription>
-							Update your endpoint monitoring settings
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<form onSubmit={handleSubmit} className='space-y-6'>
-							{error && (
-								<Alert variant='destructive'>
-									<AlertDescription>{error}</AlertDescription>
-								</Alert>
-							)}
+			<Card>
+				<CardHeader>
+					<CardTitle>Endpoint Configuration</CardTitle>
+					<CardDescription>
+						Update your endpoint monitoring settings
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<form onSubmit={handleSubmit} className='space-y-6'>
+						{error && (
+							<Alert variant='destructive'>
+								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+						)}
 
-							{/* Basic Information */}
-							<div className='space-y-4'>
-								<h3 className='text-lg font-medium'>
-									Basic Information
-								</h3>
+						{/* Basic Information */}
+						<div className='space-y-4'>
+							<h3 className='text-lg font-medium'>
+								Basic Information
+							</h3>
 
-								<div className='space-y-2'>
-									<Label htmlFor='name'>Name *</Label>
-									<Input
-										id='name'
-										value={formData.name}
-										onChange={(e) =>
-											updateFormData(
-												'name',
-												e.target.value,
-											)
-										}
-										placeholder='My API Endpoint'
-										required
-									/>
-								</div>
-
-								<div className='space-y-2'>
-									<Label htmlFor='description'>
-										Description
-									</Label>
-									<Textarea
-										id='description'
-										value={formData.description}
-										onChange={(e) =>
-											updateFormData(
-												'description',
-												e.target.value,
-											)
-										}
-										placeholder='Optional description of what this endpoint monitors'
-										rows={3}
-									/>
-								</div>
-
-								<div className='space-y-2'>
-									<Label htmlFor='url'>URL *</Label>
-									<Input
-										id='url'
-										type='url'
-										value={formData.url}
-										onChange={(e) =>
-											updateFormData(
-												'url',
-												e.target.value,
-											)
-										}
-										placeholder='https://api.example.com/health'
-										required
-									/>
-								</div>
-
-								<div className='grid grid-cols-2 gap-4'>
-									<div className='space-y-2'>
-										<Label htmlFor='method'>
-											HTTP Method
-										</Label>
-										<Select
-											value={formData.method}
-											onValueChange={(value) =>
-												updateFormData('method', value)
-											}
-										>
-											<SelectTrigger>
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value='GET'>
-													GET
-												</SelectItem>
-												<SelectItem value='POST'>
-													POST
-												</SelectItem>
-												<SelectItem value='PUT'>
-													PUT
-												</SelectItem>
-												<SelectItem value='PATCH'>
-													PATCH
-												</SelectItem>
-												<SelectItem value='DELETE'>
-													DELETE
-												</SelectItem>
-												<SelectItem value='HEAD'>
-													HEAD
-												</SelectItem>
-												<SelectItem value='OPTIONS'>
-													OPTIONS
-												</SelectItem>
-											</SelectContent>
-										</Select>
-									</div>
-
-									<div className='space-y-2'>
-										<Label htmlFor='status'>
-											Expected Status Code
-										</Label>
-										<Input
-											id='status'
-											type='number'
-											value={
-												formData.expected_status_code
-											}
-											onChange={(e) =>
-												updateFormData(
-													'expected_status_code',
-													e.target.value,
-												)
-											}
-											min='100'
-											max='599'
-										/>
-									</div>
-								</div>
+							<div className='space-y-2'>
+								<Label htmlFor='name'>Name *</Label>
+								<Input
+									id='name'
+									value={formData.name}
+									onChange={(e) =>
+										updateFormData('name', e.target.value)
+									}
+									placeholder='My API Endpoint'
+									required
+								/>
 							</div>
 
-							{/* Request Configuration */}
-							<div className='space-y-4'>
-								<h3 className='text-lg font-medium'>
-									Request Configuration
-								</h3>
+							<div className='space-y-2'>
+								<Label htmlFor='description'>Description</Label>
+								<Textarea
+									id='description'
+									value={formData.description}
+									onChange={(e) =>
+										updateFormData(
+											'description',
+											e.target.value,
+										)
+									}
+									placeholder='Optional description of what this endpoint monitors'
+									rows={3}
+								/>
+							</div>
+
+							<div className='space-y-2'>
+								<Label htmlFor='url'>URL *</Label>
+								<Input
+									id='url'
+									type='url'
+									value={formData.url}
+									onChange={(e) =>
+										updateFormData('url', e.target.value)
+									}
+									placeholder='https://api.example.com/health'
+									required
+								/>
+							</div>
+
+							<div className='grid grid-cols-2 gap-4'>
+								<div className='space-y-2'>
+									<Label htmlFor='method'>HTTP Method</Label>
+									<Select
+										value={formData.method}
+										onValueChange={(value) =>
+											updateFormData('method', value)
+										}
+									>
+										<SelectTrigger>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value='GET'>
+												GET
+											</SelectItem>
+											<SelectItem value='POST'>
+												POST
+											</SelectItem>
+											<SelectItem value='PUT'>
+												PUT
+											</SelectItem>
+											<SelectItem value='PATCH'>
+												PATCH
+											</SelectItem>
+											<SelectItem value='DELETE'>
+												DELETE
+											</SelectItem>
+											<SelectItem value='HEAD'>
+												HEAD
+											</SelectItem>
+											<SelectItem value='OPTIONS'>
+												OPTIONS
+											</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
 
 								<div className='space-y-2'>
-									<Label htmlFor='headers'>
-										Headers (JSON or key:value format)
+									<Label htmlFor='status'>
+										Expected Status Code
 									</Label>
-									<Textarea
-										id='headers'
-										value={formData.headers}
+									<Input
+										id='status'
+										type='number'
+										value={formData.expected_status_code}
 										onChange={(e) =>
 											updateFormData(
-												'headers',
+												'expected_status_code',
 												e.target.value,
 											)
 										}
-										placeholder='{"Authorization": "Bearer token"} or Authorization: Bearer token'
+										min='100'
+										max='599'
+									/>
+								</div>
+							</div>
+						</div>
+
+						{/* Request Configuration */}
+						<div className='space-y-4'>
+							<h3 className='text-lg font-medium'>
+								Request Configuration
+							</h3>
+
+							<div className='space-y-2'>
+								<Label htmlFor='headers'>
+									Headers (JSON or key:value format)
+								</Label>
+								<Textarea
+									id='headers'
+									value={formData.headers}
+									onChange={(e) =>
+										updateFormData(
+											'headers',
+											e.target.value,
+										)
+									}
+									placeholder='{"Authorization": "Bearer token"} or Authorization: Bearer token'
+									rows={4}
+								/>
+							</div>
+
+							{(formData.method === 'POST' ||
+								formData.method === 'PUT' ||
+								formData.method === 'PATCH') && (
+								<div className='space-y-2'>
+									<Label htmlFor='body'>Request Body</Label>
+									<Textarea
+										id='body'
+										value={formData.body}
+										onChange={(e) =>
+											updateFormData(
+												'body',
+												e.target.value,
+											)
+										}
+										placeholder='Request body content'
 										rows={4}
 									/>
 								</div>
+							)}
+						</div>
 
-								{(formData.method === 'POST' ||
-									formData.method === 'PUT' ||
-									formData.method === 'PATCH') && (
-									<div className='space-y-2'>
-										<Label htmlFor='body'>
-											Request Body
-										</Label>
-										<Textarea
-											id='body'
-											value={formData.body}
-											onChange={(e) =>
-												updateFormData(
-													'body',
-													e.target.value,
-												)
-											}
-											placeholder='Request body content'
-											rows={4}
-										/>
-									</div>
-								)}
-							</div>
+						{/* Monitoring Configuration */}
+						<div className='space-y-4'>
+							<h3 className='text-lg font-medium'>
+								Monitoring Configuration
+							</h3>
 
-							{/* Monitoring Configuration */}
-							<div className='space-y-4'>
-								<h3 className='text-lg font-medium'>
-									Monitoring Configuration
-								</h3>
-
-								<div className='grid grid-cols-2 gap-4'>
-									<div className='space-y-2'>
-										<Label htmlFor='timeout'>
-											Timeout (seconds)
-										</Label>
-										<Input
-											id='timeout'
-											type='number'
-											value={formData.timeout_seconds}
-											onChange={(e) =>
-												updateFormData(
-													'timeout_seconds',
-													e.target.value,
-												)
-											}
-											min='1'
-											max='300'
-										/>
-									</div>
-
-									<div className='space-y-2'>
-										<Label htmlFor='interval'>
-											Check Interval (seconds)
-										</Label>
-										<Input
-											id='interval'
-											type='number'
-											value={
-												formData.check_interval_seconds
-											}
-											onChange={(e) =>
-												updateFormData(
-													'check_interval_seconds',
-													e.target.value,
-												)
-											}
-											min='30'
-											max='86400'
-										/>
-									</div>
-								</div>
-
-								<div className='flex items-center space-x-2'>
-									<Switch
-										id='enabled'
-										checked={formData.enabled}
-										onCheckedChange={(checked) =>
-											updateFormData('enabled', checked)
-										}
-									/>
-									<Label htmlFor='enabled'>
-										Enable monitoring
+							<div className='grid grid-cols-2 gap-4'>
+								<div className='space-y-2'>
+									<Label htmlFor='timeout'>
+										Timeout (seconds)
 									</Label>
+									<Input
+										id='timeout'
+										type='number'
+										value={formData.timeout_seconds}
+										onChange={(e) =>
+											updateFormData(
+												'timeout_seconds',
+												e.target.value,
+											)
+										}
+										min='1'
+										max='300'
+									/>
+								</div>
+
+								<div className='space-y-2'>
+									<Label htmlFor='interval'>
+										Check Interval (seconds)
+									</Label>
+									<Input
+										id='interval'
+										type='number'
+										value={formData.check_interval_seconds}
+										onChange={(e) =>
+											updateFormData(
+												'check_interval_seconds',
+												e.target.value,
+											)
+										}
+										min='30'
+										max='86400'
+									/>
 								</div>
 							</div>
 
-							<div className='flex justify-end space-x-2'>
-								<Link to={`/admin/endpoints/${params.id}`}>
-									<Button type='button' variant='outline'>
-										Cancel
-									</Button>
-								</Link>
-								<Button type='submit' disabled={isSubmitting}>
-									{isSubmitting
-										? 'Updating...'
-										: 'Update Endpoint'}
-								</Button>
+							<div className='flex items-center space-x-2'>
+								<Switch
+									id='enabled'
+									checked={formData.enabled}
+									onCheckedChange={(checked) =>
+										updateFormData('enabled', checked)
+									}
+								/>
+								<Label htmlFor='enabled'>
+									Enable monitoring
+								</Label>
 							</div>
-						</form>
-					</CardContent>
-				</Card>
+						</div>
+
+						<div className='flex justify-end space-x-2'>
+							<Link to={`/admin/endpoints/${params.id}`}>
+								<Button type='button' variant='outline'>
+									Cancel
+								</Button>
+							</Link>
+							<Button type='submit' disabled={isSubmitting}>
+								{isSubmitting
+									? 'Updating...'
+									: 'Update Endpoint'}
+							</Button>
+						</div>
+					</form>
+				</CardContent>
+			</Card>
 		</div>
 	)
 }

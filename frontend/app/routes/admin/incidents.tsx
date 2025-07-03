@@ -193,276 +193,270 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 				</Link>
 			</div>
 
-				{/* Search and Filters */}
-				<Card className='mb-6'>
-					<CardContent className='pt-6'>
-						<div className='grid gap-4 md:grid-cols-4'>
-							<Input
-								placeholder='Search incidents...'
-								value={searchTerm}
-								onChange={(e) => setSearchTerm(e.target.value)}
-							/>
+			{/* Search and Filters */}
+			<Card className='mb-6'>
+				<CardContent className='pt-6'>
+					<div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+						<Input
+							placeholder='Search incidents...'
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+						/>
 
-							<Select
-								value={statusFilter}
-								onValueChange={setStatusFilter}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder='All statuses' />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value='all'>
-										All Statuses
-									</SelectItem>
-									<SelectItem value='open'>Open</SelectItem>
-									<SelectItem value='investigating'>
-										Investigating
-									</SelectItem>
-									<SelectItem value='resolved'>
-										Resolved
-									</SelectItem>
-									<SelectItem value='closed'>
-										Closed
-									</SelectItem>
-								</SelectContent>
-							</Select>
+						<Select
+							value={statusFilter}
+							onValueChange={setStatusFilter}
+						>
+							<SelectTrigger>
+								<SelectValue placeholder='All statuses' />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value='all'>
+									All Statuses
+								</SelectItem>
+								<SelectItem value='open'>Open</SelectItem>
+								<SelectItem value='investigating'>
+									Investigating
+								</SelectItem>
+								<SelectItem value='resolved'>
+									Resolved
+								</SelectItem>
+								<SelectItem value='closed'>Closed</SelectItem>
+							</SelectContent>
+						</Select>
 
-							<Select
-								value={severityFilter}
-								onValueChange={setSeverityFilter}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder='All severities' />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value='all'>
-										All Severities
-									</SelectItem>
-									<SelectItem value='high'>High</SelectItem>
-									<SelectItem value='medium'>
-										Medium
-									</SelectItem>
-									<SelectItem value='low'>Low</SelectItem>
-								</SelectContent>
-							</Select>
+						<Select
+							value={severityFilter}
+							onValueChange={setSeverityFilter}
+						>
+							<SelectTrigger>
+								<SelectValue placeholder='All severities' />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value='all'>
+									All Severities
+								</SelectItem>
+								<SelectItem value='high'>High</SelectItem>
+								<SelectItem value='medium'>Medium</SelectItem>
+								<SelectItem value='low'>Low</SelectItem>
+							</SelectContent>
+						</Select>
 
-							<div className='text-sm text-muted-foreground flex items-center'>
-								Showing {filteredIncidents.length} of {total}{' '}
-								incidents
-							</div>
+						<div className='text-sm text-muted-foreground flex items-center'>
+							Showing {filteredIncidents.length} of {total}{' '}
+							incidents
 						</div>
-					</CardContent>
-				</Card>
+					</div>
+				</CardContent>
+			</Card>
 
-				{/* Incidents List */}
-				<Card>
-					<CardHeader>
-						<CardTitle>All Incidents</CardTitle>
-						<CardDescription>
-							System incidents and their current status
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						{filteredIncidents.length === 0 ? (
-							<div className='text-center py-12'>
-								<h3 className='text-lg font-medium text-muted-foreground mb-2'>
-									{searchTerm ||
-									statusFilter !== 'all' ||
-									severityFilter !== 'all'
-										? 'No incidents found'
-										: 'No incidents yet'}
-								</h3>
-								<p className='text-muted-foreground mb-4'>
-									{searchTerm ||
-									statusFilter !== 'all' ||
-									severityFilter !== 'all'
-										? 'Try adjusting your search terms or filters'
-										: 'All systems are operational'}
-								</p>
-								{!searchTerm &&
-									statusFilter === 'all' &&
-									severityFilter === 'all' && (
-										<Link to='/admin/incidents/new'>
-											<Button>
-												Create First Incident
-											</Button>
-										</Link>
-									)}
-							</div>
-						) : (
-							<div className='space-y-4'>
-								{filteredIncidents.map((incident: any) => (
-									<div
-										key={incident.id}
-										className='border rounded-lg p-4'
-									>
-										<div className='flex items-start justify-between'>
-											<div className='flex-1'>
-												<div className='flex items-center gap-3 mb-2'>
-													<h3 className='font-semibold text-lg'>
-														{incident.title}
-													</h3>
-													{getStatusBadge(
-														incident.status,
-													)}
-													{getSeverityBadge(
-														incident.severity,
-													)}
+			{/* Incidents List */}
+			<Card>
+				<CardHeader>
+					<CardTitle>All Incidents</CardTitle>
+					<CardDescription>
+						System incidents and their current status
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					{filteredIncidents.length === 0 ? (
+						<div className='text-center py-12'>
+							<h3 className='text-lg font-medium text-muted-foreground mb-2'>
+								{searchTerm ||
+								statusFilter !== 'all' ||
+								severityFilter !== 'all'
+									? 'No incidents found'
+									: 'No incidents yet'}
+							</h3>
+							<p className='text-muted-foreground mb-4'>
+								{searchTerm ||
+								statusFilter !== 'all' ||
+								severityFilter !== 'all'
+									? 'Try adjusting your search terms or filters'
+									: 'All systems are operational'}
+							</p>
+							{!searchTerm &&
+								statusFilter === 'all' &&
+								severityFilter === 'all' && (
+									<Link to='/admin/incidents/new'>
+										<Button>Create First Incident</Button>
+									</Link>
+								)}
+						</div>
+					) : (
+						<div className='space-y-4'>
+							{filteredIncidents.map((incident: any) => (
+								<div
+									key={incident.id}
+									className='border rounded-lg p-4'
+								>
+									<div className='flex items-start justify-between'>
+										<div className='flex-1'>
+											<div className='flex items-center gap-3 mb-2'>
+												<h3 className='font-semibold text-lg'>
+													{incident.title}
+												</h3>
+												{getStatusBadge(
+													incident.status,
+												)}
+												{getSeverityBadge(
+													incident.severity,
+												)}
+											</div>
+
+											<p className='text-muted-foreground mb-3'>
+												{incident.description ||
+													'No description provided'}
+											</p>
+
+											<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm'>
+												<div>
+													<span className='text-muted-foreground'>
+														Created:
+													</span>
+													<div className='font-medium'>
+														{new Date(
+															incident.created_at,
+														).toLocaleDateString()}
+													</div>
 												</div>
-
-												<p className='text-muted-foreground mb-3'>
-													{incident.description ||
-														'No description provided'}
-												</p>
-
-												<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm'>
+												<div>
+													<span className='text-muted-foreground'>
+														Status:
+													</span>
+													<div className='font-medium'>
+														{incident.status}
+													</div>
+												</div>
+												<div>
+													<span className='text-muted-foreground'>
+														Severity:
+													</span>
+													<div className='font-medium'>
+														{incident.severity}
+													</div>
+												</div>
+												{incident.end_time && (
 													<div>
 														<span className='text-muted-foreground'>
-															Created:
+															Resolved:
 														</span>
 														<div className='font-medium'>
 															{new Date(
-																incident.created_at,
+																incident.end_time,
 															).toLocaleDateString()}
 														</div>
 													</div>
-													<div>
-														<span className='text-muted-foreground'>
-															Status:
-														</span>
-														<div className='font-medium'>
-															{incident.status}
-														</div>
-													</div>
-													<div>
-														<span className='text-muted-foreground'>
-															Severity:
-														</span>
-														<div className='font-medium'>
-															{incident.severity}
-														</div>
-													</div>
-													{incident.end_time && (
-														<div>
-															<span className='text-muted-foreground'>
-																Resolved:
-															</span>
-															<div className='font-medium'>
-																{new Date(
-																	incident.end_time,
-																).toLocaleDateString()}
-															</div>
-														</div>
-													)}
-												</div>
+												)}
 											</div>
+										</div>
 
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<Button
-														variant='ghost'
-														size='sm'
-													>
-														⋮
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent align='end'>
-													<DropdownMenuItem
-														onClick={() =>
-															navigate(
-																`/admin/incidents/${incident.id}`,
-															)
-														}
-													>
-														View Details
-													</DropdownMenuItem>
-													{incident.status !==
-														'resolved' && (
-														<>
-															<DropdownMenuItem
-																onClick={() =>
-																	updateIncidentStatus(
-																		incident,
-																		'investigating',
-																	)
-																}
-															>
-																Mark as
-																Investigating
-															</DropdownMenuItem>
-															<DropdownMenuItem
-																onClick={() =>
-																	updateIncidentStatus(
-																		incident,
-																		'resolved',
-																	)
-																}
-															>
-																Mark as Resolved
-															</DropdownMenuItem>
-														</>
-													)}
-													{incident.status ===
-														'resolved' && (
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button
+													variant='ghost'
+													size='sm'
+												>
+													⋮
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align='end'>
+												<DropdownMenuItem
+													onClick={() =>
+														navigate(
+															`/admin/incidents/${incident.id}`,
+														)
+													}
+												>
+													View Details
+												</DropdownMenuItem>
+												{incident.status !==
+													'resolved' && (
+													<>
 														<DropdownMenuItem
 															onClick={() =>
 																updateIncidentStatus(
 																	incident,
-																	'open',
+																	'investigating',
 																)
 															}
 														>
-															Reopen Incident
+															Mark as
+															Investigating
 														</DropdownMenuItem>
-													)}
+														<DropdownMenuItem
+															onClick={() =>
+																updateIncidentStatus(
+																	incident,
+																	'resolved',
+																)
+															}
+														>
+															Mark as Resolved
+														</DropdownMenuItem>
+													</>
+												)}
+												{incident.status ===
+													'resolved' && (
 													<DropdownMenuItem
-														className='text-destructive'
-														onClick={() => {
-															setIncidentToDelete(
+														onClick={() =>
+															updateIncidentStatus(
 																incident,
+																'open',
 															)
-															setDeleteDialogOpen(
-																true,
-															)
-														}}
+														}
 													>
-														Delete
+														Reopen Incident
 													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
-										</div>
+												)}
+												<DropdownMenuItem
+													className='text-destructive'
+													onClick={() => {
+														setIncidentToDelete(
+															incident,
+														)
+														setDeleteDialogOpen(
+															true,
+														)
+													}}
+												>
+													Delete
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
 									</div>
-								))}
-							</div>
-						)}
-					</CardContent>
-				</Card>
+								</div>
+							))}
+						</div>
+					)}
+				</CardContent>
+			</Card>
 
-				{/* Delete Confirmation Dialog */}
-				<AlertDialog
-					open={deleteDialogOpen}
-					onOpenChange={setDeleteDialogOpen}
-				>
-					<AlertDialogContent>
-						<AlertDialogHeader>
-							<AlertDialogTitle>Delete Incident</AlertDialogTitle>
-							<AlertDialogDescription>
-								Are you sure you want to delete "
-								{incidentToDelete?.title}"? This action cannot
-								be undone.
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel>Cancel</AlertDialogCancel>
-							<AlertDialogAction
-								onClick={() => handleDelete(incidentToDelete)}
-								className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-							>
-								Delete
-							</AlertDialogAction>
-						</AlertDialogFooter>
-					</AlertDialogContent>
-				</AlertDialog>
+			{/* Delete Confirmation Dialog */}
+			<AlertDialog
+				open={deleteDialogOpen}
+				onOpenChange={setDeleteDialogOpen}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Delete Incident</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to delete "
+							{incidentToDelete?.title}"? This action cannot be
+							undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={() => handleDelete(incidentToDelete)}
+							className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+						>
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	)
 }

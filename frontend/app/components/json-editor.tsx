@@ -15,13 +15,13 @@ interface JsonEditorProps {
 	validate?: boolean
 }
 
-export function JsonEditor({ 
-	value, 
-	onChange, 
+export function JsonEditor({
+	value,
+	onChange,
 	title = 'JSON Configuration',
 	height = 300,
 	placeholder = {},
-	validate = true
+	validate = true,
 }: JsonEditorProps) {
 	const [isValid, setIsValid] = useState(true)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -33,7 +33,7 @@ export function JsonEditor({
 
 	const validateJson = (jsonString: string) => {
 		if (!validate) return true
-		
+
 		if (!jsonString.trim()) {
 			setIsValid(true)
 			setErrorMessage(null)
@@ -47,7 +47,9 @@ export function JsonEditor({
 			return true
 		} catch (error) {
 			setIsValid(false)
-			setErrorMessage(error instanceof Error ? error.message : 'Invalid JSON')
+			setErrorMessage(
+				error instanceof Error ? error.message : 'Invalid JSON',
+			)
 			return false
 		}
 	}
@@ -55,7 +57,7 @@ export function JsonEditor({
 	const handleEditorChange = (newValue: string | undefined) => {
 		const val = newValue || ''
 		setEditorValue(val)
-		
+
 		if (validateJson(val)) {
 			onChange(val)
 		}
@@ -93,7 +95,9 @@ export function JsonEditor({
 					<div className='flex items-center gap-2'>
 						<CardTitle className='text-base'>{title}</CardTitle>
 						{validate && (
-							<Badge variant={isValid ? 'default' : 'destructive'}>
+							<Badge
+								variant={isValid ? 'default' : 'destructive'}
+							>
 								{isValid ? (
 									<CheckCircle className='w-3 h-3 mr-1' />
 								) : (
@@ -144,7 +148,7 @@ export function JsonEditor({
 						<AlertDescription>{errorMessage}</AlertDescription>
 					</Alert>
 				)}
-				
+
 				<div className='border rounded-md overflow-hidden'>
 					<Editor
 						height={height}

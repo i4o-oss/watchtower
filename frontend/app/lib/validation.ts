@@ -24,7 +24,9 @@ export const validationRules = {
 		message,
 	}),
 
-	email: (message = 'Please enter a valid email address'): ValidationRule => ({
+	email: (
+		message = 'Please enter a valid email address',
+	): ValidationRule => ({
 		validate: (value) => {
 			if (!value) return true // Optional field validation
 			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -70,7 +72,9 @@ export const validationRules = {
 		message,
 	}),
 
-	positiveNumber: (message = 'Must be a positive number'): ValidationRule => ({
+	positiveNumber: (
+		message = 'Must be a positive number',
+	): ValidationRule => ({
 		validate: (value) => {
 			if (!value) return true // Optional field validation
 			const num = Number(value)
@@ -113,13 +117,23 @@ export const validationRules = {
 	httpMethod: (message = 'Must be a valid HTTP method'): ValidationRule => ({
 		validate: (value) => {
 			if (!value) return true // Optional field validation
-			const validMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
+			const validMethods = [
+				'GET',
+				'POST',
+				'PUT',
+				'PATCH',
+				'DELETE',
+				'HEAD',
+				'OPTIONS',
+			]
 			return validMethods.includes(value.toUpperCase())
 		},
 		message,
 	}),
 
-	statusCode: (message = 'Must be a valid HTTP status code'): ValidationRule => ({
+	statusCode: (
+		message = 'Must be a valid HTTP status code',
+	): ValidationRule => ({
 		validate: (value) => {
 			if (!value) return true // Optional field validation
 			const num = Number(value)
@@ -134,11 +148,16 @@ export const endpointValidationSchema: FieldValidation = {
 	name: [
 		validationRules.required('Endpoint name is required'),
 		validationRules.minLength(2, 'Name must be at least 2 characters'),
-		validationRules.maxLength(100, 'Name must be no more than 100 characters'),
+		validationRules.maxLength(
+			100,
+			'Name must be no more than 100 characters',
+		),
 	],
 	url: [
 		validationRules.required('URL is required'),
-		validationRules.url('Please enter a valid URL (e.g., https://api.example.com)'),
+		validationRules.url(
+			'Please enter a valid URL (e.g., https://api.example.com)',
+		),
 	],
 	method: [
 		validationRules.required('HTTP method is required'),
@@ -160,12 +179,8 @@ export const endpointValidationSchema: FieldValidation = {
 		validationRules.min(30, 'Interval must be at least 30 seconds'),
 		validationRules.max(86400, 'Interval must be no more than 24 hours'),
 	],
-	headers: [
-		validationRules.validJson('Headers must be valid JSON'),
-	],
-	body: [
-		validationRules.validJson('Request body must be valid JSON'),
-	],
+	headers: [validationRules.validJson('Headers must be valid JSON')],
+	body: [validationRules.validJson('Request body must be valid JSON')],
 }
 
 // Incident validation schema
@@ -173,20 +188,30 @@ export const incidentValidationSchema: FieldValidation = {
 	title: [
 		validationRules.required('Incident title is required'),
 		validationRules.minLength(5, 'Title must be at least 5 characters'),
-		validationRules.maxLength(200, 'Title must be no more than 200 characters'),
+		validationRules.maxLength(
+			200,
+			'Title must be no more than 200 characters',
+		),
 	],
 	description: [
 		validationRules.required('Description is required'),
-		validationRules.minLength(10, 'Description must be at least 10 characters'),
-		validationRules.maxLength(2000, 'Description must be no more than 2000 characters'),
+		validationRules.minLength(
+			10,
+			'Description must be at least 10 characters',
+		),
+		validationRules.maxLength(
+			2000,
+			'Description must be no more than 2000 characters',
+		),
 	],
-	severity: [
-		validationRules.required('Severity is required'),
-	],
+	severity: [validationRules.required('Severity is required')],
 }
 
 // Validate form data against schema
-export function validateForm(data: any, schema: FieldValidation): ValidationResult {
+export function validateForm(
+	data: any,
+	schema: FieldValidation,
+): ValidationResult {
 	const errors: { [key: string]: string } = {}
 
 	for (const field in schema) {
@@ -208,7 +233,10 @@ export function validateForm(data: any, schema: FieldValidation): ValidationResu
 }
 
 // Validate a single field
-export function validateField(value: any, rules: ValidationRule[]): string | null {
+export function validateField(
+	value: any,
+	rules: ValidationRule[],
+): string | null {
 	for (const rule of rules) {
 		if (!rule.validate(value)) {
 			return rule.message
@@ -227,7 +255,9 @@ export function getApiErrorMessage(error: any): string {
 
 	// Handle validation errors from API
 	if (error?.details && Array.isArray(error.details)) {
-		return error.details.map((detail: any) => detail.message || detail).join(', ')
+		return error.details
+			.map((detail: any) => detail.message || detail)
+			.join(', ')
 	}
 
 	// Handle field-specific errors

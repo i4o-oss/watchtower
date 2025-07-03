@@ -194,308 +194,300 @@ export default function IncidentDetail({
 					<Link to='/admin/incidents'>
 						<Button variant='outline'>Back to Incidents</Button>
 					</Link>
-						<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<Button variant='destructive'>Delete</Button>
-							</AlertDialogTrigger>
-							<AlertDialogContent>
-								<AlertDialogHeader>
-									<AlertDialogTitle>
-										Delete Incident
-									</AlertDialogTitle>
-									<AlertDialogDescription>
-										Are you sure you want to delete this
-										incident? This action cannot be undone.
-									</AlertDialogDescription>
-								</AlertDialogHeader>
-								<AlertDialogFooter>
-									<AlertDialogCancel>
-										Cancel
-									</AlertDialogCancel>
-									<AlertDialogAction
-										onClick={handleDelete}
-										disabled={isDeleting}
-									>
-										{isDeleting ? 'Deleting...' : 'Delete'}
-									</AlertDialogAction>
-								</AlertDialogFooter>
-							</AlertDialogContent>
-						</AlertDialog>
-					</div>
+					<AlertDialog>
+						<AlertDialogTrigger asChild>
+							<Button variant='destructive'>Delete</Button>
+						</AlertDialogTrigger>
+						<AlertDialogContent>
+							<AlertDialogHeader>
+								<AlertDialogTitle>
+									Delete Incident
+								</AlertDialogTitle>
+								<AlertDialogDescription>
+									Are you sure you want to delete this
+									incident? This action cannot be undone.
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel>Cancel</AlertDialogCancel>
+								<AlertDialogAction
+									onClick={handleDelete}
+									disabled={isDeleting}
+								>
+									{isDeleting ? 'Deleting...' : 'Delete'}
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
 				</div>
+			</div>
 
-				<div className='grid gap-6 lg:grid-cols-3'>
-					{/* Incident Details */}
-					<div className='lg:col-span-2 space-y-6'>
-						<Card>
-							<CardHeader>
-								<div className='flex items-center justify-between'>
-									<CardTitle>Incident Information</CardTitle>
-									<div className='flex gap-2'>
-										{getStatusBadge(incident.status)}
-										{getSeverityBadge(incident.severity)}
-									</div>
+			<div className='grid gap-6 lg:grid-cols-3'>
+				{/* Incident Details */}
+				<div className='lg:col-span-2 space-y-6'>
+					<Card>
+						<CardHeader>
+							<div className='flex items-center justify-between'>
+								<CardTitle>Incident Information</CardTitle>
+								<div className='flex gap-2'>
+									{getStatusBadge(incident.status)}
+									{getSeverityBadge(incident.severity)}
 								</div>
-							</CardHeader>
-							<CardContent className='space-y-4'>
+							</div>
+						</CardHeader>
+						<CardContent className='space-y-4'>
+							<div>
+								<h4 className='font-medium mb-2'>Title</h4>
+								<p className='text-lg'>{incident.title}</p>
+							</div>
+
+							{incident.description && (
 								<div>
-									<h4 className='font-medium mb-2'>Title</h4>
-									<p className='text-lg'>{incident.title}</p>
+									<h4 className='font-medium mb-2'>
+										Description
+									</h4>
+									<div className='bg-muted p-3 rounded whitespace-pre-wrap'>
+										{incident.description}
+									</div>
 								</div>
+							)}
 
-								{incident.description && (
-									<div>
-										<h4 className='font-medium mb-2'>
-											Description
-										</h4>
-										<div className='bg-muted p-3 rounded whitespace-pre-wrap'>
-											{incident.description}
-										</div>
-									</div>
-								)}
-
-								<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+							<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+								<div>
+									<h4 className='font-medium text-sm text-muted-foreground'>
+										Status
+									</h4>
+									<p>{incident.status}</p>
+								</div>
+								<div>
+									<h4 className='font-medium text-sm text-muted-foreground'>
+										Severity
+									</h4>
+									<p>{incident.severity}</p>
+								</div>
+								<div>
+									<h4 className='font-medium text-sm text-muted-foreground'>
+										Created
+									</h4>
+									<p>
+										{new Date(
+											incident.created_at,
+										).toLocaleString()}
+									</p>
+								</div>
+								{incident.end_time && (
 									<div>
 										<h4 className='font-medium text-sm text-muted-foreground'>
-											Status
-										</h4>
-										<p>{incident.status}</p>
-									</div>
-									<div>
-										<h4 className='font-medium text-sm text-muted-foreground'>
-											Severity
-										</h4>
-										<p>{incident.severity}</p>
-									</div>
-									<div>
-										<h4 className='font-medium text-sm text-muted-foreground'>
-											Created
+											Resolved
 										</h4>
 										<p>
 											{new Date(
-												incident.created_at,
+												incident.end_time,
 											).toLocaleString()}
 										</p>
 									</div>
-									{incident.end_time && (
-										<div>
-											<h4 className='font-medium text-sm text-muted-foreground'>
-												Resolved
-											</h4>
-											<p>
-												{new Date(
-													incident.end_time,
-												).toLocaleString()}
-											</p>
-										</div>
-									)}
-								</div>
-
-								{incident.created_by && (
-									<div>
-										<h4 className='font-medium text-sm text-muted-foreground'>
-											Created By
-										</h4>
-										<p>User ID: {incident.created_by}</p>
-									</div>
 								)}
-							</CardContent>
-						</Card>
+							</div>
 
-						{/* Status Update */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Update Incident</CardTitle>
-								<CardDescription>
-									Change status or add update notes
-								</CardDescription>
-							</CardHeader>
-							<CardContent className='space-y-4'>
-								<div className='space-y-2'>
-									<Label htmlFor='status'>Status</Label>
-									<Select
-										value={newStatus}
-										onValueChange={setNewStatus}
-									>
-										<SelectTrigger>
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value='open'>
-												Open
-											</SelectItem>
-											<SelectItem value='investigating'>
-												Investigating
-											</SelectItem>
-											<SelectItem value='resolved'>
-												Resolved
-											</SelectItem>
-											<SelectItem value='closed'>
-												Closed
-											</SelectItem>
-										</SelectContent>
-									</Select>
+							{incident.created_by && (
+								<div>
+									<h4 className='font-medium text-sm text-muted-foreground'>
+										Created By
+									</h4>
+									<p>User ID: {incident.created_by}</p>
 								</div>
+							)}
+						</CardContent>
+					</Card>
 
-								<div className='space-y-2'>
-									<Label htmlFor='note'>
-										Update Note (Optional)
-									</Label>
-									<Textarea
-										id='note'
-										value={updateNote}
-										onChange={(e) =>
-											setUpdateNote(e.target.value)
-										}
-										placeholder='Add a note about this update...'
-										rows={3}
-									/>
-								</div>
-
-								<Button
-									onClick={handleStatusUpdate}
-									disabled={
-										isUpdating ||
-										(newStatus === incident.status &&
-											!updateNote.trim())
-									}
-									className='w-full'
+					{/* Status Update */}
+					<Card>
+						<CardHeader>
+							<CardTitle>Update Incident</CardTitle>
+							<CardDescription>
+								Change status or add update notes
+							</CardDescription>
+						</CardHeader>
+						<CardContent className='space-y-4'>
+							<div className='space-y-2'>
+								<Label htmlFor='status'>Status</Label>
+								<Select
+									value={newStatus}
+									onValueChange={setNewStatus}
 								>
-									{isUpdating
-										? 'Updating...'
-										: 'Update Incident'}
+									<SelectTrigger>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value='open'>
+											Open
+										</SelectItem>
+										<SelectItem value='investigating'>
+											Investigating
+										</SelectItem>
+										<SelectItem value='resolved'>
+											Resolved
+										</SelectItem>
+										<SelectItem value='closed'>
+											Closed
+										</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+
+							<div className='space-y-2'>
+								<Label htmlFor='note'>
+									Update Note (Optional)
+								</Label>
+								<Textarea
+									id='note'
+									value={updateNote}
+									onChange={(e) =>
+										setUpdateNote(e.target.value)
+									}
+									placeholder='Add a note about this update...'
+									rows={3}
+								/>
+							</div>
+
+							<Button
+								onClick={handleStatusUpdate}
+								disabled={
+									isUpdating ||
+									(newStatus === incident.status &&
+										!updateNote.trim())
+								}
+								className='w-full'
+							>
+								{isUpdating ? 'Updating...' : 'Update Incident'}
+							</Button>
+						</CardContent>
+					</Card>
+				</div>
+
+				{/* Sidebar */}
+				<div className='space-y-6'>
+					<Card>
+						<CardHeader>
+							<CardTitle>Quick Actions</CardTitle>
+						</CardHeader>
+						<CardContent className='space-y-2'>
+							{incident.status !== 'investigating' && (
+								<Button
+									variant='outline'
+									className='w-full'
+									onClick={() => {
+										setNewStatus('investigating')
+										handleStatusUpdate()
+									}}
+								>
+									Mark as Investigating
 								</Button>
-							</CardContent>
-						</Card>
-					</div>
+							)}
 
-					{/* Sidebar */}
-					<div className='space-y-6'>
-						<Card>
-							<CardHeader>
-								<CardTitle>Quick Actions</CardTitle>
-							</CardHeader>
-							<CardContent className='space-y-2'>
-								{incident.status !== 'investigating' && (
-									<Button
-										variant='outline'
-										className='w-full'
-										onClick={() => {
-											setNewStatus('investigating')
-											handleStatusUpdate()
-										}}
-									>
-										Mark as Investigating
-									</Button>
-								)}
+							{incident.status !== 'resolved' && (
+								<Button
+									variant='outline'
+									className='w-full'
+									onClick={() => {
+										setNewStatus('resolved')
+										handleStatusUpdate()
+									}}
+								>
+									Mark as Resolved
+								</Button>
+							)}
 
-								{incident.status !== 'resolved' && (
-									<Button
-										variant='outline'
-										className='w-full'
-										onClick={() => {
-											setNewStatus('resolved')
-											handleStatusUpdate()
-										}}
-									>
-										Mark as Resolved
-									</Button>
-								)}
+							{incident.status === 'resolved' && (
+								<Button
+									variant='outline'
+									className='w-full'
+									onClick={() => {
+										setNewStatus('open')
+										handleStatusUpdate()
+									}}
+								>
+									Reopen Incident
+								</Button>
+							)}
 
-								{incident.status === 'resolved' && (
-									<Button
-										variant='outline'
-										className='w-full'
-										onClick={() => {
-											setNewStatus('open')
-											handleStatusUpdate()
-										}}
-									>
-										Reopen Incident
-									</Button>
-								)}
+							<Link to='/admin/incidents' className='block'>
+								<Button variant='outline' className='w-full'>
+									Back to All Incidents
+								</Button>
+							</Link>
+						</CardContent>
+					</Card>
 
-								<Link to='/admin/incidents' className='block'>
-									<Button
-										variant='outline'
-										className='w-full'
-									>
-										Back to All Incidents
-									</Button>
-								</Link>
-							</CardContent>
-						</Card>
+					<Card>
+						<CardHeader>
+							<CardTitle>Timeline</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className='space-y-3 text-sm'>
+								<div className='flex justify-between'>
+									<span className='text-muted-foreground'>
+										Created:
+									</span>
+									<span>
+										{new Date(
+											incident.created_at,
+										).toLocaleString()}
+									</span>
+								</div>
 
-						<Card>
-							<CardHeader>
-								<CardTitle>Timeline</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className='space-y-3 text-sm'>
-									<div className='flex justify-between'>
-										<span className='text-muted-foreground'>
-											Created:
-										</span>
-										<span>
-											{new Date(
-												incident.created_at,
-											).toLocaleString()}
-										</span>
-									</div>
-
-									{incident.updated_at &&
-										incident.updated_at !==
-											incident.created_at && (
-											<div className='flex justify-between'>
-												<span className='text-muted-foreground'>
-													Last Updated:
-												</span>
-												<span>
-													{new Date(
-														incident.updated_at,
-													).toLocaleString()}
-												</span>
-											</div>
-										)}
-
-									{incident.end_time && (
+								{incident.updated_at &&
+									incident.updated_at !==
+										incident.created_at && (
 										<div className='flex justify-between'>
 											<span className='text-muted-foreground'>
-												Resolved:
+												Last Updated:
 											</span>
 											<span>
 												{new Date(
-													incident.end_time,
+													incident.updated_at,
 												).toLocaleString()}
 											</span>
 										</div>
 									)}
 
-									{incident.end_time &&
-										incident.created_at && (
-											<div className='flex justify-between'>
-												<span className='text-muted-foreground'>
-													Duration:
-												</span>
-												<span>
-													{Math.round(
-														(new Date(
-															incident.end_time,
-														).getTime() -
-															new Date(
-																incident.created_at,
-															).getTime()) /
-															(1000 * 60),
-													)}{' '}
-													minutes
-												</span>
-											</div>
-										)}
-								</div>
-							</CardContent>
-						</Card>
-					</div>
+								{incident.end_time && (
+									<div className='flex justify-between'>
+										<span className='text-muted-foreground'>
+											Resolved:
+										</span>
+										<span>
+											{new Date(
+												incident.end_time,
+											).toLocaleString()}
+										</span>
+									</div>
+								)}
+
+								{incident.end_time && incident.created_at && (
+									<div className='flex justify-between'>
+										<span className='text-muted-foreground'>
+											Duration:
+										</span>
+										<span>
+											{Math.round(
+												(new Date(
+													incident.end_time,
+												).getTime() -
+													new Date(
+														incident.created_at,
+													).getTime()) /
+													(1000 * 60),
+											)}{' '}
+											minutes
+										</span>
+									</div>
+								)}
+							</div>
+						</CardContent>
+					</Card>
 				</div>
+			</div>
 		</div>
 	)
 }

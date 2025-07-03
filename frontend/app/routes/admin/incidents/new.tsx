@@ -22,10 +22,10 @@ import { Alert, AlertDescription } from '~/components/ui/alert'
 import { LoadingSpinner } from '~/components/loading-spinner'
 import { useSuccessToast, useErrorToast } from '~/components/toast'
 import { requireAuth } from '~/lib/auth'
-import { 
-	validateForm, 
-	incidentValidationSchema, 
-	getApiErrorMessage 
+import {
+	validateForm,
+	incidentValidationSchema,
+	getApiErrorMessage,
 } from '~/lib/validation'
 import type { Route } from './+types/new'
 
@@ -66,10 +66,12 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 	const navigate = useNavigate()
 	const successToast = useSuccessToast()
 	const errorToast = useErrorToast()
-	
+
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
+	const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>(
+		{},
+	)
 	const [formData, setFormData] = useState({
 		title: '',
 		description: '',
@@ -89,7 +91,10 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 		if (!validation.isValid) {
 			setFieldErrors(validation.errors)
 			setIsSubmitting(false)
-			errorToast('Validation Error', 'Please correct the errors in the form')
+			errorToast(
+				'Validation Error',
+				'Please correct the errors in the form',
+			)
 			return
 		}
 
@@ -107,7 +112,10 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 			)
 
 			if (response.ok) {
-				successToast('Incident Created', `Successfully created incident "${formData.title}"`)
+				successToast(
+					'Incident Created',
+					`Successfully created incident "${formData.title}"`,
+				)
 				navigate('/admin/incidents')
 			} else {
 				const errorData = await response.json()
@@ -117,7 +125,8 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 			}
 		} catch (error) {
 			console.error('Error creating incident:', error)
-			const errorMessage = 'Network error occurred. Please check your connection and try again.'
+			const errorMessage =
+				'Network error occurred. Please check your connection and try again.'
 			setError(errorMessage)
 			errorToast('Network Error', errorMessage)
 		} finally {
@@ -143,186 +152,175 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 				</Link>
 			</div>
 
-				<Card>
-					<CardHeader>
-						<CardTitle>Incident Details</CardTitle>
-						<CardDescription>
-							Provide information about the incident
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<form onSubmit={handleSubmit} className='space-y-6'>
-							{error && (
-								<Alert variant='destructive'>
-									<AlertDescription>{error}</AlertDescription>
-								</Alert>
-							)}
+			<Card>
+				<CardHeader>
+					<CardTitle>Incident Details</CardTitle>
+					<CardDescription>
+						Provide information about the incident
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<form onSubmit={handleSubmit} className='space-y-6'>
+						{error && (
+							<Alert variant='destructive'>
+								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+						)}
 
-							<div className='space-y-4'>
+						<div className='space-y-4'>
+							<div className='space-y-2'>
+								<Label htmlFor='title'>Title *</Label>
+								<Input
+									id='title'
+									value={formData.title}
+									onChange={(e) =>
+										updateFormData('title', e.target.value)
+									}
+									placeholder='Brief description of the incident'
+									required
+								/>
+							</div>
+
+							<div className='space-y-2'>
+								<Label htmlFor='description'>Description</Label>
+								<Textarea
+									id='description'
+									value={formData.description}
+									onChange={(e) =>
+										updateFormData(
+											'description',
+											e.target.value,
+										)
+									}
+									placeholder='Detailed description of what happened and current status'
+									rows={4}
+								/>
+							</div>
+
+							<div className='grid grid-cols-2 gap-4'>
 								<div className='space-y-2'>
-									<Label htmlFor='title'>Title *</Label>
-									<Input
-										id='title'
-										value={formData.title}
-										onChange={(e) =>
-											updateFormData(
-												'title',
-												e.target.value,
-											)
+									<Label htmlFor='severity'>Severity</Label>
+									<Select
+										value={formData.severity}
+										onValueChange={(value) =>
+											updateFormData('severity', value)
 										}
-										placeholder='Brief description of the incident'
-										required
-									/>
+									>
+										<SelectTrigger>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value='low'>
+												Low
+											</SelectItem>
+											<SelectItem value='medium'>
+												Medium
+											</SelectItem>
+											<SelectItem value='high'>
+												High
+											</SelectItem>
+										</SelectContent>
+									</Select>
 								</div>
 
 								<div className='space-y-2'>
-									<Label htmlFor='description'>
-										Description
-									</Label>
-									<Textarea
-										id='description'
-										value={formData.description}
-										onChange={(e) =>
-											updateFormData(
-												'description',
-												e.target.value,
-											)
+									<Label htmlFor='status'>Status</Label>
+									<Select
+										value={formData.status}
+										onValueChange={(value) =>
+											updateFormData('status', value)
 										}
-										placeholder='Detailed description of what happened and current status'
-										rows={4}
-									/>
+									>
+										<SelectTrigger>
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value='open'>
+												Open
+											</SelectItem>
+											<SelectItem value='investigating'>
+												Investigating
+											</SelectItem>
+											<SelectItem value='resolved'>
+												Resolved
+											</SelectItem>
+										</SelectContent>
+									</Select>
 								</div>
+							</div>
 
-								<div className='grid grid-cols-2 gap-4'>
-									<div className='space-y-2'>
-										<Label htmlFor='severity'>
-											Severity
-										</Label>
-										<Select
-											value={formData.severity}
-											onValueChange={(value) =>
-												updateFormData(
-													'severity',
-													value,
-												)
-											}
-										>
-											<SelectTrigger>
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value='low'>
-													Low
-												</SelectItem>
-												<SelectItem value='medium'>
-													Medium
-												</SelectItem>
-												<SelectItem value='high'>
-													High
-												</SelectItem>
-											</SelectContent>
-										</Select>
-									</div>
-
-									<div className='space-y-2'>
-										<Label htmlFor='status'>Status</Label>
-										<Select
-											value={formData.status}
-											onValueChange={(value) =>
-												updateFormData('status', value)
-											}
-										>
-											<SelectTrigger>
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value='open'>
-													Open
-												</SelectItem>
-												<SelectItem value='investigating'>
-													Investigating
-												</SelectItem>
-												<SelectItem value='resolved'>
-													Resolved
-												</SelectItem>
-											</SelectContent>
-										</Select>
-									</div>
-								</div>
-
-								{endpoints.length > 0 && (
-									<div className='space-y-2'>
-										<Label>
-											Affected Endpoints (Optional)
-										</Label>
-										<div className='grid grid-cols-1 gap-2 max-h-40 overflow-y-auto border rounded p-3'>
-											{endpoints.map((endpoint: any) => (
-												<label
-													key={endpoint.id}
-													className='flex items-center space-x-2 cursor-pointer'
-												>
-													<input
-														type='checkbox'
-														checked={formData.endpoint_ids.includes(
-															endpoint.id,
-														)}
-														onChange={(e) => {
-															if (
-																e.target.checked
-															) {
-																updateFormData(
-																	'endpoint_ids',
-																	[
-																		...formData.endpoint_ids,
+							{endpoints.length > 0 && (
+								<div className='space-y-2'>
+									<Label>Affected Endpoints (Optional)</Label>
+									<div className='grid grid-cols-1 gap-2 max-h-40 overflow-y-auto border rounded p-3'>
+										{endpoints.map((endpoint: any) => (
+											<label
+												key={endpoint.id}
+												className='flex items-center space-x-2 cursor-pointer'
+											>
+												<input
+													type='checkbox'
+													checked={formData.endpoint_ids.includes(
+														endpoint.id,
+													)}
+													onChange={(e) => {
+														if (e.target.checked) {
+															updateFormData(
+																'endpoint_ids',
+																[
+																	...formData.endpoint_ids,
+																	endpoint.id,
+																],
+															)
+														} else {
+															updateFormData(
+																'endpoint_ids',
+																formData.endpoint_ids.filter(
+																	(id) =>
+																		id !==
 																		endpoint.id,
-																	],
-																)
-															} else {
-																updateFormData(
-																	'endpoint_ids',
-																	formData.endpoint_ids.filter(
-																		(id) =>
-																			id !==
-																			endpoint.id,
-																	),
-																)
-															}
-														}}
-														className='rounded'
-													/>
-													<span className='text-sm'>
-														{endpoint.name} (
-														{endpoint.url})
-													</span>
-												</label>
-											))}
-										</div>
-										<p className='text-xs text-muted-foreground'>
-											Select endpoints that are affected
-											by this incident
-										</p>
+																),
+															)
+														}
+													}}
+													className='rounded'
+												/>
+												<span className='text-sm'>
+													{endpoint.name} (
+													{endpoint.url})
+												</span>
+											</label>
+										))}
 									</div>
-								)}
-							</div>
+									<p className='text-xs text-muted-foreground'>
+										Select endpoints that are affected by
+										this incident
+									</p>
+								</div>
+							)}
+						</div>
 
-							<div className='flex justify-end space-x-2'>
-								<Link to='/admin/incidents'>
-									<Button type='button' variant='outline'>
-										Cancel
-									</Button>
-								</Link>
-								<Button type='submit' disabled={isSubmitting}>
-									{isSubmitting && (
-										<LoadingSpinner size='sm' className='mr-2' />
-									)}
-									{isSubmitting
-										? 'Creating...'
-										: 'Create Incident'}
+						<div className='flex justify-end space-x-2'>
+							<Link to='/admin/incidents'>
+								<Button type='button' variant='outline'>
+									Cancel
 								</Button>
-							</div>
-						</form>
-					</CardContent>
-				</Card>
+							</Link>
+							<Button type='submit' disabled={isSubmitting}>
+								{isSubmitting && (
+									<LoadingSpinner
+										size='sm'
+										className='mr-2'
+									/>
+								)}
+								{isSubmitting
+									? 'Creating...'
+									: 'Create Incident'}
+							</Button>
+						</div>
+					</form>
+				</CardContent>
+			</Card>
 		</div>
 	)
 }

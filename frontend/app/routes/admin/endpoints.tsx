@@ -141,222 +141,220 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 				</Link>
 			</div>
 
-				{/* Search and Filters */}
-				<Card className='mb-6'>
-					<CardContent className='pt-6'>
-						<div className='flex gap-4'>
-							<Input
-								placeholder='Search endpoints...'
-								value={searchTerm}
-								onChange={(e) => setSearchTerm(e.target.value)}
-								className='max-w-sm'
-							/>
+			{/* Search and Filters */}
+			<Card className='mb-6'>
+				<CardContent className='pt-6'>
+					<div className='flex gap-4'>
+						<Input
+							placeholder='Search endpoints...'
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+							className='max-w-sm'
+						/>
+					</div>
+				</CardContent>
+			</Card>
+
+			{/* Endpoints List */}
+			<Card>
+				<CardHeader>
+					<CardTitle>All Endpoints ({total})</CardTitle>
+					<CardDescription>
+						Monitor and manage your endpoint configurations
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					{filteredEndpoints.length === 0 ? (
+						<div className='text-center py-12'>
+							<h3 className='text-lg font-medium text-muted-foreground mb-2'>
+								{searchTerm
+									? 'No endpoints found'
+									: 'No endpoints yet'}
+							</h3>
+							<p className='text-muted-foreground mb-4'>
+								{searchTerm
+									? 'Try adjusting your search terms'
+									: 'Get started by creating your first monitoring endpoint'}
+							</p>
+							{!searchTerm && (
+								<Link to='/admin/endpoints/new'>
+									<Button>Create First Endpoint</Button>
+								</Link>
+							)}
 						</div>
-					</CardContent>
-				</Card>
+					) : (
+						<div className='space-y-4'>
+							{filteredEndpoints.map((endpoint: any) => (
+								<div
+									key={endpoint.id}
+									className='border rounded-lg p-4'
+								>
+									<div className='flex items-start justify-between'>
+										<div className='flex-1'>
+											<div className='flex items-center gap-3 mb-2'>
+												<h3 className='font-semibold text-lg'>
+													{endpoint.name}
+												</h3>
+												<Badge
+													variant={
+														endpoint.enabled
+															? 'default'
+															: 'secondary'
+													}
+												>
+													{endpoint.enabled
+														? 'Active'
+														: 'Disabled'}
+												</Badge>
+												<Badge
+													variant='outline'
+													className='font-mono text-xs'
+												>
+													{endpoint.method}
+												</Badge>
+											</div>
 
-				{/* Endpoints List */}
-				<Card>
-					<CardHeader>
-						<CardTitle>All Endpoints ({total})</CardTitle>
-						<CardDescription>
-							Monitor and manage your endpoint configurations
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						{filteredEndpoints.length === 0 ? (
-							<div className='text-center py-12'>
-								<h3 className='text-lg font-medium text-muted-foreground mb-2'>
-									{searchTerm
-										? 'No endpoints found'
-										: 'No endpoints yet'}
-								</h3>
-								<p className='text-muted-foreground mb-4'>
-									{searchTerm
-										? 'Try adjusting your search terms'
-										: 'Get started by creating your first monitoring endpoint'}
-								</p>
-								{!searchTerm && (
-									<Link to='/admin/endpoints/new'>
-										<Button>Create First Endpoint</Button>
-									</Link>
-								)}
-							</div>
-						) : (
-							<div className='space-y-4'>
-								{filteredEndpoints.map((endpoint: any) => (
-									<div
-										key={endpoint.id}
-										className='border rounded-lg p-4'
-									>
-										<div className='flex items-start justify-between'>
-											<div className='flex-1'>
-												<div className='flex items-center gap-3 mb-2'>
-													<h3 className='font-semibold text-lg'>
-														{endpoint.name}
-													</h3>
-													<Badge
-														variant={
-															endpoint.enabled
-																? 'default'
-																: 'secondary'
+											<p className='text-muted-foreground mb-2'>
+												{endpoint.description ||
+													'No description'}
+											</p>
+
+											<p className='font-mono text-sm bg-muted px-2 py-1 rounded mb-3 inline-block'>
+												{endpoint.url}
+											</p>
+
+											<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm'>
+												<div>
+													<span className='text-muted-foreground'>
+														Expected Status:
+													</span>
+													<div className='font-medium'>
+														{
+															endpoint.expected_status_code
 														}
-													>
-														{endpoint.enabled
-															? 'Active'
-															: 'Disabled'}
-													</Badge>
-													<Badge
-														variant='outline'
-														className='font-mono text-xs'
-													>
-														{endpoint.method}
-													</Badge>
+													</div>
 												</div>
-
-												<p className='text-muted-foreground mb-2'>
-													{endpoint.description ||
-														'No description'}
-												</p>
-
-												<p className='font-mono text-sm bg-muted px-2 py-1 rounded mb-3 inline-block'>
-													{endpoint.url}
-												</p>
-
-												<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm'>
-													<div>
-														<span className='text-muted-foreground'>
-															Expected Status:
-														</span>
-														<div className='font-medium'>
-															{
-																endpoint.expected_status_code
-															}
-														</div>
+												<div>
+													<span className='text-muted-foreground'>
+														Timeout:
+													</span>
+													<div className='font-medium'>
+														{
+															endpoint.timeout_seconds
+														}
+														s
 													</div>
-													<div>
-														<span className='text-muted-foreground'>
-															Timeout:
-														</span>
-														<div className='font-medium'>
-															{
-																endpoint.timeout_seconds
-															}
-															s
-														</div>
+												</div>
+												<div>
+													<span className='text-muted-foreground'>
+														Interval:
+													</span>
+													<div className='font-medium'>
+														{
+															endpoint.check_interval_seconds
+														}
+														s
 													</div>
-													<div>
-														<span className='text-muted-foreground'>
-															Interval:
-														</span>
-														<div className='font-medium'>
-															{
-																endpoint.check_interval_seconds
-															}
-															s
-														</div>
-													</div>
-													<div>
-														<span className='text-muted-foreground'>
-															Created:
-														</span>
-														<div className='font-medium'>
-															{new Date(
-																endpoint.created_at,
-															).toLocaleDateString()}
-														</div>
+												</div>
+												<div>
+													<span className='text-muted-foreground'>
+														Created:
+													</span>
+													<div className='font-medium'>
+														{new Date(
+															endpoint.created_at,
+														).toLocaleDateString()}
 													</div>
 												</div>
 											</div>
-
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<Button
-														variant='ghost'
-														size='sm'
-													>
-														⋮
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent align='end'>
-													<DropdownMenuItem
-														onClick={() =>
-															navigate(
-																`/admin/endpoints/${endpoint.id}`,
-															)
-														}
-													>
-														View Details
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														onClick={() =>
-															navigate(
-																`/admin/endpoints/${endpoint.id}/edit`,
-															)
-														}
-													>
-														Edit
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														onClick={() =>
-															toggleEndpoint(
-																endpoint,
-															)
-														}
-													>
-														{endpoint.enabled
-															? 'Disable'
-															: 'Enable'}
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														className='text-destructive'
-														onClick={() => {
-															setEndpointToDelete(
-																endpoint,
-															)
-															setDeleteDialogOpen(
-																true,
-															)
-														}}
-													>
-														Delete
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
 										</div>
-									</div>
-								))}
-							</div>
-						)}
-					</CardContent>
-				</Card>
 
-				{/* Delete Confirmation Dialog */}
-				<AlertDialog
-					open={deleteDialogOpen}
-					onOpenChange={setDeleteDialogOpen}
-				>
-					<AlertDialogContent>
-						<AlertDialogHeader>
-							<AlertDialogTitle>Delete Endpoint</AlertDialogTitle>
-							<AlertDialogDescription>
-								Are you sure you want to delete "
-								{endpointToDelete?.name}"? This action cannot be
-								undone and will also delete all associated
-								monitoring logs.
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel>Cancel</AlertDialogCancel>
-							<AlertDialogAction
-								onClick={() => handleDelete(endpointToDelete)}
-								className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-							>
-								Delete
-							</AlertDialogAction>
-						</AlertDialogFooter>
-					</AlertDialogContent>
-				</AlertDialog>
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button
+													variant='ghost'
+													size='sm'
+												>
+													⋮
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align='end'>
+												<DropdownMenuItem
+													onClick={() =>
+														navigate(
+															`/admin/endpoints/${endpoint.id}`,
+														)
+													}
+												>
+													View Details
+												</DropdownMenuItem>
+												<DropdownMenuItem
+													onClick={() =>
+														navigate(
+															`/admin/endpoints/${endpoint.id}/edit`,
+														)
+													}
+												>
+													Edit
+												</DropdownMenuItem>
+												<DropdownMenuItem
+													onClick={() =>
+														toggleEndpoint(endpoint)
+													}
+												>
+													{endpoint.enabled
+														? 'Disable'
+														: 'Enable'}
+												</DropdownMenuItem>
+												<DropdownMenuItem
+													className='text-destructive'
+													onClick={() => {
+														setEndpointToDelete(
+															endpoint,
+														)
+														setDeleteDialogOpen(
+															true,
+														)
+													}}
+												>
+													Delete
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+				</CardContent>
+			</Card>
+
+			{/* Delete Confirmation Dialog */}
+			<AlertDialog
+				open={deleteDialogOpen}
+				onOpenChange={setDeleteDialogOpen}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Delete Endpoint</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to delete "
+							{endpointToDelete?.name}"? This action cannot be
+							undone and will also delete all associated
+							monitoring logs.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={() => handleDelete(endpointToDelete)}
+							className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+						>
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	)
 }

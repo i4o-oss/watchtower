@@ -81,258 +81,254 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 				</p>
 			</div>
 
-				{/* Quick Stats */}
-				<div className='grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8'>
-					<Card>
-						<CardHeader className='pb-3'>
-							<CardTitle className='text-sm font-medium'>
-								Total Endpoints
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className='text-2xl font-bold'>
-								{endpoints.total}
-							</div>
-							<p className='text-xs text-muted-foreground'>
-								{activeEndpoints} active
-							</p>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader className='pb-3'>
-							<CardTitle className='text-sm font-medium'>
-								Recent Failures
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className='text-2xl font-bold text-destructive'>
-								{recentFailures}
-							</div>
-							<p className='text-xs text-muted-foreground'>
-								Last 24 hours
-							</p>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader className='pb-3'>
-							<CardTitle className='text-sm font-medium'>
-								Open Incidents
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className='text-2xl font-bold text-orange-600'>
-								{openIncidents}
-							</div>
-							<p className='text-xs text-muted-foreground'>
-								Require attention
-							</p>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader className='pb-3'>
-							<CardTitle className='text-sm font-medium'>
-								System Status
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className='flex items-center gap-2'>
-								<Badge
-									variant={
-										openIncidents === 0
-											? 'default'
-											: 'destructive'
-									}
-								>
-									{openIncidents === 0
-										? 'Operational'
-										: 'Issues'}
-								</Badge>
-							</div>
-							<p className='text-xs text-muted-foreground'>
-								Overall health
-							</p>
-						</CardContent>
-					</Card>
-				</div>
-
-				{/* Main Sections */}
-				<div className='grid gap-6 lg:grid-cols-2 mb-8'>
-					{/* Recent Endpoints */}
-					<Card>
-						<CardHeader className='flex flex-row items-center justify-between'>
-							<div>
-								<CardTitle>Recent Endpoints</CardTitle>
-								<CardDescription>
-									Your monitoring endpoints
-								</CardDescription>
-							</div>
-							<Link to='/admin/endpoints'>
-								<Button variant='outline' size='sm'>
-									View All
-								</Button>
-							</Link>
-						</CardHeader>
-						<CardContent>
-							{endpoints.endpoints.length === 0 ? (
-								<div className='text-center py-8 text-muted-foreground'>
-									<p>No endpoints configured yet</p>
-									<Link to='/admin/endpoints/new'>
-										<Button className='mt-2' size='sm'>
-											Create First Endpoint
-										</Button>
-									</Link>
-								</div>
-							) : (
-								<div className='space-y-3'>
-									{endpoints.endpoints
-										.slice(0, 5)
-										.map((endpoint: any) => (
-											<div
-												key={endpoint.id}
-												className='flex items-center justify-between p-3 border rounded-lg'
-											>
-												<div>
-													<h4 className='font-medium'>
-														{endpoint.name}
-													</h4>
-													<p className='text-sm text-muted-foreground'>
-														{endpoint.url}
-													</p>
-												</div>
-												<div className='flex items-center gap-2'>
-													<Badge
-														variant={
-															endpoint.enabled
-																? 'default'
-																: 'secondary'
-														}
-													>
-														{endpoint.enabled
-															? 'Active'
-															: 'Disabled'}
-													</Badge>
-													<Link
-														to={`/admin/endpoints/${endpoint.id}`}
-													>
-														<Button
-															variant='ghost'
-															size='sm'
-														>
-															View
-														</Button>
-													</Link>
-												</div>
-											</div>
-										))}
-								</div>
-							)}
-						</CardContent>
-					</Card>
-
-					{/* Recent Incidents */}
-					<Card>
-						<CardHeader className='flex flex-row items-center justify-between'>
-							<div>
-								<CardTitle>Open Incidents</CardTitle>
-								<CardDescription>
-									Current issues requiring attention
-								</CardDescription>
-							</div>
-							<Link to='/admin/incidents'>
-								<Button variant='outline' size='sm'>
-									View All
-								</Button>
-							</Link>
-						</CardHeader>
-						<CardContent>
-							{incidents.incidents.length === 0 ? (
-								<div className='text-center py-8 text-muted-foreground'>
-									<p>No open incidents</p>
-									<p className='text-sm'>
-										All systems operational
-									</p>
-								</div>
-							) : (
-								<div className='space-y-3'>
-									{incidents.incidents
-										.slice(0, 5)
-										.map((incident: any) => (
-											<div
-												key={incident.id}
-												className='flex items-center justify-between p-3 border rounded-lg'
-											>
-												<div>
-													<h4 className='font-medium'>
-														{incident.title}
-													</h4>
-													<p className='text-sm text-muted-foreground'>
-														{new Date(
-															incident.created_at,
-														).toLocaleDateString()}
-													</p>
-												</div>
-												<div className='flex items-center gap-2'>
-													<Badge
-														variant={
-															incident.severity ===
-															'high'
-																? 'destructive'
-																: incident.severity ===
-																		'medium'
-																	? 'default'
-																	: 'secondary'
-														}
-													>
-														{incident.severity}
-													</Badge>
-													<Link
-														to={`/admin/incidents/${incident.id}`}
-													>
-														<Button
-															variant='ghost'
-															size='sm'
-														>
-															View
-														</Button>
-													</Link>
-												</div>
-											</div>
-										))}
-								</div>
-							)}
-						</CardContent>
-					</Card>
-				</div>
-
-				{/* Quick Actions */}
+			{/* Quick Stats */}
+			<div className='grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8'>
 				<Card>
-					<CardHeader>
-						<CardTitle>Quick Actions</CardTitle>
-						<CardDescription>
-							Common administrative tasks
-						</CardDescription>
+					<CardHeader className='pb-3'>
+						<CardTitle className='text-sm font-medium'>
+							Total Endpoints
+						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className='flex flex-wrap gap-3'>
-							<Link to='/admin/endpoints/new'>
-								<Button>Add New Endpoint</Button>
-							</Link>
-							<Link to='/admin/incidents/new'>
-								<Button variant='outline'>
-									Create Incident
-								</Button>
-							</Link>
-							<Link to='/admin/monitoring'>
-								<Button variant='outline'>
-									View Monitoring Logs
-								</Button>
-							</Link>
+						<div className='text-2xl font-bold'>
+							{endpoints.total}
 						</div>
+						<p className='text-xs text-muted-foreground'>
+							{activeEndpoints} active
+						</p>
 					</CardContent>
 				</Card>
+
+				<Card>
+					<CardHeader className='pb-3'>
+						<CardTitle className='text-sm font-medium'>
+							Recent Failures
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className='text-2xl font-bold text-destructive'>
+							{recentFailures}
+						</div>
+						<p className='text-xs text-muted-foreground'>
+							Last 24 hours
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className='pb-3'>
+						<CardTitle className='text-sm font-medium'>
+							Open Incidents
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className='text-2xl font-bold text-orange-600'>
+							{openIncidents}
+						</div>
+						<p className='text-xs text-muted-foreground'>
+							Require attention
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className='pb-3'>
+						<CardTitle className='text-sm font-medium'>
+							System Status
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className='flex items-center gap-2'>
+							<Badge
+								variant={
+									openIncidents === 0
+										? 'default'
+										: 'destructive'
+								}
+							>
+								{openIncidents === 0 ? 'Operational' : 'Issues'}
+							</Badge>
+						</div>
+						<p className='text-xs text-muted-foreground'>
+							Overall health
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Main Sections */}
+			<div className='grid gap-6 xl:grid-cols-2 mb-8'>
+				{/* Recent Endpoints */}
+				<Card>
+					<CardHeader className='flex flex-row items-center justify-between'>
+						<div>
+							<CardTitle>Recent Endpoints</CardTitle>
+							<CardDescription>
+								Your monitoring endpoints
+							</CardDescription>
+						</div>
+						<Link to='/admin/endpoints'>
+							<Button variant='outline' size='sm'>
+								View All
+							</Button>
+						</Link>
+					</CardHeader>
+					<CardContent>
+						{endpoints.endpoints.length === 0 ? (
+							<div className='text-center py-8 text-muted-foreground'>
+								<p>No endpoints configured yet</p>
+								<Link to='/admin/endpoints/new'>
+									<Button className='mt-2' size='sm'>
+										Create First Endpoint
+									</Button>
+								</Link>
+							</div>
+						) : (
+							<div className='space-y-3'>
+								{endpoints.endpoints
+									.slice(0, 5)
+									.map((endpoint: any) => (
+										<div
+											key={endpoint.id}
+											className='flex items-center justify-between p-3 border rounded-lg'
+										>
+											<div>
+												<h4 className='font-medium'>
+													{endpoint.name}
+												</h4>
+												<p className='text-sm text-muted-foreground'>
+													{endpoint.url}
+												</p>
+											</div>
+											<div className='flex items-center gap-2'>
+												<Badge
+													variant={
+														endpoint.enabled
+															? 'default'
+															: 'secondary'
+													}
+												>
+													{endpoint.enabled
+														? 'Active'
+														: 'Disabled'}
+												</Badge>
+												<Link
+													to={`/admin/endpoints/${endpoint.id}`}
+												>
+													<Button
+														variant='ghost'
+														size='sm'
+													>
+														View
+													</Button>
+												</Link>
+											</div>
+										</div>
+									))}
+							</div>
+						)}
+					</CardContent>
+				</Card>
+
+				{/* Recent Incidents */}
+				<Card>
+					<CardHeader className='flex flex-row items-center justify-between'>
+						<div>
+							<CardTitle>Open Incidents</CardTitle>
+							<CardDescription>
+								Current issues requiring attention
+							</CardDescription>
+						</div>
+						<Link to='/admin/incidents'>
+							<Button variant='outline' size='sm'>
+								View All
+							</Button>
+						</Link>
+					</CardHeader>
+					<CardContent>
+						{incidents.incidents.length === 0 ? (
+							<div className='text-center py-8 text-muted-foreground'>
+								<p>No open incidents</p>
+								<p className='text-sm'>
+									All systems operational
+								</p>
+							</div>
+						) : (
+							<div className='space-y-3'>
+								{incidents.incidents
+									.slice(0, 5)
+									.map((incident: any) => (
+										<div
+											key={incident.id}
+											className='flex items-center justify-between p-3 border rounded-lg'
+										>
+											<div>
+												<h4 className='font-medium'>
+													{incident.title}
+												</h4>
+												<p className='text-sm text-muted-foreground'>
+													{new Date(
+														incident.created_at,
+													).toLocaleDateString()}
+												</p>
+											</div>
+											<div className='flex items-center gap-2'>
+												<Badge
+													variant={
+														incident.severity ===
+														'high'
+															? 'destructive'
+															: incident.severity ===
+																	'medium'
+																? 'default'
+																: 'secondary'
+													}
+												>
+													{incident.severity}
+												</Badge>
+												<Link
+													to={`/admin/incidents/${incident.id}`}
+												>
+													<Button
+														variant='ghost'
+														size='sm'
+													>
+														View
+													</Button>
+												</Link>
+											</div>
+										</div>
+									))}
+							</div>
+						)}
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Quick Actions */}
+			<Card>
+				<CardHeader>
+					<CardTitle>Quick Actions</CardTitle>
+					<CardDescription>
+						Common administrative tasks
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className='flex flex-wrap gap-3'>
+						<Link to='/admin/endpoints/new'>
+							<Button>Add New Endpoint</Button>
+						</Link>
+						<Link to='/admin/incidents/new'>
+							<Button variant='outline'>Create Incident</Button>
+						</Link>
+						<Link to='/admin/monitoring'>
+							<Button variant='outline'>
+								View Monitoring Logs
+							</Button>
+						</Link>
+					</div>
+				</CardContent>
+			</Card>
 		</div>
 	)
 }

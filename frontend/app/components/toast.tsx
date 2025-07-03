@@ -1,4 +1,10 @@
-import { useState, useEffect, createContext, useContext, useCallback } from 'react'
+import {
+	useState,
+	useEffect,
+	createContext,
+	useContext,
+	useCallback,
+} from 'react'
 import { cn } from '~/lib/utils'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 
@@ -126,7 +132,7 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
 				getBackgroundColor(),
 				isVisible
 					? 'translate-x-0 opacity-100'
-					: 'translate-x-full opacity-0'
+					: 'translate-x-full opacity-0',
 			)}
 		>
 			<div className='flex items-start gap-3'>
@@ -158,7 +164,7 @@ export function useSuccessToast() {
 	return useCallback(
 		(title: string, message?: string) =>
 			addToast({ title, message, type: 'success' }),
-		[addToast]
+		[addToast],
 	)
 }
 
@@ -167,7 +173,7 @@ export function useErrorToast() {
 	return useCallback(
 		(title: string, message?: string) =>
 			addToast({ title, message, type: 'error', duration: 7000 }),
-		[addToast]
+		[addToast],
 	)
 }
 
@@ -176,7 +182,7 @@ export function useWarningToast() {
 	return useCallback(
 		(title: string, message?: string) =>
 			addToast({ title, message, type: 'warning' }),
-		[addToast]
+		[addToast],
 	)
 }
 
@@ -185,6 +191,6 @@ export function useInfoToast() {
 	return useCallback(
 		(title: string, message?: string) =>
 			addToast({ title, message, type: 'info' }),
-		[addToast]
+		[addToast],
 	)
 }
