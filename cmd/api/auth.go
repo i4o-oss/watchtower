@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/i4o-oss/watchtower/internal/data"
+	"github.com/i4o-oss/watchtower/internal/security"
 	"gorm.io/gorm"
 )
 
@@ -62,10 +63,47 @@ func (app *Application) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate required fields
-	if req.Email == "" || req.Password == "" {
-		app.errorResponse(w, http.StatusBadRequest, "Email and password are required")
+	// Validate and sanitize input
+	sanitizer := security.NewSanitizer()
+
+	// Validate email
+	emailResult := sanitizer.SanitizeEmail(req.Email, "email")
+	if len(emailResult.Errors) > 0 {
+		app.errorResponse(w, http.StatusBadRequest, "Invalid email: "+emailResult.Errors[0])
 		return
+	}
+	if emailResult.Value == "" {
+		app.errorResponse(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+	req.Email = emailResult.Value
+
+	// Validate password
+	if req.Password == "" {
+		app.errorResponse(w, http.StatusBadRequest, "Password is required")
+		return
+	}
+	if len(req.Password) < 8 {
+		app.errorResponse(w, http.StatusBadRequest, "Password must be at least 8 characters long")
+		return
+	}
+	if len(req.Password) > 128 {
+		app.errorResponse(w, http.StatusBadRequest, "Password must be no more than 128 characters long")
+		return
+	}
+
+	// Validate name if provided
+	if req.Name != "" {
+		nameResult := sanitizer.SanitizeHTML(req.Name, "name")
+		if len(nameResult.Errors) > 0 {
+			app.errorResponse(w, http.StatusBadRequest, "Invalid name: "+nameResult.Errors[0])
+			return
+		}
+		if len(nameResult.Value) > 100 {
+			app.errorResponse(w, http.StatusBadRequest, "Name must be no more than 100 characters")
+			return
+		}
+		req.Name = nameResult.Value
 	}
 
 	// Check if user already exists
@@ -121,8 +159,19 @@ func (app *Application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate required fields
-	if req.Email == "" || req.Password == "" {
+	// Validate and sanitize input
+	sanitizer := security.NewSanitizer()
+
+	// Validate email
+	emailResult := sanitizer.SanitizeEmail(req.Email, "email")
+	if len(emailResult.Errors) > 0 || emailResult.Value == "" {
+		app.errorResponse(w, http.StatusBadRequest, "Email and password are required")
+		return
+	}
+	req.Email = emailResult.Value
+
+	// Validate password
+	if req.Password == "" || len(req.Password) > 128 {
 		app.errorResponse(w, http.StatusBadRequest, "Email and password are required")
 		return
 	}

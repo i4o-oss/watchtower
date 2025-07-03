@@ -7,17 +7,21 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/i4o-oss/watchtower/internal/cache"
 	"github.com/i4o-oss/watchtower/internal/data"
+	"github.com/i4o-oss/watchtower/internal/security"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 type Config struct {
 	Port     int
 	Database DatabaseConfig
+	Cache    CacheConfig
 }
 
 type DatabaseConfig struct {
@@ -29,16 +33,35 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
+type CacheConfig struct {
+	Host     string
+	Port     int
+	Password string
+	DB       int
+	Enabled  bool
+}
+
 type Application struct {
-	config Config
-	logger *log.Logger
-	db     *data.DB
-	sseHub *SSEHub
+	config          Config
+	logger          *log.Logger
+	db              *data.CachedDB
+	cache           cache.Cache
+	sseHub          *SSEHub
+	securityHeaders *security.SecurityHeaders
+	csrfProtection  *security.CSRFProtection
 }
 
 var (
 	port = os.Getenv("PORT")
 )
+
+// getEnvWithDefault returns environment variable value or default if not set
+func getEnvWithDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 func (app *Application) gracefulShutdown(apiServer *http.Server, done chan bool) {
 	// Create context that listens for the interrupt signal from the OS.
@@ -82,6 +105,25 @@ func main() {
 		os.Exit(1)
 	}
 
+	// read cache config from env
+	cachePort, err := strconv.Atoi(getEnvWithDefault("REDIS_PORT", "6379"))
+	if err != nil {
+		logger.Error("unable to read cache port from env file", "err", err.Error())
+		os.Exit(1)
+	}
+
+	cacheDB, err := strconv.Atoi(getEnvWithDefault("REDIS_DB", "0"))
+	if err != nil {
+		logger.Error("unable to read cache db from env file", "err", err.Error())
+		os.Exit(1)
+	}
+
+	cacheEnabled, err := strconv.ParseBool(getEnvWithDefault("CACHE_ENABLED", "false"))
+	if err != nil {
+		logger.Error("unable to read cache enabled from env file", "err", err.Error())
+		os.Exit(1)
+	}
+
 	config := Config{
 		Port: port,
 		Database: DatabaseConfig{
@@ -92,10 +134,17 @@ func main() {
 			Port:     dbPort,
 			SSLMode:  os.Getenv("DB_SSLMODE"),
 		},
+		Cache: CacheConfig{
+			Host:     getEnvWithDefault("REDIS_HOST", "localhost"),
+			Port:     cachePort,
+			Password: os.Getenv("REDIS_PASSWORD"),
+			DB:       cacheDB,
+			Enabled:  cacheEnabled,
+		},
 	}
 
 	// Initialize database connection
-	db, err := data.NewDatabase(
+	rawDB, err := data.NewDatabase(
 		config.Database.Host,
 		config.Database.User,
 		config.Database.Password,
@@ -108,6 +157,42 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize cache
+	var cacheClient cache.Cache
+	var db *data.CachedDB
+
+	if config.Cache.Enabled {
+		logger.Info("Initializing Redis cache")
+		redisCache, err := cache.NewRedisCache(cache.CacheConfig{
+			Host:     config.Cache.Host,
+			Port:     config.Cache.Port,
+			Password: config.Cache.Password,
+			DB:       config.Cache.DB,
+		})
+		if err != nil {
+			logger.Warn("Failed to connect to Redis, falling back to no cache", "err", err.Error())
+			cacheClient = cache.NewNoOpCache()
+		} else {
+			cacheClient = redisCache
+			logger.Info("Redis cache initialized successfully")
+		}
+	} else {
+		logger.Info("Cache disabled, using no-op cache")
+		cacheClient = cache.NewNoOpCache()
+	}
+
+	// Initialize cached database wrapper
+	db = data.NewCachedDB(rawDB, cacheClient)
+
+	// Warm cache with frequently accessed data
+	if config.Cache.Enabled {
+		go func() {
+			if err := db.WarmCache(); err != nil {
+				logger.Warn("Failed to warm cache", "err", err.Error())
+			}
+		}()
+	}
+
 	// Initialize session store
 	initSessionStore()
 
@@ -115,11 +200,36 @@ func main() {
 	sseHub := NewSSEHub()
 	go sseHub.Run()
 
+	// Initialize security components
+	var securityHeadersConfig security.SecurityHeadersConfig
+	env := strings.ToLower(getEnvWithDefault("ENV", "development"))
+	if env == "production" {
+		securityHeadersConfig = security.GetProductionConfig()
+	} else {
+		securityHeadersConfig = security.GetDevelopmentConfig()
+	}
+
+	// Add trusted origins for CSRF protection
+	allowedOrigins := getEnvWithDefault("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173")
+	trustedOrigins := strings.Split(allowedOrigins, ",")
+	for i, origin := range trustedOrigins {
+		trustedOrigins[i] = strings.TrimSpace(origin)
+	}
+
+	securityHeaders := security.NewSecurityHeaders(securityHeadersConfig)
+	csrfProtection := security.NewCSRFProtection(cacheClient, security.CSRFConfig{
+		SecureCookie:   env == "production",
+		TrustedOrigins: trustedOrigins,
+	})
+
 	app := &Application{
-		config: config,
-		logger: logger,
-		db:     db,
-		sseHub: sseHub,
+		config:          config,
+		logger:          logger,
+		db:              db,
+		cache:           cacheClient,
+		sseHub:          sseHub,
+		securityHeaders: securityHeaders,
+		csrfProtection:  csrfProtection,
 	}
 
 	// Start SSE status broadcaster
@@ -144,6 +254,11 @@ func main() {
 	// Close database connection
 	if err := app.db.Close(); err != nil {
 		app.logger.Error("failed to close database connection", "err", err.Error())
+	}
+
+	// Close cache connection
+	if err := app.cache.Close(); err != nil {
+		app.logger.Error("failed to close cache connection", "err", err.Error())
 	}
 
 	app.logger.Info("Graceful shutdown complete.")

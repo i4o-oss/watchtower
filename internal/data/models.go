@@ -159,8 +159,32 @@ func (db *DB) GetEndpoint(id uuid.UUID) (*Endpoint, error) {
 
 func (db *DB) GetEndpoints() ([]Endpoint, error) {
 	var endpoints []Endpoint
-	err := db.DB.Find(&endpoints).Error
+	err := db.DB.Order("created_at DESC").Find(&endpoints).Error
 	return endpoints, err
+}
+
+// GetEndpointsWithPagination gets endpoints with pagination and filtering
+func (db *DB) GetEndpointsWithPagination(page, limit int, enabled *bool) ([]Endpoint, int64, error) {
+	var endpoints []Endpoint
+	var total int64
+
+	query := db.DB.Model(&Endpoint{})
+
+	// Apply filters
+	if enabled != nil {
+		query = query.Where("enabled = ?", *enabled)
+	}
+
+	// Get total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination
+	offset := (page - 1) * limit
+	err := query.Order("created_at DESC").Offset(offset).Limit(limit).Find(&endpoints).Error
+
+	return endpoints, total, err
 }
 
 func (db *DB) GetEnabledEndpoints() ([]Endpoint, error) {
@@ -197,6 +221,41 @@ func (db *DB) GetRecentMonitoringLogs(hours int) ([]MonitoringLog, error) {
 	cutoff := time.Now().Add(-time.Duration(hours) * time.Hour)
 	err := db.DB.Where("timestamp > ?", cutoff).Order("timestamp DESC").Find(&logs).Error
 	return logs, err
+}
+
+// GetMonitoringLogsWithPagination gets monitoring logs with proper pagination
+func (db *DB) GetMonitoringLogsWithPagination(page, limit, hours int, endpointID *uuid.UUID, success *bool) ([]MonitoringLog, int64, error) {
+	var logs []MonitoringLog
+	var total int64
+
+	query := db.DB.Model(&MonitoringLog{})
+
+	// Apply time filter
+	if hours > 0 {
+		cutoff := time.Now().Add(-time.Duration(hours) * time.Hour)
+		query = query.Where("timestamp > ?", cutoff)
+	}
+
+	// Apply endpoint filter
+	if endpointID != nil {
+		query = query.Where("endpoint_id = ?", *endpointID)
+	}
+
+	// Apply success filter
+	if success != nil {
+		query = query.Where("success = ?", *success)
+	}
+
+	// Get total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination
+	offset := (page - 1) * limit
+	err := query.Order("timestamp DESC").Offset(offset).Limit(limit).Find(&logs).Error
+
+	return logs, total, err
 }
 
 // GetMonitoringLogsByDateRange gets monitoring logs for an endpoint within a date range
@@ -326,6 +385,38 @@ func (db *DB) GetOpenIncidents() ([]Incident, error) {
 	var incidents []Incident
 	err := db.DB.Where("status != ?", "resolved").Preload("Creator").Order("created_at DESC").Find(&incidents).Error
 	return incidents, err
+}
+
+// GetIncidentsWithPagination gets incidents with pagination and filtering
+func (db *DB) GetIncidentsWithPagination(page, limit int, status string, severity string) ([]Incident, int64, error) {
+	var incidents []Incident
+	var total int64
+
+	query := db.DB.Model(&Incident{})
+
+	// Apply filters
+	if status != "" && status != "all" {
+		if status == "open" {
+			query = query.Where("status != ?", "resolved")
+		} else {
+			query = query.Where("status = ?", status)
+		}
+	}
+
+	if severity != "" && severity != "all" {
+		query = query.Where("severity = ?", severity)
+	}
+
+	// Get total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination with preloading
+	offset := (page - 1) * limit
+	err := query.Preload("Creator").Order("created_at DESC").Offset(offset).Limit(limit).Find(&incidents).Error
+
+	return incidents, total, err
 }
 
 func (db *DB) UpdateIncident(incident *Incident) error {

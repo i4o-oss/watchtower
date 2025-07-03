@@ -60,30 +60,25 @@ func (app *Application) listEndpoints(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	endpoints, err := app.db.GetEndpoints()
+	// Parse enabled filter
+	var enabled *bool
+	if enabledStr := r.URL.Query().Get("enabled"); enabledStr != "" {
+		if e, err := strconv.ParseBool(enabledStr); err == nil {
+			enabled = &e
+		}
+	}
+
+	// Use database-level pagination
+	endpoints, total, err := app.db.GetEndpointsWithPagination(page, limit, enabled)
 	if err != nil {
 		app.logger.Error("Error getting endpoints", "err", err.Error())
 		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
-	// Simple pagination (in production, use database-level pagination)
-	total := len(endpoints)
-	start := (page - 1) * limit
-	end := start + limit
-
-	if start >= total {
-		endpoints = []data.Endpoint{}
-	} else {
-		if end > total {
-			end = total
-		}
-		endpoints = endpoints[start:end]
-	}
-
 	response := ListEndpointsResponse{
 		Endpoints: endpoints,
-		Total:     total,
+		Total:     int(total),
 		Page:      page,
 		Limit:     limit,
 	}
@@ -275,30 +270,33 @@ func (app *Application) listMonitoringLogs(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	logs, err := app.db.GetRecentMonitoringLogs(hours)
+	// Parse endpoint filter
+	var endpointID *uuid.UUID
+	if endpointIDStr := r.URL.Query().Get("endpoint_id"); endpointIDStr != "" {
+		if id, err := uuid.Parse(endpointIDStr); err == nil {
+			endpointID = &id
+		}
+	}
+
+	// Parse success filter
+	var success *bool
+	if successStr := r.URL.Query().Get("success"); successStr != "" {
+		if s, err := strconv.ParseBool(successStr); err == nil {
+			success = &s
+		}
+	}
+
+	// Use database-level pagination
+	logs, total, err := app.db.GetMonitoringLogsWithPagination(page, limit, hours, endpointID, success)
 	if err != nil {
 		app.logger.Error("Error getting monitoring logs", "err", err.Error())
 		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
-	// Simple pagination
-	total := len(logs)
-	start := (page - 1) * limit
-	end := start + limit
-
-	if start >= total {
-		logs = []data.MonitoringLog{}
-	} else {
-		if end > total {
-			end = total
-		}
-		logs = logs[start:end]
-	}
-
 	response := MonitoringLogsResponse{
 		Logs:  logs,
-		Total: total,
+		Total: int(total),
 		Page:  page,
 		Limit: limit,
 	}
@@ -382,39 +380,21 @@ func (app *Application) listIncidents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var incidents []data.Incident
-	var err error
+	// Parse filters
+	status := r.URL.Query().Get("status")
+	severity := r.URL.Query().Get("severity")
 
-	// Check if we should only show open incidents
-	if r.URL.Query().Get("status") == "open" {
-		incidents, err = app.db.GetOpenIncidents()
-	} else {
-		incidents, err = app.db.GetIncidents()
-	}
-
+	// Use database-level pagination
+	incidents, total, err := app.db.GetIncidentsWithPagination(page, limit, status, severity)
 	if err != nil {
 		app.logger.Error("Error getting incidents", "err", err.Error())
 		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
-	// Simple pagination
-	total := len(incidents)
-	start := (page - 1) * limit
-	end := start + limit
-
-	if start >= total {
-		incidents = []data.Incident{}
-	} else {
-		if end > total {
-			end = total
-		}
-		incidents = incidents[start:end]
-	}
-
 	response := ListIncidentsResponse{
 		Incidents: incidents,
-		Total:     total,
+		Total:     int(total),
 		Page:      page,
 		Limit:     limit,
 	}

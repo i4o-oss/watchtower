@@ -2,94 +2,144 @@ package main
 
 import (
 	"net/http"
-	"net/url"
 	"strings"
+
+	"github.com/i4o-oss/watchtower/internal/security"
 )
 
-// validateEndpointRequest validates endpoint creation/update requests
+// validateEndpointRequest validates endpoint creation/update requests with enhanced security
 func validateEndpointRequest(req *EndpointRequest) []string {
 	var errors []string
+	sanitizer := security.NewSanitizer()
 
-	// Validate name
-	if strings.TrimSpace(req.Name) == "" {
+	// Validate and sanitize name
+	nameResult := sanitizer.SanitizeHTML(req.Name, "name")
+	errors = append(errors, nameResult.Errors...)
+	if nameResult.Value == "" {
 		errors = append(errors, "Name is required and cannot be empty")
 	}
+	if len(nameResult.Value) > 100 {
+		errors = append(errors, "Name must be no more than 100 characters")
+	}
+	req.Name = nameResult.Value
 
-	// Validate URL
-	if strings.TrimSpace(req.URL) == "" {
-		errors = append(errors, "URL is required and cannot be empty")
-	} else {
-		// Parse URL to ensure it's valid
-		parsedURL, err := url.Parse(req.URL)
-		if err != nil {
-			errors = append(errors, "URL is not valid")
-		} else if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-			errors = append(errors, "URL must use http or https scheme")
+	// Validate and sanitize description
+	if req.Description != "" {
+		descResult := sanitizer.SanitizeHTML(req.Description, "description")
+		errors = append(errors, descResult.Errors...)
+		if len(descResult.Value) > 500 {
+			errors = append(errors, "Description must be no more than 500 characters")
 		}
+		req.Description = descResult.Value
 	}
 
-	// Validate HTTP method
-	validMethods := map[string]bool{
-		"GET":     true,
-		"POST":    true,
-		"PUT":     true,
-		"DELETE":  true,
-		"PATCH":   true,
-		"HEAD":    true,
-		"OPTIONS": true,
+	// Validate and sanitize URL
+	urlResult := sanitizer.SanitizeURL(req.URL, "URL")
+	errors = append(errors, urlResult.Errors...)
+	if urlResult.Value == "" {
+		errors = append(errors, "URL is required and cannot be empty")
 	}
-	if req.Method != "" && !validMethods[strings.ToUpper(req.Method)] {
-		errors = append(errors, "Invalid HTTP method")
+	req.URL = urlResult.Value
+
+	// Validate and sanitize HTTP method
+	methodResult := sanitizer.SanitizeHTTPMethod(req.Method, "method")
+	errors = append(errors, methodResult.Errors...)
+	req.Method = methodResult.Value
+
+	// Validate and sanitize headers
+	if req.Headers != nil {
+		sanitizedHeaders, warnings, headerErrors := sanitizer.SanitizeHeaders(req.Headers, "headers")
+		errors = append(errors, headerErrors...)
+		_ = warnings // Log warnings if needed
+		req.Headers = sanitizedHeaders
 	}
 
-	// Validate expected status code
-	if req.ExpectedStatusCode < 100 || req.ExpectedStatusCode > 599 {
-		errors = append(errors, "Expected status code must be between 100 and 599")
+	// Validate and sanitize body
+	if req.Body != "" {
+		bodyResult := sanitizer.SanitizeJSON(req.Body, "body")
+		errors = append(errors, bodyResult.Errors...)
+		if len(bodyResult.Value) > 10000 {
+			errors = append(errors, "Body must be no more than 10KB")
+		}
+		req.Body = bodyResult.Value
 	}
 
-	// Validate timeout
-	if req.TimeoutSeconds < 1 || req.TimeoutSeconds > 300 {
-		errors = append(errors, "Timeout must be between 1 and 300 seconds")
-	}
+	// Validate expected status code range
+	statusCodeErrors := sanitizer.ValidateIntRange(req.ExpectedStatusCode, "expected status code", 100, 599)
+	errors = append(errors, statusCodeErrors...)
 
-	// Validate check interval
-	if req.CheckIntervalSeconds < 60 {
-		errors = append(errors, "Check interval must be at least 60 seconds")
-	}
+	// Validate timeout range
+	timeoutErrors := sanitizer.ValidateIntRange(req.TimeoutSeconds, "timeout", 1, 300)
+	errors = append(errors, timeoutErrors...)
+
+	// Validate check interval range
+	intervalErrors := sanitizer.ValidateIntRange(req.CheckIntervalSeconds, "check interval", 60, 86400)
+	errors = append(errors, intervalErrors...)
 
 	return errors
 }
 
-// validateIncidentRequest validates incident creation/update requests
+// validateIncidentRequest validates incident creation/update requests with enhanced security
 func validateIncidentRequest(req *IncidentRequest) []string {
 	var errors []string
+	sanitizer := security.NewSanitizer()
 
-	// Validate title
-	if strings.TrimSpace(req.Title) == "" {
+	// Validate and sanitize title
+	titleResult := sanitizer.SanitizeHTML(req.Title, "title")
+	errors = append(errors, titleResult.Errors...)
+	if titleResult.Value == "" {
 		errors = append(errors, "Title is required and cannot be empty")
+	}
+	if len(titleResult.Value) > 200 {
+		errors = append(errors, "Title must be no more than 200 characters")
+	}
+	req.Title = titleResult.Value
+
+	// Validate and sanitize description
+	if req.Description != "" {
+		descResult := sanitizer.SanitizeHTML(req.Description, "description")
+		errors = append(errors, descResult.Errors...)
+		if len(descResult.Value) > 2000 {
+			errors = append(errors, "Description must be no more than 2000 characters")
+		}
+		req.Description = descResult.Value
 	}
 
 	// Validate severity
-	validSeverities := map[string]bool{
-		"low":      true,
-		"medium":   true,
-		"high":     true,
-		"critical": true,
-	}
-	if req.Severity != "" && !validSeverities[req.Severity] {
-		errors = append(errors, "Severity must be one of: low, medium, high, critical")
+	if req.Severity != "" {
+		severityResult := sanitizer.SanitizeAlphanumeric(req.Severity, "severity", "")
+		errors = append(errors, severityResult.Errors...)
+
+		validSeverities := map[string]bool{
+			"low":      true,
+			"medium":   true,
+			"high":     true,
+			"critical": true,
+		}
+		if !validSeverities[strings.ToLower(severityResult.Value)] {
+			errors = append(errors, "Severity must be one of: low, medium, high, critical")
+		} else {
+			req.Severity = strings.ToLower(severityResult.Value)
+		}
 	}
 
 	// Validate status
-	validStatuses := map[string]bool{
-		"open":          true,
-		"investigating": true,
-		"identified":    true,
-		"monitoring":    true,
-		"resolved":      true,
-	}
-	if req.Status != "" && !validStatuses[req.Status] {
-		errors = append(errors, "Status must be one of: open, investigating, identified, monitoring, resolved")
+	if req.Status != "" {
+		statusResult := sanitizer.SanitizeAlphanumeric(req.Status, "status", "")
+		errors = append(errors, statusResult.Errors...)
+
+		validStatuses := map[string]bool{
+			"open":          true,
+			"investigating": true,
+			"identified":    true,
+			"monitoring":    true,
+			"resolved":      true,
+		}
+		if !validStatuses[strings.ToLower(statusResult.Value)] {
+			errors = append(errors, "Status must be one of: open, investigating, identified, monitoring, resolved")
+		} else {
+			req.Status = strings.ToLower(statusResult.Value)
+		}
 	}
 
 	return errors

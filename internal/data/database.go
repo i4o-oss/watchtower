@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"time"
 
 	"github.com/pressly/goose/v3"
 	"gorm.io/driver/postgres"
@@ -30,11 +31,16 @@ func NewDatabase(host, user, password, dbname string, port int, sslmode string) 
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Test the connection
+	// Get underlying sql.DB for connection pooling
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
+
+	// Configure connection pool
+	sqlDB.SetMaxOpenConns(25)                 // Maximum number of open connections
+	sqlDB.SetMaxIdleConns(5)                  // Maximum number of idle connections
+	sqlDB.SetConnMaxLifetime(5 * time.Minute) // Maximum amount of time a connection may be reused
 
 	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)

@@ -16,23 +16,38 @@ func (app *Application) routes() http.Handler {
 	r.Use(app.RequestLogger)
 	r.Use(app.SecurityHeaders)
 	r.Use(app.CORS)
+	r.Use(app.csrfProtection.Middleware())
+
+	// Health check routes (no rate limiting, skip CSRF)
+	r.Group(func(r chi.Router) {
+		r.Use(app.csrfProtection.SkipCSRFMiddleware())
+		r.Get("/health", app.healthCheck)
+		r.Get("/ready", app.readinessCheck)
+		r.Get("/live", app.livenessCheck)
+	})
 
 	// API routes with /api/v1 prefix
 	r.Route("/api/v1", func(r chi.Router) {
-		// Public routes
-		r.Get("/health", health)
+		// Apply rate limiting to all API routes
+		r.Use(app.bypassRateLimitMiddleware)
 
-		// Public status API endpoints
-		r.Get("/status", app.getPublicStatus)
-		r.Get("/uptime/{endpoint_id}", app.getUptimeData)
-		r.Get("/incidents", app.getPublicIncidents)
+		// CSRF token endpoint
+		r.Get("/csrf-token", app.csrfProtection.GetTokenHandler())
 
-		// Real-time updates via Server-Sent Events
+		// Public status API endpoints with more generous rate limits
+		r.Group(func(r chi.Router) {
+			r.Use(app.rateLimitMiddleware(PublicAPIRateLimit))
+			r.Get("/status", app.getPublicStatus)
+			r.Get("/uptime/{endpoint_id}", app.getUptimeData)
+			r.Get("/incidents", app.getPublicIncidents)
+		})
+
+		// Real-time updates via Server-Sent Events (no additional rate limiting - handled by SSE)
 		r.Get("/events", app.handleSSE)
 
-		// Authentication routes with rate limiting
+		// Authentication routes with strict rate limiting
 		r.Group(func(r chi.Router) {
-			r.Use(app.RateLimitAuth)
+			r.Use(app.rateLimitMiddleware(AuthRateLimit))
 			r.Post("/auth/register", app.register)
 			r.Post("/auth/login", app.login)
 		})
@@ -114,6 +129,7 @@ func (app *Application) routes() http.Handler {
 	return r
 }
 
+// Legacy health endpoint - replaced by app.healthCheck
 func health(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
