@@ -57,6 +57,7 @@ func (app *Application) routes() http.Handler {
 				r.Put("/{id}", app.updateEndpoint)
 				r.Delete("/{id}", app.deleteEndpoint)
 				r.Get("/{id}/logs", app.getEndpointLogs)
+				r.Get("/{id}/incidents", app.getEndpointIncidents)
 			})
 
 			// Monitoring logs
@@ -69,6 +70,15 @@ func (app *Application) routes() http.Handler {
 				r.Get("/{id}", app.getIncident)
 				r.Put("/{id}", app.updateIncident)
 				r.Delete("/{id}", app.deleteIncident)
+
+				// Incident-endpoint associations
+				r.Get("/{id}/endpoints", app.getIncidentEndpoints)
+				r.Post("/{id}/endpoints", app.associateEndpointsWithIncident)
+				r.Delete("/{id}/endpoints/{endpoint_id}", app.removeEndpointFromIncident)
+
+				// Incident timeline and comments
+				r.Get("/{id}/timeline", app.getIncidentTimeline)
+				r.Post("/{id}/comments", app.addIncidentComment)
 			})
 		})
 	})

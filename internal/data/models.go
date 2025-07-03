@@ -356,3 +356,57 @@ func (db *DB) GetIncidentsByEndpoint(endpointID uuid.UUID) ([]Incident, error) {
 		Find(&incidents).Error
 	return incidents, err
 }
+
+func (db *DB) UpdateEndpointIncident(endpointIncident *EndpointIncident) error {
+	return db.DB.Save(endpointIncident).Error
+}
+
+func (db *DB) DeleteEndpointIncident(endpointID uuid.UUID, incidentID uuid.UUID) error {
+	return db.DB.Where("endpoint_id = ? AND incident_id = ?", endpointID, incidentID).Delete(&EndpointIncident{}).Error
+}
+
+// IncidentTimeline represents a timeline entry for incident history
+type IncidentTimeline struct {
+	ID         uuid.UUID              `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	IncidentID uuid.UUID              `json:"incident_id" gorm:"type:uuid;not null"`
+	UserID     *uuid.UUID             `json:"user_id" gorm:"type:uuid"`
+	EventType  string                 `json:"event_type" gorm:"not null"`
+	OldValue   *string                `json:"old_value"`
+	NewValue   *string                `json:"new_value"`
+	Message    *string                `json:"message"`
+	Metadata   map[string]interface{} `json:"metadata" gorm:"type:jsonb;default:'{}'"`
+	CreatedAt  time.Time              `json:"created_at"`
+
+	// Relationships
+	Incident *Incident `json:"incident,omitempty" gorm:"foreignKey:IncidentID"`
+	User     *User     `json:"user,omitempty" gorm:"foreignKey:UserID"`
+}
+
+// TableName sets the table name to singular form
+func (IncidentTimeline) TableName() string {
+	return "incident_timeline"
+}
+
+// IncidentTimeline database operations
+func (db *DB) CreateIncidentTimeline(timeline *IncidentTimeline) error {
+	return db.DB.Create(timeline).Error
+}
+
+func (db *DB) GetIncidentTimeline(incidentID uuid.UUID) ([]IncidentTimeline, error) {
+	var timeline []IncidentTimeline
+	err := db.DB.Where("incident_id = ?", incidentID).
+		Preload("User").
+		Order("created_at ASC").
+		Find(&timeline).Error
+	return timeline, err
+}
+
+func (db *DB) GetRecentIncidentActivity(limit int) ([]IncidentTimeline, error) {
+	var timeline []IncidentTimeline
+	query := db.DB.Preload("Incident").Preload("User").Order("created_at DESC")
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	err := query.Find(&timeline).Error
+	return timeline, err
+}

@@ -16,24 +16,26 @@ import (
 
 // MonitoringEngine is the main monitoring system that coordinates all components
 type MonitoringEngine struct {
-	workerPool *WorkerPool
-	scheduler  *Scheduler
-	db         *data.DB
-	logger     *log.Logger
-	config     EngineConfig
-	ctx        context.Context
-	cancel     context.CancelFunc
-	wg         sync.WaitGroup
-	isRunning  bool
-	mu         sync.RWMutex
+	workerPool       *WorkerPool
+	scheduler        *Scheduler
+	incidentDetector *IncidentDetector
+	db               *data.DB
+	logger           *log.Logger
+	config           EngineConfig
+	ctx              context.Context
+	cancel           context.CancelFunc
+	wg               sync.WaitGroup
+	isRunning        bool
+	mu               sync.RWMutex
 }
 
 // EngineConfig holds configuration for the monitoring engine
 type EngineConfig struct {
-	WorkerPoolConfig WorkerPoolConfig
-	SchedulerConfig  SchedulerConfig
-	ValidatorConfig  ValidatorConfig
-	HTTPClientConfig HTTPClientConfig
+	WorkerPoolConfig       WorkerPoolConfig
+	SchedulerConfig        SchedulerConfig
+	ValidatorConfig        ValidatorConfig
+	HTTPClientConfig       HTTPClientConfig
+	IncidentDetectorConfig IncidentDetectorConfig
 }
 
 // DefaultEngineConfig returns a default configuration for the monitoring engine
@@ -66,6 +68,7 @@ func DefaultEngineConfig() EngineConfig {
 			FollowRedirects:    true,
 			MaxRedirects:       10,
 		},
+		IncidentDetectorConfig: DefaultIncidentDetectorConfig(),
 	}
 }
 
@@ -99,6 +102,9 @@ func (e *MonitoringEngine) Start() error {
 	// Create scheduler with the database as endpoint provider
 	e.scheduler = NewScheduler(e.config.SchedulerConfig, e.workerPool, e.db, e.logger)
 
+	// Create incident detector
+	e.incidentDetector = NewIncidentDetector(e.config.IncidentDetectorConfig, e.db, e.logger)
+
 	// Start worker pool
 	e.workerPool.Start()
 
@@ -106,6 +112,13 @@ func (e *MonitoringEngine) Start() error {
 	if err := e.scheduler.Start(); err != nil {
 		e.workerPool.Stop()
 		return fmt.Errorf("failed to start scheduler: %w", err)
+	}
+
+	// Start incident detector
+	if err := e.incidentDetector.Start(); err != nil {
+		e.scheduler.Stop()
+		e.workerPool.Stop()
+		return fmt.Errorf("failed to start incident detector: %w", err)
 	}
 
 	// Start job result monitoring
@@ -136,7 +149,12 @@ func (e *MonitoringEngine) Stop() error {
 	// Signal shutdown
 	e.cancel()
 
-	// Stop scheduler first (stops creating new jobs)
+	// Stop incident detector first
+	if e.incidentDetector != nil {
+		e.incidentDetector.Stop()
+	}
+
+	// Stop scheduler (stops creating new jobs)
 	if e.scheduler != nil {
 		e.scheduler.Stop()
 	}
@@ -179,6 +197,10 @@ func (e *MonitoringEngine) GetStatus() EngineStatus {
 
 		if e.scheduler != nil {
 			status.ScheduleStatus = e.scheduler.GetScheduleStatus()
+		}
+
+		if e.incidentDetector != nil {
+			status.IncidentDetectorStats = e.incidentDetector.GetStats()
 		}
 	}
 
@@ -373,10 +395,11 @@ func (e *MonitoringEngine) RunWithGracefulShutdown() error {
 
 // EngineStatus represents the current status of the monitoring engine
 type EngineStatus struct {
-	IsRunning       bool            `json:"is_running"`
-	StartTime       time.Time       `json:"start_time"`
-	WorkerPoolStats WorkerPoolStats `json:"worker_pool_stats"`
-	ScheduleStatus  ScheduleStatus  `json:"schedule_status"`
+	IsRunning             bool                  `json:"is_running"`
+	StartTime             time.Time             `json:"start_time"`
+	WorkerPoolStats       WorkerPoolStats       `json:"worker_pool_stats"`
+	ScheduleStatus        ScheduleStatus        `json:"schedule_status"`
+	IncidentDetectorStats IncidentDetectorStats `json:"incident_detector_stats"`
 }
 
 // Helper function to parse UUID strings
