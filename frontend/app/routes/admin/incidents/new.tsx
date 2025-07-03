@@ -19,7 +19,14 @@ import {
 	SelectValue,
 } from '~/components/ui/select'
 import { Alert, AlertDescription } from '~/components/ui/alert'
+import { LoadingSpinner } from '~/components/loading-spinner'
+import { useSuccessToast, useErrorToast } from '~/components/toast'
 import { requireAuth } from '~/lib/auth'
+import { 
+	validateForm, 
+	incidentValidationSchema, 
+	getApiErrorMessage 
+} from '~/lib/validation'
 import type { Route } from './+types/new'
 
 export function meta({}: Route.MetaArgs) {
@@ -57,8 +64,12 @@ export async function clientLoader() {
 export default function NewIncident({ loaderData }: Route.ComponentProps) {
 	const { endpoints } = loaderData
 	const navigate = useNavigate()
+	const successToast = useSuccessToast()
+	const errorToast = useErrorToast()
+	
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
 	const [formData, setFormData] = useState({
 		title: '',
 		description: '',
@@ -71,6 +82,16 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 		e.preventDefault()
 		setIsSubmitting(true)
 		setError(null)
+		setFieldErrors({})
+
+		// Validate form data
+		const validation = validateForm(formData, incidentValidationSchema)
+		if (!validation.isValid) {
+			setFieldErrors(validation.errors)
+			setIsSubmitting(false)
+			errorToast('Validation Error', 'Please correct the errors in the form')
+			return
+		}
 
 		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -86,14 +107,19 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 			)
 
 			if (response.ok) {
+				successToast('Incident Created', `Successfully created incident "${formData.title}"`)
 				navigate('/admin/incidents')
 			} else {
 				const errorData = await response.json()
-				setError(errorData.message || 'Failed to create incident')
+				const errorMessage = getApiErrorMessage(errorData)
+				setError(errorMessage)
+				errorToast('Creation Failed', errorMessage)
 			}
 		} catch (error) {
 			console.error('Error creating incident:', error)
-			setError('Network error occurred')
+			const errorMessage = 'Network error occurred. Please check your connection and try again.'
+			setError(errorMessage)
+			errorToast('Network Error', errorMessage)
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -104,19 +130,18 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 	}
 
 	return (
-		<div className='min-h-screen bg-background'>
-			<div className='container mx-auto px-4 py-8 max-w-2xl'>
-				<div className='flex justify-between items-center mb-8'>
-					<div>
-						<h1 className='text-3xl font-bold'>New Incident</h1>
-						<p className='text-muted-foreground'>
-							Create a new system incident
-						</p>
-					</div>
-					<Link to='/admin/incidents'>
-						<Button variant='outline'>Cancel</Button>
-					</Link>
+		<div className='max-w-2xl'>
+			<div className='flex justify-between items-center mb-8'>
+				<div>
+					<h1 className='text-3xl font-bold'>New Incident</h1>
+					<p className='text-muted-foreground'>
+						Create a new system incident
+					</p>
 				</div>
+				<Link to='/admin/incidents'>
+					<Button variant='outline'>Cancel</Button>
+				</Link>
+			</div>
 
 				<Card>
 					<CardHeader>
@@ -287,6 +312,9 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 									</Button>
 								</Link>
 								<Button type='submit' disabled={isSubmitting}>
+									{isSubmitting && (
+										<LoadingSpinner size='sm' className='mr-2' />
+									)}
 									{isSubmitting
 										? 'Creating...'
 										: 'Create Incident'}
@@ -295,7 +323,6 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 						</form>
 					</CardContent>
 				</Card>
-			</div>
 		</div>
 	)
 }

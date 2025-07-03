@@ -134,25 +134,24 @@ export default function EndpointDetail({
 	}
 
 	return (
-		<div className='min-h-screen bg-background'>
-			<div className='container mx-auto px-4 py-8'>
-				<div className='flex justify-between items-center mb-8'>
-					<div>
-						<h1 className='text-3xl font-bold'>{endpoint.name}</h1>
-						<p className='text-muted-foreground'>
-							Endpoint details and monitoring logs
-						</p>
-					</div>
-					<div className='flex gap-2'>
-						<Link to='/admin/endpoints'>
-							<Button variant='outline'>Back to Endpoints</Button>
-						</Link>
-						<Link to={`/admin/endpoints/${params.id}/edit`}>
-							<Button variant='outline'>Edit</Button>
-						</Link>
-						<Button variant='outline' onClick={toggleEndpoint}>
-							{endpoint.enabled ? 'Disable' : 'Enable'}
-						</Button>
+		<div>
+			<div className='flex justify-between items-center mb-8'>
+				<div>
+					<h1 className='text-3xl font-bold'>{endpoint.name}</h1>
+					<p className='text-muted-foreground'>
+						Endpoint details and monitoring logs
+					</p>
+				</div>
+				<div className='flex gap-2'>
+					<Link to='/admin/endpoints'>
+						<Button variant='outline'>Back to Endpoints</Button>
+					</Link>
+					<Link to={`/admin/endpoints/${params.id}/edit`}>
+						<Button variant='outline'>Edit</Button>
+					</Link>
+					<Button variant='outline' onClick={toggleEndpoint}>
+						{endpoint.enabled ? 'Disable' : 'Enable'}
+					</Button>
 						<AlertDialog>
 							<AlertDialogTrigger asChild>
 								<Button variant='destructive'>Delete</Button>
@@ -475,7 +474,6 @@ export default function EndpointDetail({
 						</Card>
 					</div>
 				</div>
-			</div>
 		</div>
 	)
 }

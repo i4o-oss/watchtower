@@ -146,21 +146,20 @@ export default function EditEndpoint({
 	}
 
 	return (
-		<div className='min-h-screen bg-background'>
-			<div className='container mx-auto px-4 py-8 max-w-2xl'>
-				<div className='flex justify-between items-center mb-8'>
-					<div>
-						<h1 className='text-3xl font-bold'>Edit Endpoint</h1>
-						<p className='text-muted-foreground'>
-							Update endpoint configuration
-						</p>
-					</div>
-					<div className='flex gap-2'>
-						<Link to={`/admin/endpoints/${params.id}`}>
-							<Button variant='outline'>Cancel</Button>
-						</Link>
-					</div>
+		<div className='max-w-2xl'>
+			<div className='flex justify-between items-center mb-8'>
+				<div>
+					<h1 className='text-3xl font-bold'>Edit Endpoint</h1>
+					<p className='text-muted-foreground'>
+						Update endpoint configuration
+					</p>
 				</div>
+				<div className='flex gap-2'>
+					<Link to={`/admin/endpoints/${params.id}`}>
+						<Button variant='outline'>Cancel</Button>
+					</Link>
+				</div>
+			</div>
 
 				<Card>
 					<CardHeader>
@@ -421,7 +420,6 @@ export default function EditEndpoint({
 						</form>
 					</CardContent>
 				</Card>
-			</div>
 		</div>
 	)
 }

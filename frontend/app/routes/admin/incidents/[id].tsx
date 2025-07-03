@@ -182,19 +182,18 @@ export default function IncidentDetail({
 	}
 
 	return (
-		<div className='min-h-screen bg-background'>
-			<div className='container mx-auto px-4 py-8'>
-				<div className='flex justify-between items-center mb-8'>
-					<div>
-						<h1 className='text-3xl font-bold'>{incident.title}</h1>
-						<p className='text-muted-foreground'>
-							Incident details and management
-						</p>
-					</div>
-					<div className='flex gap-2'>
-						<Link to='/admin/incidents'>
-							<Button variant='outline'>Back to Incidents</Button>
-						</Link>
+		<div>
+			<div className='flex justify-between items-center mb-8'>
+				<div>
+					<h1 className='text-3xl font-bold'>{incident.title}</h1>
+					<p className='text-muted-foreground'>
+						Incident details and management
+					</p>
+				</div>
+				<div className='flex gap-2'>
+					<Link to='/admin/incidents'>
+						<Button variant='outline'>Back to Incidents</Button>
+					</Link>
 						<AlertDialog>
 							<AlertDialogTrigger asChild>
 								<Button variant='destructive'>Delete</Button>
@@ -497,7 +496,6 @@ export default function IncidentDetail({
 						</Card>
 					</div>
 				</div>
-			</div>
 		</div>
 	)
 }

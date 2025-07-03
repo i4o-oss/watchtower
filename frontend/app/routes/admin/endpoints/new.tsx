@@ -20,7 +20,16 @@ import {
 } from '~/components/ui/select'
 import { Switch } from '~/components/ui/switch'
 import { Alert, AlertDescription } from '~/components/ui/alert'
+import { JsonEditor } from '~/components/json-editor'
+import { LoadingSpinner } from '~/components/loading-spinner'
+import { useSuccessToast, useErrorToast } from '~/components/toast'
 import { requireAuth } from '~/lib/auth'
+import { 
+	validateForm, 
+	validateField, 
+	endpointValidationSchema, 
+	getApiErrorMessage 
+} from '~/lib/validation'
 import type { Route } from './+types/new'
 
 export function meta({}: Route.MetaArgs) {
@@ -37,8 +46,12 @@ export async function clientLoader() {
 
 export default function NewEndpoint({}: Route.ComponentProps) {
 	const navigate = useNavigate()
+	const successToast = useSuccessToast()
+	const errorToast = useErrorToast()
+	
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
 	const [formData, setFormData] = useState({
 		name: '',
 		description: '',
@@ -56,6 +69,16 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 		e.preventDefault()
 		setIsSubmitting(true)
 		setError(null)
+		setFieldErrors({})
+
+		// Validate form data
+		const validation = validateForm(formData, endpointValidationSchema)
+		if (!validation.isValid) {
+			setFieldErrors(validation.errors)
+			setIsSubmitting(false)
+			errorToast('Validation Error', 'Please correct the errors in the form')
+			return
+		}
 
 		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -66,21 +89,30 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 				try {
 					headers = JSON.parse(formData.headers)
 				} catch {
-					// Try to parse as key:value pairs
-					const lines = formData.headers.split('\n')
-					headers = {}
-					for (const line of lines) {
-						const [key, ...valueParts] = line.split(':')
-						if (key && valueParts.length > 0) {
-							headers[key.trim()] = valueParts.join(':').trim()
-						}
-					}
+					setFieldErrors({ headers: 'Invalid JSON format for headers' })
+					setIsSubmitting(false)
+					errorToast('Invalid Headers', 'Headers must be valid JSON')
+					return
+				}
+			}
+
+			// Parse body if provided
+			let body = null
+			if (formData.body.trim()) {
+				try {
+					body = JSON.parse(formData.body)
+				} catch {
+					setFieldErrors({ body: 'Invalid JSON format for request body' })
+					setIsSubmitting(false)
+					errorToast('Invalid Request Body', 'Request body must be valid JSON')
+					return
 				}
 			}
 
 			const payload = {
 				...formData,
 				headers,
+				body,
 				expected_status_code: Number(formData.expected_status_code),
 				timeout_seconds: Number(formData.timeout_seconds),
 				check_interval_seconds: Number(formData.check_interval_seconds),
@@ -97,14 +129,19 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 			)
 
 			if (response.ok) {
+				successToast('Endpoint Created', `Successfully created endpoint "${formData.name}"`)
 				navigate('/admin/endpoints')
 			} else {
 				const errorData = await response.json()
-				setError(errorData.message || 'Failed to create endpoint')
+				const errorMessage = getApiErrorMessage(errorData)
+				setError(errorMessage)
+				errorToast('Creation Failed', errorMessage)
 			}
 		} catch (error) {
 			console.error('Error creating endpoint:', error)
-			setError('Network error occurred')
+			const errorMessage = 'Network error occurred. Please check your connection and try again.'
+			setError(errorMessage)
+			errorToast('Network Error', errorMessage)
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -112,22 +149,45 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 
 	const updateFormData = (field: string, value: any) => {
 		setFormData((prev) => ({ ...prev, [field]: value }))
+		
+		// Clear field error when user starts typing
+		if (fieldErrors[field]) {
+			setFieldErrors((prev) => {
+				const newErrors = { ...prev }
+				delete newErrors[field]
+				return newErrors
+			})
+		}
 	}
 
+	// Validate field on blur
+	const handleFieldBlur = (field: string) => {
+		const rules = endpointValidationSchema[field]
+		if (rules) {
+			const error = validateField(formData[field], rules)
+			if (error) {
+				setFieldErrors((prev) => ({ ...prev, [field]: error }))
+			}
+		}
+	}
+
+	// Helper to get field error state
+	const getFieldError = (field: string) => fieldErrors[field] || null
+	const hasFieldError = (field: string) => !!fieldErrors[field]
+
 	return (
-		<div className='min-h-screen bg-background'>
-			<div className='container mx-auto px-4 py-8 max-w-2xl'>
-				<div className='flex justify-between items-center mb-8'>
-					<div>
-						<h1 className='text-3xl font-bold'>New Endpoint</h1>
-						<p className='text-muted-foreground'>
-							Create a new monitoring endpoint
-						</p>
-					</div>
-					<Link to='/admin/endpoints'>
-						<Button variant='outline'>Cancel</Button>
-					</Link>
+		<div className='max-w-2xl'>
+			<div className='flex justify-between items-center mb-8'>
+				<div>
+					<h1 className='text-3xl font-bold'>New Endpoint</h1>
+					<p className='text-muted-foreground'>
+						Create a new monitoring endpoint
+					</p>
 				</div>
+				<Link to='/admin/endpoints'>
+					<Button variant='outline'>Cancel</Button>
+				</Link>
+			</div>
 
 				<Card>
 					<CardHeader>
@@ -155,15 +215,15 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 									<Input
 										id='name'
 										value={formData.name}
-										onChange={(e) =>
-											updateFormData(
-												'name',
-												e.target.value,
-											)
-										}
+										onChange={(e) => updateFormData('name', e.target.value)}
+										onBlur={() => handleFieldBlur('name')}
 										placeholder='My API Endpoint'
+										className={hasFieldError('name') ? 'border-red-500 focus:ring-red-500' : ''}
 										required
 									/>
+									{getFieldError('name') && (
+										<p className='text-sm text-red-600 mt-1'>{getFieldError('name')}</p>
+									)}
 								</div>
 
 								<div className='space-y-2'>
@@ -190,15 +250,15 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 										id='url'
 										type='url'
 										value={formData.url}
-										onChange={(e) =>
-											updateFormData(
-												'url',
-												e.target.value,
-											)
-										}
+										onChange={(e) => updateFormData('url', e.target.value)}
+										onBlur={() => handleFieldBlur('url')}
 										placeholder='https://api.example.com/health'
+										className={hasFieldError('url') ? 'border-red-500 focus:ring-red-500' : ''}
 										required
 									/>
+									{getFieldError('url') && (
+										<p className='text-sm text-red-600 mt-1'>{getFieldError('url')}</p>
+									)}
 								</div>
 
 								<div className='grid grid-cols-2 gap-4'>
@@ -248,18 +308,16 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 										<Input
 											id='status'
 											type='number'
-											value={
-												formData.expected_status_code
-											}
-											onChange={(e) =>
-												updateFormData(
-													'expected_status_code',
-													e.target.value,
-												)
-											}
+											value={formData.expected_status_code}
+											onChange={(e) => updateFormData('expected_status_code', e.target.value)}
+											onBlur={() => handleFieldBlur('expected_status_code')}
 											min='100'
 											max='599'
+											className={hasFieldError('expected_status_code') ? 'border-red-500 focus:ring-red-500' : ''}
 										/>
+										{getFieldError('expected_status_code') && (
+											<p className='text-sm text-red-600 mt-1'>{getFieldError('expected_status_code')}</p>
+										)}
 									</div>
 								</div>
 							</div>
@@ -270,44 +328,34 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 									Request Configuration
 								</h3>
 
-								<div className='space-y-2'>
-									<Label htmlFor='headers'>
-										Headers (JSON or key:value format)
-									</Label>
-									<Textarea
-										id='headers'
-										value={formData.headers}
-										onChange={(e) =>
-											updateFormData(
-												'headers',
-												e.target.value,
-											)
-										}
-										placeholder='{"Authorization": "Bearer token"} or Authorization: Bearer token'
-										rows={4}
-									/>
-								</div>
+								<JsonEditor
+									title='HTTP Headers'
+									value={formData.headers}
+									onChange={(value) => updateFormData('headers', value)}
+									height={200}
+									placeholder={{
+										"Authorization": "Bearer your-token-here",
+										"Content-Type": "application/json",
+										"User-Agent": "Watchtower-Monitor/1.0"
+									}}
+								/>
 
 								{(formData.method === 'POST' ||
 									formData.method === 'PUT' ||
 									formData.method === 'PATCH') && (
-									<div className='space-y-2'>
-										<Label htmlFor='body'>
-											Request Body
-										</Label>
-										<Textarea
-											id='body'
-											value={formData.body}
-											onChange={(e) =>
-												updateFormData(
-													'body',
-													e.target.value,
-												)
+									<JsonEditor
+										title='Request Body'
+										value={formData.body}
+										onChange={(value) => updateFormData('body', value)}
+										height={250}
+										placeholder={{
+											"key": "value",
+											"data": {
+												"nested": "object"
 											}
-											placeholder='Request body content'
-											rows={4}
-										/>
-									</div>
+										}}
+										validate={false}
+									/>
 								)}
 							</div>
 
@@ -326,15 +374,15 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 											id='timeout'
 											type='number'
 											value={formData.timeout_seconds}
-											onChange={(e) =>
-												updateFormData(
-													'timeout_seconds',
-													e.target.value,
-												)
-											}
+											onChange={(e) => updateFormData('timeout_seconds', e.target.value)}
+											onBlur={() => handleFieldBlur('timeout_seconds')}
 											min='1'
 											max='300'
+											className={hasFieldError('timeout_seconds') ? 'border-red-500 focus:ring-red-500' : ''}
 										/>
+										{getFieldError('timeout_seconds') && (
+											<p className='text-sm text-red-600 mt-1'>{getFieldError('timeout_seconds')}</p>
+										)}
 									</div>
 
 									<div className='space-y-2'>
@@ -344,18 +392,16 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 										<Input
 											id='interval'
 											type='number'
-											value={
-												formData.check_interval_seconds
-											}
-											onChange={(e) =>
-												updateFormData(
-													'check_interval_seconds',
-													e.target.value,
-												)
-											}
+											value={formData.check_interval_seconds}
+											onChange={(e) => updateFormData('check_interval_seconds', e.target.value)}
+											onBlur={() => handleFieldBlur('check_interval_seconds')}
 											min='30'
 											max='86400'
+											className={hasFieldError('check_interval_seconds') ? 'border-red-500 focus:ring-red-500' : ''}
 										/>
+										{getFieldError('check_interval_seconds') && (
+											<p className='text-sm text-red-600 mt-1'>{getFieldError('check_interval_seconds')}</p>
+										)}
 									</div>
 								</div>
 
@@ -380,6 +426,9 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 									</Button>
 								</Link>
 								<Button type='submit' disabled={isSubmitting}>
+									{isSubmitting && (
+										<LoadingSpinner size='sm' className='mr-2' />
+									)}
 									{isSubmitting
 										? 'Creating...'
 										: 'Create Endpoint'}
@@ -388,7 +437,6 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 						</form>
 					</CardContent>
 				</Card>
-			</div>
 		</div>
 	)
 }

@@ -154,13 +154,20 @@ function UptimeGraph({
 	return (
 		<div className='space-y-4'>
 			<div className='flex items-center justify-between'>
-				<h4 className='font-medium'>90-Day Uptime History</h4>
+				<h4 className='font-medium' id={`uptime-title-${serviceId}`}>
+					90-Day Uptime History
+				</h4>
 				<span className='text-sm text-muted-foreground'>
 					{uptimeData.length} days
 				</span>
 			</div>
 
-			<div className='grid grid-cols-30 gap-1 h-8'>
+			<div
+				className='grid grid-cols-[repeat(30,1fr)] sm:grid-cols-[repeat(45,1fr)] lg:grid-cols-[repeat(90,1fr)] gap-1 h-8'
+				role='grid'
+				aria-labelledby={`uptime-title-${serviceId}`}
+				aria-description='Interactive uptime graph showing daily status over 90 days'
+			>
 				{uptimeData.slice(-90).map((day, index) => {
 					const getColor = (uptime: number) => {
 						if (uptime >= 99) return 'bg-green-500'
@@ -177,7 +184,14 @@ function UptimeGraph({
 								'border border-white/20',
 							)}
 							onClick={() => setSelectedDay(day)}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault()
+									setSelectedDay(day)
+								}
+							}}
 							title={`${day.date}: ${day.uptime.toFixed(1)}% uptime`}
+							aria-label={`${day.date}: ${day.uptime.toFixed(1)}% uptime, ${day.status} status`}
 						/>
 					)
 				})}
@@ -265,31 +279,36 @@ export function StatusPage() {
 		return () => clearInterval(interval)
 	}, [])
 
-	// WebSocket for real-time updates
+	// Server-Sent Events for real-time updates
 	useEffect(() => {
-		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-		const ws = new WebSocket(
-			`${protocol}//${window.location.host}/api/v1/ws`,
-		)
+		const eventSource = new EventSource('/api/v1/events')
 
-		ws.onmessage = (event) => {
+		eventSource.addEventListener('status_update', (event) => {
 			try {
-				const message = JSON.parse(event.data)
-				if (message.type === 'status_update') {
-					// Refresh status when we get real-time updates
-					fetchStatus()
-				}
+				const data = JSON.parse(event.data)
+				// Refresh status when we get real-time updates
+				fetchStatus()
 			} catch (error) {
-				console.error('WebSocket message error:', error)
+				console.error('SSE message parsing error:', error)
 			}
+		})
+
+		eventSource.addEventListener('ping', (event) => {
+			// Keep-alive ping from server
+			console.debug('SSE ping received')
+		})
+
+		eventSource.onerror = (error) => {
+			console.error('SSE connection error:', error)
+			// EventSource will automatically reconnect
 		}
 
-		ws.onerror = (error) => {
-			console.error('WebSocket error:', error)
+		eventSource.onopen = () => {
+			console.debug('SSE connection established')
 		}
 
 		return () => {
-			ws.close()
+			eventSource.close()
 		}
 	}, [])
 
@@ -323,11 +342,11 @@ export function StatusPage() {
 	return (
 		<div className='min-h-screen bg-background'>
 			{/* Header */}
-			<div className='border-b'>
+			<header className='border-b' role='banner'>
 				<div className='container mx-auto px-4 py-6'>
 					<div className='flex items-center justify-between'>
 						<div>
-							<h1 className='text-3xl font-bold'>
+							<h1 className='text-3xl font-bold' id='main-title'>
 								Watchtower Status
 							</h1>
 							<p className='text-muted-foreground mt-1'>
@@ -345,43 +364,54 @@ export function StatusPage() {
 						</div>
 					</div>
 				</div>
-			</div>
+			</header>
 
-			<div className='container mx-auto px-4 py-8 space-y-8'>
+			<main className='container mx-auto px-4 py-8 space-y-8' role='main'>
 				{/* Overall Status */}
-				<Card>
-					<CardHeader>
-						<CardTitle>Overall Status</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-							<div className='text-center'>
-								<div className='text-2xl font-bold'>
-									{status.overall.uptime_today.toFixed(1)}%
+				<section aria-labelledby='overall-status-title'>
+					<Card>
+						<CardHeader>
+							<CardTitle id='overall-status-title'>
+								Overall Status
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+								<div className='text-center'>
+									<div className='text-2xl font-bold'>
+										{status.overall.uptime_today.toFixed(1)}
+										%
+									</div>
+									<div className='text-sm text-muted-foreground'>
+										Today
+									</div>
 								</div>
-								<div className='text-sm text-muted-foreground'>
-									Today
+								<div className='text-center'>
+									<div className='text-2xl font-bold'>
+										{status.overall.uptime_30_day.toFixed(
+											1,
+										)}
+										%
+									</div>
+									<div className='text-sm text-muted-foreground'>
+										30 Days
+									</div>
+								</div>
+								<div className='text-center'>
+									<div className='text-2xl font-bold'>
+										{status.overall.uptime_90_day.toFixed(
+											1,
+										)}
+										%
+									</div>
+									<div className='text-sm text-muted-foreground'>
+										90 Days
+									</div>
 								</div>
 							</div>
-							<div className='text-center'>
-								<div className='text-2xl font-bold'>
-									{status.overall.uptime_30_day.toFixed(1)}%
-								</div>
-								<div className='text-sm text-muted-foreground'>
-									30 Days
-								</div>
-							</div>
-							<div className='text-center'>
-								<div className='text-2xl font-bold'>
-									{status.overall.uptime_90_day.toFixed(1)}%
-								</div>
-								<div className='text-sm text-muted-foreground'>
-									90 Days
-								</div>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
+						</CardContent>
+					</Card>
+				</section>
 
 				{/* Active Incidents */}
 				{incidents && incidents.incidents.length > 0 && (
@@ -440,8 +470,10 @@ export function StatusPage() {
 				)}
 
 				{/* Services Status */}
-				<div className='space-y-4'>
-					<h2 className='text-2xl font-bold'>Services</h2>
+				<section aria-labelledby='services-title'>
+					<h2 className='text-2xl font-bold' id='services-title'>
+						Services
+					</h2>
 					{status.services.map((service) => (
 						<Card key={service.id}>
 							<CardHeader>
@@ -540,15 +572,18 @@ export function StatusPage() {
 							</CardContent>
 						</Card>
 					))}
-				</div>
+				</section>
 
 				{/* Footer */}
-				<div className='text-center py-8 text-sm text-muted-foreground'>
+				<footer
+					className='text-center py-8 text-sm text-muted-foreground'
+					role='contentinfo'
+				>
 					<p>
 						Powered by Watchtower • Status updates every 30 seconds
 					</p>
-				</div>
-			</div>
+				</footer>
+			</main>
 		</div>
 	)
 }

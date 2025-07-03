@@ -18,6 +18,7 @@ import {
 	SelectValue,
 } from '~/components/ui/select'
 import { requireAuth } from '~/lib/auth'
+import { MonitoringCharts } from '~/components/monitoring-charts'
 import type { Route } from './+types/monitoring'
 
 export function meta({}: Route.MetaArgs) {
@@ -165,22 +166,16 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 	}
 
 	return (
-		<div className='min-h-screen bg-background'>
-			<div className='container mx-auto px-4 py-8'>
-				<div className='flex justify-between items-center mb-8'>
-					<div>
-						<h1 className='text-3xl font-bold'>Monitoring Logs</h1>
-						<p className='text-muted-foreground'>
-							View and analyze endpoint monitoring results
-						</p>
-					</div>
-					<div className='flex gap-2'>
-						<Link to='/admin'>
-							<Button variant='outline'>Back to Admin</Button>
-						</Link>
-						<Button onClick={refreshLogs}>Refresh</Button>
-					</div>
+		<div>
+			<div className='flex justify-between items-center mb-8'>
+				<div>
+					<h1 className='text-3xl font-bold'>Monitoring Logs</h1>
+					<p className='text-muted-foreground'>
+						View and analyze endpoint monitoring results
+					</p>
 				</div>
+				<Button onClick={refreshLogs}>Refresh</Button>
+			</div>
 
 				{/* Filters */}
 				<Card className='mb-6'>
@@ -456,7 +451,17 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 						</Card>
 					</div>
 				)}
-			</div>
+
+				{/* Monitoring Charts */}
+				{logs.length > 0 && (
+					<div className='mt-8'>
+						<MonitoringCharts 
+							logs={logs} 
+							endpoints={endpoints} 
+							timeRange={timeRange} 
+						/>
+					</div>
+				)}
 		</div>
 	)
 }

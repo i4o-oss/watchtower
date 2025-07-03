@@ -180,24 +180,18 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 	}
 
 	return (
-		<div className='min-h-screen bg-background'>
-			<div className='container mx-auto px-4 py-8'>
-				<div className='flex justify-between items-center mb-8'>
-					<div>
-						<h1 className='text-3xl font-bold'>Incidents</h1>
-						<p className='text-muted-foreground'>
-							Track and manage system incidents
-						</p>
-					</div>
-					<div className='flex gap-2'>
-						<Link to='/admin'>
-							<Button variant='outline'>Back to Admin</Button>
-						</Link>
-						<Link to='/admin/incidents/new'>
-							<Button>Create Incident</Button>
-						</Link>
-					</div>
+		<div>
+			<div className='flex justify-between items-center mb-8'>
+				<div>
+					<h1 className='text-3xl font-bold'>Incidents</h1>
+					<p className='text-muted-foreground'>
+						Track and manage system incidents
+					</p>
 				</div>
+				<Link to='/admin/incidents/new'>
+					<Button>Create Incident</Button>
+				</Link>
+			</div>
 
 				{/* Search and Filters */}
 				<Card className='mb-6'>
@@ -469,7 +463,6 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 						</AlertDialogFooter>
 					</AlertDialogContent>
 				</AlertDialog>
-			</div>
 		</div>
 	)
 }
