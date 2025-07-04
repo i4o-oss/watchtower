@@ -26,6 +26,13 @@ func (app *Application) routes() http.Handler {
 		r.Get("/live", app.livenessCheck)
 	})
 
+	// Performance metrics collection (skip CSRF, public endpoint)
+	r.Group(func(r chi.Router) {
+		r.Use(app.csrfProtection.SkipCSRFMiddleware())
+		r.Use(app.rateLimitMiddleware(PublicAPIRateLimit))
+		r.Post("/api/v1/performance-metrics", app.collectPerformanceMetrics)
+	})
+
 	// API routes with /api/v1 prefix
 	r.Route("/api/v1", func(r chi.Router) {
 		// Apply rate limiting to all API routes
@@ -77,6 +84,9 @@ func (app *Application) routes() http.Handler {
 
 			// Monitoring logs
 			r.Get("/monitoring-logs", app.listMonitoringLogs)
+
+			// Rate limit statistics
+			r.Get("/rate-limit-stats", app.getRateLimitStatsHandler)
 
 			// Incident management
 			r.Route("/incidents", func(r chi.Router) {
