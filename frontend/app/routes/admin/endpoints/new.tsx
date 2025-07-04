@@ -20,8 +20,8 @@ import {
 } from '~/components/ui/select'
 import { Switch } from '~/components/ui/switch'
 import { Alert, AlertDescription } from '~/components/ui/alert'
-import { JsonEditor } from '~/components/json-editor'
-import { LoadingSpinner } from '~/components/loading-spinner'
+import { LazyJsonEditor as JsonEditor } from '~/components/lazy-json-editor'
+import { ButtonLoadingSkeleton } from '~/lib/lazy'
 import { useSuccessToast, useErrorToast } from '~/components/toast'
 import { requireAuth } from '~/lib/auth'
 import {
@@ -511,12 +511,7 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 								</Button>
 							</Link>
 							<Button type='submit' disabled={isSubmitting}>
-								{isSubmitting && (
-									<LoadingSpinner
-										size='sm'
-										className='mr-2'
-									/>
-								)}
+								{isSubmitting && <ButtonLoadingSkeleton />}
 								{isSubmitting
 									? 'Creating...'
 									: 'Create Endpoint'}

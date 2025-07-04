@@ -19,7 +19,7 @@ import {
 	SelectValue,
 } from '~/components/ui/select'
 import { Alert, AlertDescription } from '~/components/ui/alert'
-import { LoadingSpinner } from '~/components/loading-spinner'
+import { ButtonLoadingSkeleton } from '~/lib/lazy'
 import { useSuccessToast, useErrorToast } from '~/components/toast'
 import { requireAuth } from '~/lib/auth'
 import {
@@ -307,12 +307,7 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 								</Button>
 							</Link>
 							<Button type='submit' disabled={isSubmitting}>
-								{isSubmitting && (
-									<LoadingSpinner
-										size='sm'
-										className='mr-2'
-									/>
-								)}
+								{isSubmitting && <ButtonLoadingSkeleton />}
 								{isSubmitting
 									? 'Creating...'
 									: 'Create Incident'}

@@ -18,7 +18,7 @@ import {
 	SelectValue,
 } from '~/components/ui/select'
 import { requireAuth } from '~/lib/auth'
-import { MonitoringCharts } from '~/components/monitoring-charts'
+import { LazyMonitoringCharts as MonitoringCharts } from '~/components/lazy-monitoring-charts'
 import type { Route } from './+types/monitoring'
 
 export function meta({}: Route.MetaArgs) {
