@@ -16,19 +16,14 @@ func (app *Application) routes() http.Handler {
 	r.Use(app.RequestLogger)
 	r.Use(app.SecurityHeaders)
 	r.Use(app.CORS)
-	r.Use(app.csrfProtection.Middleware())
 
-	// Health check routes (no rate limiting, skip CSRF)
-	r.Group(func(r chi.Router) {
-		r.Use(app.csrfProtection.SkipCSRFMiddleware())
-		r.Get("/health", app.healthCheck)
-		r.Get("/ready", app.readinessCheck)
-		r.Get("/live", app.livenessCheck)
-	})
+	// Health check routes (no rate limiting, no CSRF)
+	r.Get("/health", app.healthCheck)
+	r.Get("/ready", app.readinessCheck)
+	r.Get("/live", app.livenessCheck)
 
-	// Performance metrics collection (skip CSRF, public endpoint)
+	// Performance metrics collection (no CSRF, public endpoint)
 	r.Group(func(r chi.Router) {
-		r.Use(app.csrfProtection.SkipCSRFMiddleware())
 		r.Use(app.rateLimitMiddleware(PublicAPIRateLimit))
 		r.Post("/api/v1/performance-metrics", app.collectPerformanceMetrics)
 	})
@@ -41,7 +36,7 @@ func (app *Application) routes() http.Handler {
 		// CSRF token endpoint
 		r.Get("/csrf-token", app.csrfProtection.GetTokenHandler())
 
-		// Public status API endpoints with more generous rate limits
+		// Public status API endpoints with more generous rate limits (no CSRF for GET requests)
 		r.Group(func(r chi.Router) {
 			r.Use(app.rateLimitMiddleware(PublicAPIRateLimit))
 			r.Get("/status", app.getPublicStatus)
@@ -52,23 +47,29 @@ func (app *Application) routes() http.Handler {
 		// Real-time updates via Server-Sent Events (no additional rate limiting - handled by SSE)
 		r.Get("/events", app.handleSSE)
 
-		// Authentication routes with strict rate limiting
+		// Authentication routes with strict rate limiting (no CSRF)
 		r.Group(func(r chi.Router) {
 			r.Use(app.rateLimitMiddleware(AuthRateLimit))
 			r.Post("/auth/register", app.register)
 			r.Post("/auth/login", app.login)
 		})
 
-		r.Post("/auth/logout", app.logout)
-
-		// Protected routes
+		// Logout route (with CSRF protection)
 		r.Group(func(r chi.Router) {
+			r.Use(app.csrfProtection.Middleware())
+			r.Post("/auth/logout", app.logout)
+		})
+
+		// Protected routes (with CSRF protection)
+		r.Group(func(r chi.Router) {
+			r.Use(app.csrfProtection.Middleware())
 			r.Use(app.requireAuth)
 			r.Get("/auth/me", app.me)
 		})
 
-		// Admin routes
+		// Admin routes (with CSRF protection)
 		r.Route("/admin", func(r chi.Router) {
+			r.Use(app.csrfProtection.Middleware())
 			r.Use(app.requireAuth)
 
 			// Endpoint management

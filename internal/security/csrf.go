@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
@@ -29,6 +30,12 @@ type CSRFProtection struct {
 	config CSRFConfig
 	cache  cache.Cache
 }
+
+// Context key for CSRF skip flag
+type csrfSkipKey struct{}
+
+// skipCSRFKey is the key used to store the skip flag in context
+var skipCSRFKey = csrfSkipKey{}
 
 // NewCSRFProtection creates a new CSRF protection instance
 func NewCSRFProtection(cache cache.Cache, config CSRFConfig) *CSRFProtection {
@@ -160,6 +167,12 @@ func (c *CSRFProtection) ValidateReferer(r *http.Request) bool {
 func (c *CSRFProtection) Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check if CSRF should be skipped for this request
+			if skip, ok := r.Context().Value(skipCSRFKey).(bool); ok && skip {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			// Skip CSRF for safe methods
 			if r.Method == "GET" || r.Method == "HEAD" || r.Method == "OPTIONS" {
 				// Generate and set token for safe methods
@@ -197,6 +210,9 @@ func (c *CSRFProtection) Middleware() func(http.Handler) http.Handler {
 func (c *CSRFProtection) SkipCSRFMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Add skip flag to context
+			ctx := context.WithValue(r.Context(), skipCSRFKey, true)
+			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		})
 	}

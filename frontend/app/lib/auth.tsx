@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { redirect } from 'react-router'
+import { api, handleApiResponse } from './api'
 
 // Types
 export interface User {
@@ -28,6 +29,7 @@ export interface AuthContextType extends AuthState {
 	) => Promise<{ success: boolean; error?: string }>
 	logout: () => Promise<void>
 	checkAuth: () => Promise<void>
+	getCSRFToken: () => Promise<string | null>
 }
 
 // API Base URL from environment variables
@@ -44,31 +46,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		isAuthenticated: false,
 	})
 
+	// Get CSRF token (now using the API utility)
+	const getCSRFToken = async (): Promise<string | null> => {
+		try {
+			const response = await api.get('/api/v1/csrf-token')
+			const data = await handleApiResponse(response)
+			return data.csrf_token
+		} catch (error) {
+			console.error('Failed to get CSRF token:', error)
+			return null
+		}
+	}
+
 	// Check authentication status
 	const checkAuth = async () => {
 		try {
-			const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-				method: 'GET',
-				credentials: 'include', // Important for HTTP-only cookies
-				headers: {
-					'Content-Type': 'application/json',
-				},
+			const response = await api.get('/api/v1/auth/me')
+			const user = await handleApiResponse(response)
+			setAuthState({
+				user,
+				isLoading: false,
+				isAuthenticated: true,
 			})
-
-			if (response.ok) {
-				const user = await response.json()
-				setAuthState({
-					user,
-					isLoading: false,
-					isAuthenticated: true,
-				})
-			} else {
-				setAuthState({
-					user: null,
-					isLoading: false,
-					isAuthenticated: false,
-				})
-			}
 		} catch (error) {
 			console.error('Auth check failed:', error)
 			setAuthState({
@@ -146,13 +145,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	// Logout function
 	const logout = async () => {
 		try {
-			await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
-				method: 'POST',
-				credentials: 'include',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			})
+			// Use the API utility which handles CSRF tokens automatically
+			const response = await api.post('/api/v1/auth/logout')
+			await handleApiResponse(response)
 		} catch (error) {
 			console.error('Logout error:', error)
 		} finally {
@@ -176,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		register,
 		logout,
 		checkAuth,
+		getCSRFToken,
 	}
 
 	return (
@@ -251,20 +247,9 @@ export interface AuthCheckResult {
  */
 export async function checkAuthStatus(): Promise<AuthCheckResult> {
 	try {
-		const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-			method: 'GET',
-			credentials: 'include',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		})
-
-		if (response.ok) {
-			const user = await response.json()
-			return { isAuthenticated: true, user }
-		}
-
-		return { isAuthenticated: false }
+		const response = await api.get('/api/v1/auth/me')
+		const user = await handleApiResponse(response)
+		return { isAuthenticated: true, user }
 	} catch (error) {
 		console.error('Auth check failed:', error)
 		return { isAuthenticated: false }

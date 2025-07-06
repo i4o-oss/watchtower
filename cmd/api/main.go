@@ -52,7 +52,7 @@ type Application struct {
 }
 
 var (
-	port = os.Getenv("PORT")
+	port = getEnvWithDefault("PORT", "8080")
 )
 
 // getEnvWithDefault returns environment variable value or default if not set
@@ -170,15 +170,15 @@ func main() {
 			DB:       config.Cache.DB,
 		})
 		if err != nil {
-			logger.Warn("Failed to connect to Redis, falling back to no cache", "err", err.Error())
-			cacheClient = cache.NewNoOpCache()
+			logger.Warn("Failed to connect to Redis, falling back to in-memory cache", "err", err.Error())
+			cacheClient = cache.NewMemoryCache()
 		} else {
 			cacheClient = redisCache
 			logger.Info("Redis cache initialized successfully")
 		}
 	} else {
-		logger.Info("Cache disabled, using no-op cache")
-		cacheClient = cache.NewNoOpCache()
+		logger.Info("Cache disabled, using in-memory cache")
+		cacheClient = cache.NewMemoryCache()
 	}
 
 	// Initialize cached database wrapper
@@ -220,6 +220,7 @@ func main() {
 	csrfProtection := security.NewCSRFProtection(cacheClient, security.CSRFConfig{
 		SecureCookie:   env == "production",
 		TrustedOrigins: trustedOrigins,
+		SkipReferer:    env != "production", // Skip referer validation in development
 	})
 
 	app := &Application{
