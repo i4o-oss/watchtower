@@ -48,7 +48,8 @@ dev-debug.log
 *.sw?
 # OS specific
 .DS_Store
+tmp/
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/

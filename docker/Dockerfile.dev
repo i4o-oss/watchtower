@@ -1,0 +1,29 @@
+# Development Dockerfile with hot-reloading support
+FROM golang:1.24.2-alpine AS development
+
+# Install development tools
+RUN apk add --no-cache git ca-certificates tzdata curl
+
+# Install Air for hot reloading
+RUN go install github.com/air-verse/air@latest
+
+# Install Delve for debugging
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code (this will be mounted as volume in development)
+COPY . .
+
+# Expose ports
+EXPOSE 3000 2345
+
+# Default command for development
+CMD ["air", "-c", ".air.toml"]

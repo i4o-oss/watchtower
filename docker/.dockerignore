@@ -1,0 +1,71 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+LICENSE
+CLAUDE.md
+SECURITY.md
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+justfile
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime and build artifacts
+/bin/
+/tmp/
+
+# Node.js (but keep package.json and package-lock.json)
+frontend/node_modules/
+frontend/.cache/
+frontend/dist/
+frontend/build/
+node_modules/
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/vendor/
+
+# Docker
+Dockerfile.dev
+docker-compose.yml
+docker-compose.*.yml
+
+# Testing
+coverage.out
+*.test
+
+# Temporary files
+*.tmp
+*.temp

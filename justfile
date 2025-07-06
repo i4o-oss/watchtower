@@ -5,6 +5,9 @@ set shell := ["bash", "-c"]
 SERVER_DIR := "./cmd/api"
 FRONTEND_DIR := "./frontend"
 
+default:
+    @just --list
+
 frontend-build:
 	cd {{FRONTEND_DIR}} && bun run build
 
@@ -17,16 +20,21 @@ server-build:
 server-dev:
 	@go run ./...
 
+server-dev-hot:
+	@air -c .air.toml
+
 build:
 	just frontend-build
 	just server-build
 
-default:
-    @just --list
-
 dev:
 	#!/usr/bin/env -S parallel --shebang --ungroup
 	just server-dev
+	just frontend-dev
+
+dev-hot:
+	#!/usr/bin/env -S parallel --shebang --ungroup
+	just server-dev-hot
 	just frontend-dev
 
 fmt:
@@ -62,3 +70,44 @@ db-migrate-status:
 
 db-migrate-create NAME:
     @goose -dir internal/migrations create {{NAME}} sql
+
+# Docker commands
+docker-build:
+    docker-compose -f docker/docker-compose.yml build
+
+docker-up:
+    docker-compose -f docker/docker-compose.yml up -d
+
+docker-down:
+    docker-compose -f docker/docker-compose.yml down
+
+docker-dev:
+    docker-compose -f docker/docker-compose.yml up
+
+docker-prod:
+    docker-compose -f docker/docker-compose.prod.yml up -d
+
+docker-logs:
+    docker-compose -f docker/docker-compose.yml logs -f
+
+docker-clean:
+    docker-compose -f docker/docker-compose.yml down -v --remove-orphans
+    docker system prune -f
+
+# Docker image commands
+docker-build-prod:
+    docker build -f docker/Dockerfile -t watchtower:latest .
+
+docker-build-dev:
+    docker build -f docker/Dockerfile.dev -t watchtower:dev .
+
+docker-tag USERNAME VERSION="latest":
+    docker tag watchtower:latest {{USERNAME}}/watchtower:{{VERSION}}
+
+docker-push USERNAME VERSION="latest":
+    docker push {{USERNAME}}/watchtower:{{VERSION}}
+
+docker-publish USERNAME VERSION="latest":
+    just docker-build-prod
+    just docker-tag {{USERNAME}} {{VERSION}}
+    just docker-push {{USERNAME}} {{VERSION}}
