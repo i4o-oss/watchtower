@@ -144,10 +144,11 @@ func main() {
 	}
 
 	// Initialize database connection
-	// Try environment-based connection first (supports both DATABASE_URL and individual vars)
-	rawDB, err := data.NewDatabaseFromEnv()
-	if err != nil {
-		// Fall back to config-based connection for backward compatibility
+	// Check if DATABASE_URL is provided (Railway style), otherwise use config
+	var rawDB *data.DB
+	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
+		rawDB, err = data.NewDatabaseFromURL(databaseURL)
+	} else {
 		rawDB, err = data.NewDatabase(
 			config.Database.Host,
 			config.Database.User,
@@ -156,10 +157,10 @@ func main() {
 			config.Database.Port,
 			config.Database.SSLMode,
 		)
-		if err != nil {
-			logger.Error("failed to connect to database", "err", err.Error())
-			os.Exit(1)
-		}
+	}
+	if err != nil {
+		logger.Error("failed to connect to database", "err", err.Error())
+		os.Exit(1)
 	}
 
 	// Initialize cache

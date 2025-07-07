@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -68,42 +67,6 @@ func NewDatabaseFromURL(databaseURL string) (*DB, error) {
 	sslmode = parsedURL.Query().Get("sslmode")
 	if sslmode == "" {
 		sslmode = "require" // Default to require SSL for Railway
-	}
-
-	return NewDatabase(host, user, password, dbname, port, sslmode)
-}
-
-// NewDatabaseFromEnv creates a new database connection from environment variables
-// Supports both individual variables and DATABASE_URL
-func NewDatabaseFromEnv() (*DB, error) {
-	// Check if DATABASE_URL is provided (Railway style)
-	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
-		return NewDatabaseFromURL(databaseURL)
-	}
-
-	// Fall back to individual environment variables
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-	sslmode := os.Getenv("DB_SSLMODE")
-
-	if host == "" || user == "" || password == "" || dbname == "" {
-		return nil, fmt.Errorf("required database environment variables not set (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)")
-	}
-
-	portStr := os.Getenv("DB_PORT")
-	if portStr == "" {
-		portStr = "5432"
-	}
-
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid DB_PORT value: %w", err)
-	}
-
-	if sslmode == "" {
-		sslmode = "disable"
 	}
 
 	return NewDatabase(host, user, password, dbname, port, sslmode)
