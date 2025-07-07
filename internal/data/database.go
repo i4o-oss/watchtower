@@ -3,7 +3,10 @@ package data
 import (
 	"fmt"
 	"log"
+	"net/url"
+	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/pressly/goose/v3"
@@ -15,6 +18,95 @@ import (
 
 type DB struct {
 	*gorm.DB
+}
+
+// NewDatabaseFromURL creates a new database connection from a DATABASE_URL string
+func NewDatabaseFromURL(databaseURL string) (*DB, error) {
+	if databaseURL == "" {
+		return nil, fmt.Errorf("database URL cannot be empty")
+	}
+
+	parsedURL, err := url.Parse(databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse database URL: %w", err)
+	}
+
+	// Extract connection details from URL
+	var host, user, password, dbname, sslmode string
+	var port int
+
+	host = parsedURL.Hostname()
+	if host == "" {
+		return nil, fmt.Errorf("database host not found in URL")
+	}
+
+	if parsedURL.Port() != "" {
+		port, err = strconv.Atoi(parsedURL.Port())
+		if err != nil {
+			return nil, fmt.Errorf("invalid port in database URL: %w", err)
+		}
+	} else {
+		port = 5432 // Default PostgreSQL port
+	}
+
+	user = parsedURL.User.Username()
+	if user == "" {
+		return nil, fmt.Errorf("database user not found in URL")
+	}
+
+	password, _ = parsedURL.User.Password()
+	if password == "" {
+		return nil, fmt.Errorf("database password not found in URL")
+	}
+
+	dbname = parsedURL.Path[1:] // Remove leading slash
+	if dbname == "" {
+		return nil, fmt.Errorf("database name not found in URL")
+	}
+
+	// Check for SSL mode in query parameters
+	sslmode = parsedURL.Query().Get("sslmode")
+	if sslmode == "" {
+		sslmode = "require" // Default to require SSL for Railway
+	}
+
+	return NewDatabase(host, user, password, dbname, port, sslmode)
+}
+
+// NewDatabaseFromEnv creates a new database connection from environment variables
+// Supports both individual variables and DATABASE_URL
+func NewDatabaseFromEnv() (*DB, error) {
+	// Check if DATABASE_URL is provided (Railway style)
+	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
+		return NewDatabaseFromURL(databaseURL)
+	}
+
+	// Fall back to individual environment variables
+	host := os.Getenv("DB_HOST")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	sslmode := os.Getenv("DB_SSLMODE")
+
+	if host == "" || user == "" || password == "" || dbname == "" {
+		return nil, fmt.Errorf("required database environment variables not set (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)")
+	}
+
+	portStr := os.Getenv("DB_PORT")
+	if portStr == "" {
+		portStr = "5432"
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid DB_PORT value: %w", err)
+	}
+
+	if sslmode == "" {
+		sslmode = "disable"
+	}
+
+	return NewDatabase(host, user, password, dbname, port, sslmode)
 }
 
 func NewDatabase(host, user, password, dbname string, port int, sslmode string) (*DB, error) {

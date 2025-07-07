@@ -144,17 +144,22 @@ func main() {
 	}
 
 	// Initialize database connection
-	rawDB, err := data.NewDatabase(
-		config.Database.Host,
-		config.Database.User,
-		config.Database.Password,
-		config.Database.Name,
-		config.Database.Port,
-		config.Database.SSLMode,
-	)
+	// Try environment-based connection first (supports both DATABASE_URL and individual vars)
+	rawDB, err := data.NewDatabaseFromEnv()
 	if err != nil {
-		logger.Error("failed to connect to database", "err", err.Error())
-		os.Exit(1)
+		// Fall back to config-based connection for backward compatibility
+		rawDB, err = data.NewDatabase(
+			config.Database.Host,
+			config.Database.User,
+			config.Database.Password,
+			config.Database.Name,
+			config.Database.Port,
+			config.Database.SSLMode,
+		)
+		if err != nil {
+			logger.Error("failed to connect to database", "err", err.Error())
+			os.Exit(1)
+		}
 	}
 
 	// Initialize cache
