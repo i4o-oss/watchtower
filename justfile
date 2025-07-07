@@ -49,6 +49,33 @@ tidy:
     cd {{FRONTEND_DIR}} && bun i
     @go mod tidy
 
+# Test commands
+test:
+    @go test ./...
+
+test-verbose:
+    @go test -v ./...
+
+test-cover:
+    @go test -cover ./...
+
+test-cover-html:
+    @go test -coverprofile=coverage.out ./...
+    @go tool cover -html=coverage.out -o coverage.html
+    @echo "Coverage report generated: coverage.html"
+
+test-models:
+    @go test -v ./internal/data/
+
+test-middleware:
+    @go test -v ./cmd/api/
+
+test-monitoring:
+    @go test -v ./internal/monitoring/
+
+test-security:
+    @go test -v ./internal/security/
+
 # Database migration commands
 db-migrate-up:
     #!/usr/bin/env bash
