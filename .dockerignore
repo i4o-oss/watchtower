@@ -1,0 +1,142 @@
+# Railway-optimized .dockerignore
+# Reduces build context and improves build performance
+
+# Version control
+.git
+.gitignore
+.gitmodules
+.gitattributes
+
+# Documentation
+README.md
+CONTRIBUTING.md
+LICENSE
+CHANGELOG.md
+*.md
+
+# Development files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE/Editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependency directories
+node_modules/
+frontend/node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+*_test.js
+*_test.ts
+*_test.tsx
+__tests__/
+test/
+tests/
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.cache/
+
+# Railway specific ignores
+.railway/
+railway.toml
+railway-env-setup.md
+
+# Task master files
+.taskmaster/
+CLAUDE.md
+
+# Docker files (exclude development docker files)
+docker-compose.yml
+docker-compose.override.yml
+docker-compose.dev.yml
+docker/Dockerfile.dev
+docker/docker-compose.yml
+docker/docker-compose.dev.yml
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+azure-pipelines.yml
+Jenkinsfile
+
+# Frontend specific ignores
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/coverage/
+frontend/build/
+frontend/dist/
+frontend/.vite/
+frontend/node_modules/
+
+# Go specific ignores
+vendor/
+*.test
+*.prof
+*.cpu
+*.mem
+*.cover
+*.out
+
+# Exclude development binaries
+watchtower
+watchtower.exe
+main
+main.exe
+
+# Exclude large binary files
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Exclude unnecessary assets
+*.psd
+*.ai
+*.sketch
+*.fig
