@@ -1,0 +1,93 @@
+{
+	"meta": {
+		"generatedAt": "2025-07-01T14:05:28.832Z",
+		"tasksAnalyzed": 10,
+		"totalTasks": 10,
+		"analysisCount": 10,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Initialize Project Structure and Dependencies",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down project initialization into monorepo setup, Go backend scaffolding with dependencies, React frontend setup with React Router v7, and development environment configuration with build scripts.",
+			"reasoning": "Moderate complexity due to multiple technology stacks (Go, React, PostgreSQL) but mostly standard setup procedures. Breaking into 4 logical components allows parallel work and clear validation points."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Database Schema Implementation",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Split database implementation into: schema design and migration files creation, core tables (endpoints, monitoring_logs), incident management tables (incidents, endpoint_incidents), user management table, and indexes/constraints/performance optimization.",
+			"reasoning": "High-medium complexity due to multiple interrelated tables, foreign key relationships, and performance considerations. 5 subtasks allow focused work on related table groups and separate performance optimization."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Authentication and Authorization System",
+			"complexityScore": 8,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Decompose authentication into: user registration/login endpoints, password hashing with bcrypt, JWT token generation and validation, authentication middleware implementation, session management and secure storage, and security features (brute force protection, role-based access).",
+			"reasoning": "High complexity due to security-critical nature, multiple authentication components, and need for proper security measures. 6 subtasks ensure each security aspect is properly implemented and tested."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Core Monitoring Engine",
+			"complexityScore": 9,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "Break monitoring engine into: goroutine worker pool architecture, HTTP client with custom configuration support, response tracking and validation logic, database logging integration, interval scheduling system, retry logic and error handling, and graceful shutdown/worker management.",
+			"reasoning": "Very high complexity due to concurrent programming, scheduling, error handling, and system reliability requirements. 7 subtasks address each critical component of the monitoring system separately."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Admin API Endpoints",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Organize API development into: endpoint management CRUD operations (GET/POST/PUT/DELETE), monitoring logs retrieval with pagination and filtering, incident management API endpoints, and comprehensive input validation and authentication middleware integration.",
+			"reasoning": "Medium complexity with standard CRUD operations but requires proper validation, authentication, and error handling. 4 subtasks group related endpoints and separate validation concerns."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Public API and WebSocket Implementation",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Split into: public status API endpoints implementation, WebSocket server setup and connection management, real-time broadcasting system, data aggregation for uptime calculations, and historical data querying optimization.",
+			"reasoning": "High-medium complexity due to real-time WebSocket implementation, data aggregation requirements, and performance considerations for public APIs. 5 subtasks separate API and WebSocket concerns."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Incident Management System",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Organize incident management into: incident CRUD operations and validation, automatic incident detection logic, manual incident creation for maintenance, incident-endpoint association functionality, and incident status workflow and timeline tracking.",
+			"reasoning": "High-medium complexity due to business logic for automatic detection, workflow management, and data relationships. 5 subtasks separate automatic vs manual creation and workflow concerns."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Admin Dashboard Frontend",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Break dashboard into: React Router v7 setup and navigation structure, endpoint configuration forms with JSON editor, monitoring history visualization with charts, incident management interface, form validation and error handling, and responsive design implementation.",
+			"reasoning": "High-medium complexity due to multiple complex UI components, data visualization, form handling, and responsive design requirements. 6 subtasks address each major UI component separately."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Public Status Page Frontend",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Organize status page into: responsive layout and status indicators, interactive uptime graphs with daily breakdown, incident display with modal functionality, WebSocket integration for real-time updates, and accessibility compliance and mobile optimization.",
+			"reasoning": "High-medium complexity due to real-time updates, interactive visualizations, and accessibility requirements. 5 subtasks separate UI components, real-time features, and accessibility concerns."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Performance Optimization and Security Hardening",
+			"complexityScore": 8,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Split optimization into: database query optimization and indexing, caching strategies implementation, comprehensive security measures (input validation, CSRF, XSS prevention), API rate limiting, frontend performance optimization and code splitting, and comprehensive logging and error handling.",
+			"reasoning": "High complexity due to multiple performance and security domains requiring specialized knowledge. 6 subtasks separate database, security, API, frontend, and monitoring concerns for focused optimization work."
+		}
+	]
+}

@@ -1,0 +1,265 @@
+# Watchtower - Status Monitoring Application
+## Product Requirements Document
+
+### 1. Overview
+
+Watchtower is a comprehensive status monitoring application that allows users to monitor multiple endpoints, track uptime, and display service status to visitors. The application combines real-time monitoring with incident management and provides both admin and public-facing interfaces.
+
+### 2. Core Features
+
+#### 2.1 Endpoint Monitoring Configuration
+- Add multiple endpoints for monitoring
+- Configure HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- Set custom monitoring intervals (1min, 5min, 15min, 30min, 1hr, 6hr, 12hr, 24hr)
+- Add custom request headers (key-value pairs)
+- Configure request body with JSON editor
+- Set endpoint name and description
+- Enable/disable monitoring for individual endpoints
+- Configure expected response codes and timeout values
+- Set up alert thresholds and notification preferences
+
+#### 2.2 Monitoring Engine
+- Continuous background monitoring based on configured intervals
+- HTTP request execution with custom headers and body
+- Response time tracking and logging
+- Status code validation and error handling
+- Retry logic for failed requests
+- Monitoring history retention (90+ days)
+- Real-time status updates
+- Performance metrics collection (response time, availability percentage)
+
+#### 2.3 Data Storage and Logging
+- Store monitoring results with timestamps
+- Track response times, status codes, and error messages
+- Maintain uptime/downtime events
+- Store incident reports and metadata
+- Historical data retention for trend analysis
+- Efficient data structure for quick queries and visualization
+
+#### 2.4 Public Status Page (Home Page)
+- Display current status of all monitored endpoints
+- Show real-time status indicators (up/down/degraded)
+- 90-day uptime graphs for each endpoint
+- Interactive daily breakdown on graph click
+- Display incident reports for selected dates
+- Responsive design for mobile and desktop
+- Auto-refresh functionality
+- Service status summary dashboard
+
+#### 2.5 Admin Dashboard
+- Secure authentication for admin access
+- Endpoint management interface (CRUD operations)
+- Monitoring configuration panel
+- Incident report creation and management
+- Historical data visualization and analytics
+- System health monitoring
+- User management (if multi-admin support needed)
+- Notification settings and alert configuration
+
+#### 2.6 Incident Management
+- Create incident reports with title, description, and severity
+- Assign incidents to specific endpoints and date ranges
+- Publish/unpublish incident reports
+- Incident status tracking (investigating, identified, monitoring, resolved)
+- Automatic incident detection based on monitoring failures
+- Manual incident creation for maintenance windows
+- Incident timeline and update history
+
+### 3. Technical Architecture
+
+#### 3.1 Backend (Golang)
+- RESTful API endpoints for monitoring configuration
+- Background goroutines for monitoring execution
+- Database integration for data persistence
+- Authentication and authorization middleware
+- WebSocket support for real-time updates
+- Structured logging and error handling
+- Configuration management
+- Health check endpoints
+
+#### 3.2 Frontend (React Router v7)
+- SPA mode with client-side routing
+- Responsive UI components
+- Real-time status updates via WebSocket
+- Interactive charts and graphs
+- Form validation and error handling
+- Admin authentication flow
+- JSON editor for request body configuration
+- Progressive web app features
+
+#### 3.3 Database Schema
+- Endpoints table (id, name, description, url, method, headers, body, interval, enabled, created_at, updated_at)
+- Monitoring_logs table (id, endpoint_id, timestamp, status_code, response_time, error_message, success)
+- Incidents table (id, title, description, severity, status, start_time, end_time, created_at, updated_at)
+- Endpoint_incidents table (endpoint_id, incident_id, affected_start, affected_end)
+- Users table (id, username, password_hash, role, created_at, updated_at)
+
+### 4. User Stories
+
+#### 4.1 Admin User Stories
+- As an admin, I want to add new endpoints to monitor so that I can track their availability
+- As an admin, I want to configure monitoring intervals so that I can balance monitoring frequency with system resources
+- As an admin, I want to set custom headers and request bodies so that I can monitor authenticated or complex endpoints
+- As an admin, I want to create incident reports so that I can communicate issues to users
+- As an admin, I want to view historical monitoring data so that I can analyze trends and patterns
+- As an admin, I want to receive alerts when services go down so that I can respond quickly
+
+#### 4.2 Public User Stories
+- As a visitor, I want to see the current status of all services so that I know if they're available
+- As a visitor, I want to view uptime history so that I can understand service reliability
+- As a visitor, I want to see incident reports so that I understand what issues occurred and when
+- As a visitor, I want to access the status page from any device so that I can check status on the go
+- As a visitor, I want real-time updates so that I don't need to refresh the page manually
+
+### 5. API Endpoints
+
+#### 5.1 Public API
+- GET /api/status - Get current status of all endpoints
+- GET /api/uptime/:endpoint_id - Get uptime data for specific endpoint
+- GET /api/incidents - Get published incident reports
+- GET /api/incidents/:date - Get incidents for specific date
+- WebSocket /ws/status - Real-time status updates
+
+#### 5.2 Admin API
+- POST /api/auth/login - Admin authentication
+- POST /api/auth/logout - Admin logout
+- GET /api/admin/endpoints - List all endpoints
+- POST /api/admin/endpoints - Create new endpoint
+- PUT /api/admin/endpoints/:id - Update endpoint
+- DELETE /api/admin/endpoints/:id - Delete endpoint
+- GET /api/admin/monitoring-logs - Get monitoring history
+- POST /api/admin/incidents - Create incident report
+- PUT /api/admin/incidents/:id - Update incident report
+- DELETE /api/admin/incidents/:id - Delete incident report
+
+### 6. UI/UX Requirements
+
+#### 6.1 Status Page Design
+- Clean, professional appearance suitable for public viewing
+- Color-coded status indicators (green=up, red=down, yellow=degraded)
+- Responsive grid layout for multiple endpoints
+- Interactive uptime graphs with hover details
+- Incident popup/modal for detailed information
+- Auto-refresh with visual indicators
+- Loading states and error handling
+
+#### 6.2 Admin Dashboard Design
+- Secure login form with validation
+- Tabbed interface for different admin functions
+- Form-based endpoint configuration with validation
+- JSON editor with syntax highlighting
+- Data tables with sorting and pagination
+- Chart visualizations for analytics
+- Confirmation dialogs for destructive actions
+- Responsive design for mobile administration
+
+#### 6.3 Accessibility
+- ARIA labels and semantic HTML
+- Keyboard navigation support
+- Screen reader compatibility
+- Color contrast compliance
+- Focus management for interactive elements
+
+### 7. Performance Requirements
+
+#### 7.1 Monitoring Performance
+- Support for 100+ simultaneous endpoint monitoring
+- Configurable monitoring intervals from 1 minute to 24 hours
+- Response time tracking with millisecond precision
+- Efficient database queries for historical data
+- Background processing without blocking UI operations
+
+#### 7.2 Application Performance
+- Status page load time < 2 seconds
+- Real-time updates with < 1 second latency
+- Uptime graph rendering for 90 days of data
+- Efficient data pagination for large datasets
+- Optimized bundle size for fast loading
+
+### 8. Security Requirements
+
+#### 8.1 Authentication
+- Secure admin authentication with password hashing
+- Session management with secure tokens
+- Automatic session expiration
+- Protection against brute force attacks
+- Secure password reset functionality
+
+#### 8.2 Data Protection
+- Input validation and sanitization
+- SQL injection prevention
+- XSS protection
+- CSRF protection for admin actions
+- Secure handling of sensitive configuration data
+
+### 9. Deployment and Operations
+
+#### 9.1 Configuration
+- Environment-based configuration management
+- Database connection configuration
+- Monitoring interval limits and defaults
+- Alert notification settings
+- Public/private endpoint access controls
+
+#### 9.2 Monitoring and Maintenance
+- Application health monitoring
+- Database performance monitoring
+- Log management and rotation
+- Backup and recovery procedures
+- Update and deployment procedures
+
+### 10. Future Enhancements
+
+#### 10.1 Advanced Features
+- Multi-region monitoring
+- Custom alert channels (email, Slack, webhook)
+- API monitoring with response validation
+- Certificate expiration monitoring
+- Maintenance window scheduling
+- Public API for status integration
+- Custom branding and white-label options
+- Advanced analytics and reporting
+- Team collaboration features
+- Integration with external monitoring tools
+
+#### 10.2 Scalability
+- Horizontal scaling for monitoring workers
+- Database sharding for large datasets
+- CDN integration for global performance
+- Caching strategies for improved performance
+- Load balancing for high availability
+
+### 11. Success Metrics
+
+#### 11.1 Technical Metrics
+- Monitoring accuracy (>99.9% successful checks)
+- Status page availability (>99.9% uptime)
+- Response time for status queries (<500ms)
+- Data retention compliance (90+ days)
+- Alert response time (<1 minute)
+
+#### 11.2 User Experience Metrics
+- Admin task completion rate
+- Status page bounce rate
+- Mobile responsiveness score
+- Accessibility compliance score
+- User satisfaction ratings
+
+### 12. Acceptance Criteria
+
+#### 12.1 Core Functionality
+- All endpoint monitoring configurations work as specified
+- Status page displays accurate real-time information
+- Uptime graphs show correct historical data
+- Incident reports display properly on status page
+- Admin dashboard allows full CRUD operations
+- Authentication system works securely
+
+#### 12.2 Performance and Reliability
+- Application handles concurrent monitoring without performance degradation
+- Database queries complete within acceptable time limits
+- UI remains responsive during data loading
+- Error handling prevents system crashes
+- Data integrity maintained across all operations
+
+This PRD provides a comprehensive foundation for developing the Watchtower status monitoring application, covering all requested features and technical requirements while maintaining scalability and security standards.
