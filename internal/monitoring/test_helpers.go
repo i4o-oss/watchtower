@@ -10,10 +10,10 @@ import (
 
 // MockDB implements the interfaces needed by the monitoring engine
 type MockDB struct {
-	endpoints        []data.Endpoint
-	monitoringLogs   []data.MonitoringLog
-	shouldFail       bool
-	failOnOperation  string
+	endpoints       []data.Endpoint
+	monitoringLogs  []data.MonitoringLog
+	shouldFail      bool
+	failOnOperation string
 }
 
 func NewMockDB() *MockDB {
@@ -29,7 +29,7 @@ func (m *MockDB) GetEnabledEndpoints() ([]data.Endpoint, error) {
 	if m.shouldFail && m.failOnOperation == "GetEnabledEndpoints" {
 		return nil, gorm.ErrInvalidTransaction
 	}
-	
+
 	var enabled []data.Endpoint
 	for _, endpoint := range m.endpoints {
 		if endpoint.Enabled {
@@ -44,7 +44,7 @@ func (m *MockDB) CreateMonitoringLog(log *data.MonitoringLog) error {
 	if m.shouldFail && m.failOnOperation == "CreateMonitoringLog" {
 		return gorm.ErrInvalidTransaction
 	}
-	
+
 	log.ID = uuid.New()
 	log.Timestamp = time.Now()
 	m.monitoringLogs = append(m.monitoringLogs, *log)
@@ -56,7 +56,7 @@ func (m *MockDB) GetRecentMonitoringLogs(hours int) ([]data.MonitoringLog, error
 	if m.shouldFail && m.failOnOperation == "GetRecentMonitoringLogs" {
 		return nil, gorm.ErrInvalidTransaction
 	}
-	
+
 	// Return logs from the last `hours` hours
 	cutoff := time.Now().Add(-time.Duration(hours) * time.Hour)
 	var recentLogs []data.MonitoringLog

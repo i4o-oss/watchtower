@@ -80,18 +80,18 @@ func TestUser_HashPassword(t *testing.T) {
 			user := &User{
 				Email: "test@example.com",
 			}
-			
+
 			err := user.HashPassword(tt.password)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HashPassword() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 			if !tt.wantErr {
 				// Verify password was hashed and not stored as plain text
 				assertNotEqual(t, tt.password, user.Password)
 				assertTrue(t, len(user.Password) > 0)
-				
+
 				// Verify the hash can be verified
 				err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(tt.password))
 				assertNoError(t, err)
@@ -104,12 +104,12 @@ func TestUser_CheckPassword(t *testing.T) {
 	user := &User{
 		Email: "test@example.com",
 	}
-	
+
 	// Set up a hashed password
 	password := "testpassword123"
 	err := user.HashPassword(password)
 	assertNoError(t, err)
-	
+
 	tests := []struct {
 		name          string
 		checkPassword string
@@ -193,7 +193,7 @@ func TestHTTPHeaders_Value(t *testing.T) {
 				t.Errorf("HTTPHeaders.Value() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 			if !tt.wantErr {
 				// Convert to string for comparison
 				var gotStr string
@@ -206,18 +206,18 @@ func TestHTTPHeaders_Value(t *testing.T) {
 					t.Errorf("Unexpected return type: %T", got)
 					return
 				}
-				
+
 				// For nil headers, check exact match
 				if tt.headers == nil {
 					assertEqual(t, tt.want, gotStr)
 					return
 				}
-				
+
 				// For non-nil headers, verify it's valid JSON
 				var jsonTest map[string]string
 				err = json.Unmarshal([]byte(gotStr), &jsonTest)
 				assertNoError(t, err)
-				
+
 				// Check that all expected headers are present
 				for key, value := range tt.headers {
 					assertEqual(t, value, jsonTest[key])
@@ -276,12 +276,12 @@ func TestHTTPHeaders_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var h HTTPHeaders
 			err := h.Scan(tt.value)
-			
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HTTPHeaders.Scan() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 			if !tt.wantErr {
 				if tt.want == nil {
 					assertTrue(t, h != nil)
@@ -434,12 +434,12 @@ func TestMonitoringLogValidation(t *testing.T) {
 			if tt.valid {
 				assertTrue(t, tt.log.EndpointID != uuid.Nil)
 				assertTrue(t, !tt.log.Timestamp.IsZero())
-				
+
 				// For successful checks, verify positive response time
 				if tt.log.Success && tt.log.ResponseTimeMs != nil {
 					assertTrue(t, *tt.log.ResponseTimeMs > 0)
 				}
-				
+
 				// For failed checks, verify either error message or status code
 				if !tt.log.Success {
 					hasError := tt.log.ErrorMessage != nil && *tt.log.ErrorMessage != ""
@@ -506,7 +506,7 @@ func TestIncidentValidation(t *testing.T) {
 				assertTrue(t, tt.incident.Severity != "")
 				assertTrue(t, tt.incident.Status != "")
 				assertTrue(t, !tt.incident.StartTime.IsZero())
-				
+
 				// If resolved, should have end time
 				if tt.incident.Status == "resolved" {
 					assertTrue(t, tt.incident.EndTime != nil)
@@ -523,9 +523,9 @@ func TestEndpointIncidentValidation(t *testing.T) {
 	now := time.Now()
 
 	tests := []struct {
-		name               string
-		endpointIncident   EndpointIncident
-		valid              bool
+		name             string
+		endpointIncident EndpointIncident
+		valid            bool
 	}{
 		{
 			name: "active endpoint incident",
@@ -555,7 +555,7 @@ func TestEndpointIncidentValidation(t *testing.T) {
 				assertTrue(t, tt.endpointIncident.EndpointID != uuid.Nil)
 				assertTrue(t, tt.endpointIncident.IncidentID != uuid.Nil)
 				assertTrue(t, !tt.endpointIncident.AffectedStart.IsZero())
-				
+
 				// If resolved, end time should be after start time
 				if tt.endpointIncident.AffectedEnd != nil {
 					assertTrue(t, tt.endpointIncident.AffectedEnd.After(tt.endpointIncident.AffectedStart))
@@ -613,12 +613,12 @@ func TestIncidentTimelineValidation(t *testing.T) {
 			if tt.valid {
 				assertTrue(t, tt.timeline.IncidentID != uuid.Nil)
 				assertTrue(t, tt.timeline.EventType != "")
-				
+
 				// Timeline entries should have some meaningful content
 				hasOldValue := tt.timeline.OldValue != nil && *tt.timeline.OldValue != ""
 				hasNewValue := tt.timeline.NewValue != nil && *tt.timeline.NewValue != ""
 				hasMessage := tt.timeline.Message != nil && *tt.timeline.Message != ""
-				
+
 				assertTrue(t, hasOldValue || hasNewValue || hasMessage)
 			}
 		})

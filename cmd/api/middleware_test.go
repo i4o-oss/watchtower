@@ -316,7 +316,6 @@ func TestMiddleware_RequireAuth_DatabaseError(t *testing.T) {
 	}
 }
 
-
 func TestMiddleware_ConcurrentAccess(t *testing.T) {
 	setupTestEnv()
 	defer teardownTestEnv()
@@ -370,8 +369,8 @@ func TestMiddleware_ConcurrentAccess(t *testing.T) {
 			middleware.ServeHTTP(rr, req)
 
 			if http.StatusOK != rr.Code {
-		t.Errorf("Expected %v, got %v", http.StatusOK, rr.Code)
-	}
+				t.Errorf("Expected %v, got %v", http.StatusOK, rr.Code)
+			}
 			if u.Email != rr.Body.String() {
 				t.Errorf("Expected %v, got %v", u.Email, rr.Body.String())
 			}

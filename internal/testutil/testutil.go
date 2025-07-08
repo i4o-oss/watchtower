@@ -120,15 +120,15 @@ func (m *MockHTTPClient) SetError(url string, err error) {
 
 func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	url := req.URL.String()
-	
+
 	if err, exists := m.errors[url]; exists {
 		return nil, err
 	}
-	
+
 	if resp, exists := m.responses[url]; exists {
 		return resp, nil
 	}
-	
+
 	// Default response
 	return &http.Response{
 		StatusCode: 200,
@@ -139,25 +139,25 @@ func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 
 // MockDB implements basic database operations for testing
 type MockDB struct {
-	users      []data.User
-	endpoints  []data.Endpoint
-	logs       []data.MonitoringLog
-	incidents  []data.Incident
-	userIDSeq  uint
+	users         []data.User
+	endpoints     []data.Endpoint
+	logs          []data.MonitoringLog
+	incidents     []data.Incident
+	userIDSeq     uint
 	endpointIDSeq uint
-	logIDSeq   uint
+	logIDSeq      uint
 	incidentIDSeq uint
 }
 
 func NewMockDB() *MockDB {
 	return &MockDB{
-		users:     make([]data.User, 0),
-		endpoints: make([]data.Endpoint, 0),
-		logs:      make([]data.MonitoringLog, 0),
-		incidents: make([]data.Incident, 0),
-		userIDSeq: 1,
+		users:         make([]data.User, 0),
+		endpoints:     make([]data.Endpoint, 0),
+		logs:          make([]data.MonitoringLog, 0),
+		incidents:     make([]data.Incident, 0),
+		userIDSeq:     1,
 		endpointIDSeq: 1,
-		logIDSeq:  1,
+		logIDSeq:      1,
 		incidentIDSeq: 1,
 	}
 }

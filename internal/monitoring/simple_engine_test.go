@@ -24,16 +24,16 @@ func TestHTTPClientConfig(t *testing.T) {
 		Timeout:    5 * time.Second,
 		MaxRetries: 3,
 	}
-	
+
 	client := NewHTTPClient(config)
 	if client == nil {
 		t.Error("Expected client to be created")
 	}
-	
+
 	if client.config.Timeout != 5*time.Second {
 		t.Errorf("Expected Timeout=5s, got %v", client.config.Timeout)
 	}
-	
+
 	if client.config.MaxRetries != 3 {
 		t.Errorf("Expected MaxRetries=3, got %d", client.config.MaxRetries)
 	}
@@ -49,7 +49,7 @@ func TestParseUUID(t *testing.T) {
 	if parsed.String() != validUUID {
 		t.Errorf("Expected %s, got %s", validUUID, parsed.String())
 	}
-	
+
 	// Test invalid UUID
 	_, err = parseUUID("invalid-uuid")
 	if err == nil {
@@ -60,7 +60,7 @@ func TestParseUUID(t *testing.T) {
 func TestLoggerCreation(t *testing.T) {
 	logger := log.New(nil)
 	logger.SetLevel(log.ErrorLevel)
-	
+
 	if logger == nil {
 		t.Error("Expected logger to be created")
 	}
@@ -75,11 +75,11 @@ func TestMonitoringStructures(t *testing.T) {
 		ResultQueueSize: 5,
 		ResultQueueCap:  50,
 	}
-	
+
 	if stats.Workers != 5 {
 		t.Errorf("Expected Workers=5, got %d", stats.Workers)
 	}
-	
+
 	if stats.JobQueueSize != 10 {
 		t.Errorf("Expected JobQueueSize=10, got %d", stats.JobQueueSize)
 	}
@@ -87,21 +87,21 @@ func TestMonitoringStructures(t *testing.T) {
 
 func TestMockDBBasics(t *testing.T) {
 	mockDB := NewMockDB()
-	
+
 	if mockDB == nil {
 		t.Error("Expected mock DB to be created")
 	}
-	
+
 	// Test GetEnabledEndpoints with no endpoints
 	endpoints, err := mockDB.GetEnabledEndpoints()
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
-	
+
 	if len(endpoints) != 0 {
 		t.Errorf("Expected 0 endpoints, got %d", len(endpoints))
 	}
-	
+
 	// Test failure scenario
 	mockDB.SetShouldFail(true, "GetEnabledEndpoints")
 	_, err = mockDB.GetEnabledEndpoints()
