@@ -76,6 +76,9 @@ test-monitoring:
 test-security:
     @go test -v ./internal/security/
 
+vet:
+    @go vet ./...
+
 # Database migration commands
 db-migrate-up:
     #!/usr/bin/env bash
