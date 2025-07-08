@@ -3,13 +3,13 @@ package testutil
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/i4o-oss/watchtower/internal/cache"
 	"github.com/i4o-oss/watchtower/internal/data"
 	"gorm.io/gorm"
@@ -139,32 +139,23 @@ func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 
 // MockDB implements basic database operations for testing
 type MockDB struct {
-	users         []data.User
-	endpoints     []data.Endpoint
-	logs          []data.MonitoringLog
-	incidents     []data.Incident
-	userIDSeq     uint
-	endpointIDSeq uint
-	logIDSeq      uint
-	incidentIDSeq uint
+	users     []data.User
+	endpoints []data.Endpoint
+	logs      []data.MonitoringLog
+	incidents []data.Incident
 }
 
 func NewMockDB() *MockDB {
 	return &MockDB{
-		users:         make([]data.User, 0),
-		endpoints:     make([]data.Endpoint, 0),
-		logs:          make([]data.MonitoringLog, 0),
-		incidents:     make([]data.Incident, 0),
-		userIDSeq:     1,
-		endpointIDSeq: 1,
-		logIDSeq:      1,
-		incidentIDSeq: 1,
+		users:     make([]data.User, 0),
+		endpoints: make([]data.Endpoint, 0),
+		logs:      make([]data.MonitoringLog, 0),
+		incidents: make([]data.Incident, 0),
 	}
 }
 
 func (m *MockDB) CreateUser(user *data.User) error {
-	user.ID = m.userIDSeq
-	m.userIDSeq++
+	user.ID = uuid.New()
 	m.users = append(m.users, *user)
 	return nil
 }
@@ -179,13 +170,12 @@ func (m *MockDB) FindUserByEmail(email string) (*data.User, error) {
 }
 
 func (m *MockDB) CreateEndpoint(endpoint *data.Endpoint) error {
-	endpoint.ID = m.endpointIDSeq
-	m.endpointIDSeq++
+	endpoint.ID = uuid.New()
 	m.endpoints = append(m.endpoints, *endpoint)
 	return nil
 }
 
-func (m *MockDB) FindEndpointByID(id uint) (*data.Endpoint, error) {
+func (m *MockDB) FindEndpointByID(id uuid.UUID) (*data.Endpoint, error) {
 	for _, endpoint := range m.endpoints {
 		if endpoint.ID == id {
 			return &endpoint, nil
@@ -249,36 +239,34 @@ func CreateTestUser() *data.User {
 	return &data.User{
 		Email:    "test@example.com",
 		Password: "hashedpassword",
-		Role:     "user",
 	}
 }
 
 func CreateTestEndpoint() *data.Endpoint {
 	return &data.Endpoint{
-		URL:      "https://example.com",
-		Name:     "Test Endpoint",
-		Method:   "GET",
-		Interval: 300,
-		Timeout:  30,
-		UserID:   1,
+		URL:                  "https://example.com",
+		Name:                 "Test Endpoint",
+		Method:               "GET",
+		CheckIntervalSeconds: 300,
+		TimeoutSeconds:       30,
 	}
 }
 
 func CreateTestLog() *data.MonitoringLog {
 	return &data.MonitoringLog{
-		EndpointID:   1,
-		Status:       "up",
-		ResponseTime: 150,
-		StatusCode:   200,
-		Timestamp:    time.Now(),
+		EndpointID:     uuid.New(),
+		Success:        true,
+		ResponseTimeMs: func() *int { i := 150; return &i }(),
+		StatusCode:     func() *int { i := 200; return &i }(),
+		Timestamp:      time.Now(),
 	}
 }
 
 func CreateTestIncident() *data.Incident {
 	return &data.Incident{
-		EndpointID:  1,
-		Status:      "open",
+		Title:       "Test Incident",
 		Description: "Test incident",
+		Status:      "open",
 		StartTime:   time.Now(),
 	}
 }

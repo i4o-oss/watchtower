@@ -107,11 +107,8 @@ func (h *SSEHub) startPingTicker() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			h.BroadcastPing()
-		}
+	for range ticker.C {
+		h.BroadcastPing()
 	}
 }
 
@@ -239,11 +236,8 @@ func (app *Application) StartSSEStatusBroadcaster() {
 		ticker := time.NewTicker(30 * time.Second) // Broadcast every 30 seconds
 		defer ticker.Stop()
 
-		for {
-			select {
-			case <-ticker.C:
-				app.broadcastCurrentStatus()
-			}
+		for range ticker.C {
+			app.broadcastCurrentStatus()
 		}
 	}()
 }
