@@ -346,13 +346,13 @@ func (v *ResponseValidator) ValidateEndpointConfig(endpoint *data.Endpoint) []Va
 	}
 
 	// Validate check interval
-	if endpoint.CheckIntervalSeconds < 60 || endpoint.CheckIntervalSeconds > 86400 {
+	if endpoint.CheckIntervalSeconds <= 0 || endpoint.CheckIntervalSeconds > 86400 {
 		errors = append(errors, ValidationError{
 			Type:        "invalid_check_interval",
 			Field:       "check_interval_seconds",
 			Expected:    "60-86400 seconds",
 			Actual:      strconv.Itoa(endpoint.CheckIntervalSeconds),
-			Description: "Check interval must be between 60 seconds and 24 hours",
+			Description: "Check interval must be between 1 second and 24 hours",
 		})
 	}
 

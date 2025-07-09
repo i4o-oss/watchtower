@@ -36,18 +36,22 @@ type Result struct {
 	ExecutedAt     time.Time
 }
 
+// ResultCallback is a function type for handling monitoring results
+type ResultCallback func(endpointID, endpointName string, success bool, responseTime *int)
+
 // WorkerPool manages a pool of workers for executing monitoring jobs
 type WorkerPool struct {
-	workers    int
-	jobQueue   chan Job
-	resultChan chan Result
-	ctx        context.Context
-	cancel     context.CancelFunc
-	wg         sync.WaitGroup
-	logger     *log.Logger
-	db         MonitoringDB
-	httpClient *HTTPClient
-	validator  *ResponseValidator
+	workers        int
+	jobQueue       chan Job
+	resultChan     chan Result
+	ctx            context.Context
+	cancel         context.CancelFunc
+	wg             sync.WaitGroup
+	logger         *log.Logger
+	db             MonitoringDB
+	httpClient     *HTTPClient
+	validator      *ResponseValidator
+	resultCallback ResultCallback
 }
 
 // WorkerPoolConfig holds configuration for the worker pool
@@ -58,17 +62,18 @@ type WorkerPoolConfig struct {
 }
 
 // NewWorkerPool creates a new worker pool with the specified configuration
-func NewWorkerPool(config WorkerPoolConfig, logger *log.Logger, db MonitoringDB) *WorkerPool {
+func NewWorkerPool(config WorkerPoolConfig, logger *log.Logger, db MonitoringDB, resultCallback ResultCallback) *WorkerPool {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &WorkerPool{
-		workers:    config.WorkerCount,
-		jobQueue:   make(chan Job, config.JobQueueSize),
-		resultChan: make(chan Result, config.ResultChanSize),
-		ctx:        ctx,
-		cancel:     cancel,
-		logger:     logger,
-		db:         db,
+		workers:        config.WorkerCount,
+		jobQueue:       make(chan Job, config.JobQueueSize),
+		resultChan:     make(chan Result, config.ResultChanSize),
+		ctx:            ctx,
+		cancel:         cancel,
+		logger:         logger,
+		db:             db,
+		resultCallback: resultCallback,
 		httpClient: NewHTTPClient(HTTPClientConfig{
 			Timeout:       30 * time.Second,
 			MaxRetries:    3,
@@ -246,6 +251,16 @@ func (wp *WorkerPool) resultProcessor() {
 				wp.logger.Debug("monitoring log saved",
 					"endpoint_id", result.Job.EndpointID,
 					"log_id", monitoringLog.ID)
+
+				// Call result callback if provided
+				if wp.resultCallback != nil && result.Job.Endpoint != nil {
+					wp.resultCallback(
+						result.Job.EndpointID.String(),
+						result.Job.Endpoint.Name,
+						result.Success,
+						result.ResponseTimeMs,
+					)
+				}
 			}
 
 		case <-wp.ctx.Done():

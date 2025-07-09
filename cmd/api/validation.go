@@ -73,7 +73,7 @@ func validateEndpointRequest(req *EndpointRequest) []string {
 	errors = append(errors, timeoutErrors...)
 
 	// Validate check interval range
-	intervalErrors := sanitizer.ValidateIntRange(req.CheckIntervalSeconds, "check interval", 60, 86400)
+	intervalErrors := sanitizer.ValidateIntRange(req.CheckIntervalSeconds, "check interval", 1, 86400)
 	errors = append(errors, intervalErrors...)
 
 	return errors

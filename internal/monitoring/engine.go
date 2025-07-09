@@ -27,6 +27,7 @@ type MonitoringEngine struct {
 	wg               sync.WaitGroup
 	isRunning        bool
 	mu               sync.RWMutex
+	resultCallback   ResultCallback
 }
 
 // EngineConfig holds configuration for the monitoring engine
@@ -85,6 +86,13 @@ func NewMonitoringEngine(config EngineConfig, db *data.DB, logger *log.Logger) *
 	}
 }
 
+// SetResultCallback sets the callback function for monitoring results
+func (e *MonitoringEngine) SetResultCallback(callback ResultCallback) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.resultCallback = callback
+}
+
 // Start starts the monitoring engine
 func (e *MonitoringEngine) Start() error {
 	e.mu.Lock()
@@ -97,7 +105,7 @@ func (e *MonitoringEngine) Start() error {
 	e.logger.Info("starting monitoring engine")
 
 	// Create worker pool
-	e.workerPool = NewWorkerPool(e.config.WorkerPoolConfig, e.logger, e.db)
+	e.workerPool = NewWorkerPool(e.config.WorkerPoolConfig, e.logger, e.db, e.resultCallback)
 
 	// Create scheduler with the database as endpoint provider
 	e.scheduler = NewScheduler(e.config.SchedulerConfig, e.workerPool, e.db, e.logger)

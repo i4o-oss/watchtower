@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "endpoint" (
     body TEXT DEFAULT '',
     expected_status_code INTEGER DEFAULT 200,
     timeout_seconds INTEGER DEFAULT 30 CHECK (timeout_seconds > 0 AND timeout_seconds <= 300),
-    check_interval_seconds INTEGER DEFAULT 300 CHECK (check_interval_seconds >= 60),
+    check_interval_seconds INTEGER DEFAULT 300 CHECK (check_interval_seconds >= 1),
     enabled BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

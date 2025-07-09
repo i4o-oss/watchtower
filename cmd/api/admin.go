@@ -136,6 +136,19 @@ func (app *Application) createEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Broadcast endpoint creation event via SSE
+	app.sseHub.BroadcastEndpointUpdate("endpoint_created", endpoint)
+
+	// Add endpoint to monitoring engine
+	if app.monitoringEngine != nil && app.monitoringEngine.IsRunning() {
+		if err := app.monitoringEngine.AddEndpoint(endpoint); err != nil {
+			app.logger.Error("Error adding endpoint to monitoring engine", "err", err.Error())
+			// Don't fail the request, just log the error
+		} else {
+			app.logger.Info("Added endpoint to monitoring engine", "endpoint_id", endpoint.ID.String(), "name", endpoint.Name)
+		}
+	}
+
 	app.writeJSON(w, http.StatusCreated, EndpointResponse{Endpoint: endpoint})
 }
 
@@ -213,6 +226,19 @@ func (app *Application) updateEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Broadcast endpoint update event via SSE
+	app.sseHub.BroadcastEndpointUpdate("endpoint_updated", endpoint)
+
+	// Update endpoint in monitoring engine
+	if app.monitoringEngine != nil && app.monitoringEngine.IsRunning() {
+		if err := app.monitoringEngine.UpdateEndpoint(endpoint); err != nil {
+			app.logger.Error("Error updating endpoint in monitoring engine", "err", err.Error())
+			// Don't fail the request, just log the error
+		} else {
+			app.logger.Info("Updated endpoint in monitoring engine", "endpoint_id", endpoint.ID.String(), "name", endpoint.Name)
+		}
+	}
+
 	app.writeJSON(w, http.StatusOK, EndpointResponse{Endpoint: endpoint})
 }
 
@@ -225,11 +251,32 @@ func (app *Application) deleteEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get endpoint for SSE broadcast before deleting
+	endpoint, err := app.db.GetEndpoint(id)
+	if err != nil {
+		app.logger.Error("Error getting endpoint for deletion", "err", err.Error())
+		app.errorResponse(w, http.StatusNotFound, "Endpoint not found")
+		return
+	}
+
 	if err := app.db.DeleteEndpoint(id); err != nil {
 		app.logger.Error("Error deleting endpoint", "err", err.Error())
 		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
+
+	// Remove endpoint from monitoring engine
+	if app.monitoringEngine != nil && app.monitoringEngine.IsRunning() {
+		if err := app.monitoringEngine.RemoveEndpoint(endpoint.ID.String()); err != nil {
+			app.logger.Error("Error removing endpoint from monitoring engine", "err", err.Error())
+			// Don't fail the request, just log the error
+		} else {
+			app.logger.Info("Removed endpoint from monitoring engine", "endpoint_id", endpoint.ID.String(), "name", endpoint.Name)
+		}
+	}
+
+	// Broadcast endpoint deletion event via SSE
+	app.sseHub.BroadcastEndpointUpdate("endpoint_deleted", endpoint)
 
 	w.WriteHeader(http.StatusNoContent)
 }

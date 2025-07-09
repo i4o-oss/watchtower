@@ -28,197 +28,101 @@ func NewCachedDB(db *DB, cacheInstance cache.Cache) *CachedDB {
 // Cached Endpoint operations
 
 func (cdb *CachedDB) GetEndpoint(id uuid.UUID) (*Endpoint, error) {
-	key := cdb.keyBuilder.EndpointKey(id.String())
-
-	// Try cache first
-	var endpoint Endpoint
-	if err := cdb.cache.Get(key, &endpoint); err == nil {
-		return &endpoint, nil
-	}
-
-	// Cache miss, get from database
-	endpoint_ptr, err := cdb.DB.GetEndpoint(id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Cache the result
-	if err := cdb.cache.Set(key, *endpoint_ptr, cache.CacheExpireMedium); err != nil {
-		log.Printf("Failed to cache endpoint %s: %v", id, err)
-	}
-
-	return endpoint_ptr, nil
+	// Always fetch from database to ensure consistency
+	return cdb.DB.GetEndpoint(id)
 }
 
 func (cdb *CachedDB) GetEndpointsWithPagination(page, limit int, enabled *bool) ([]Endpoint, int64, error) {
-	key := cdb.keyBuilder.EndpointsKey(page, limit, enabled)
-
-	// Try cache first
-	var cached struct {
-		Endpoints []Endpoint `json:"endpoints"`
-		Total     int64      `json:"total"`
-	}
-	if err := cdb.cache.Get(key, &cached); err == nil {
-		return cached.Endpoints, cached.Total, nil
-	}
-
-	// Cache miss, get from database
-	endpoints, total, err := cdb.DB.GetEndpointsWithPagination(page, limit, enabled)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Cache the result
-	cached.Endpoints = endpoints
-	cached.Total = total
-	if err := cdb.cache.Set(key, cached, cache.CacheExpireShort); err != nil {
-		log.Printf("Failed to cache endpoints pagination: %v", err)
-	}
-
-	return endpoints, total, nil
+	// Always fetch from database to ensure immediate consistency after create/update/delete
+	// This is the most critical endpoint for admin UI, so we prioritize consistency over cache performance
+	return cdb.DB.GetEndpointsWithPagination(page, limit, enabled)
 }
 
 func (cdb *CachedDB) GetEnabledEndpoints() ([]Endpoint, error) {
-	key := cache.CacheKeyEnabledEndpoints
-
-	// Try cache first
-	var endpoints []Endpoint
-	if err := cdb.cache.Get(key, &endpoints); err == nil {
-		return endpoints, nil
-	}
-
-	// Cache miss, get from database
-	endpoints, err := cdb.DB.GetEnabledEndpoints()
-	if err != nil {
-		return nil, err
-	}
-
-	// Cache the result
-	if err := cdb.cache.Set(key, endpoints, cache.CacheExpireShort); err != nil {
-		log.Printf("Failed to cache enabled endpoints: %v", err)
-	}
-
-	return endpoints, nil
+	// Always fetch from database to ensure status page shows new endpoints immediately
+	// This is critical for user experience on the public status page
+	return cdb.DB.GetEnabledEndpoints()
 }
 
 func (cdb *CachedDB) CreateEndpoint(endpoint *Endpoint) error {
-	err := cdb.DB.CreateEndpoint(endpoint)
-	if err != nil {
-		return err
-	}
-
-	// Invalidate related caches
-	cdb.invalidateEndpointCaches()
-
-	return nil
+	// No caching needed - direct database operation
+	return cdb.DB.CreateEndpoint(endpoint)
 }
 
 func (cdb *CachedDB) UpdateEndpoint(endpoint *Endpoint) error {
-	err := cdb.DB.UpdateEndpoint(endpoint)
-	if err != nil {
-		return err
-	}
-
-	// Invalidate caches
-	cdb.cache.Delete(cdb.keyBuilder.EndpointKey(endpoint.ID.String()))
-	cdb.invalidateEndpointCaches()
-
-	return nil
+	// No caching needed - direct database operation
+	return cdb.DB.UpdateEndpoint(endpoint)
 }
 
 func (cdb *CachedDB) DeleteEndpoint(id uuid.UUID) error {
-	err := cdb.DB.DeleteEndpoint(id)
-	if err != nil {
-		return err
-	}
-
-	// Invalidate caches
-	cdb.cache.Delete(cdb.keyBuilder.EndpointKey(id.String()))
-	cdb.invalidateEndpointCaches()
-
-	return nil
+	// No caching needed - direct database operation
+	return cdb.DB.DeleteEndpoint(id)
 }
 
 // Cached Monitoring Log operations
 
 func (cdb *CachedDB) GetMonitoringLogsWithPagination(page, limit, hours int, endpointID *uuid.UUID, success *bool) ([]MonitoringLog, int64, error) {
-	var endpointIDStr *string
-	if endpointID != nil {
-		str := endpointID.String()
-		endpointIDStr = &str
+	// Only cache if hours <= 24 (current day data)
+	shouldCache := hours <= 24
+
+	if shouldCache {
+		var endpointIDStr *string
+		if endpointID != nil {
+			str := endpointID.String()
+			endpointIDStr = &str
+		}
+
+		key := cdb.keyBuilder.MonitoringLogsKey(page, limit, hours, endpointIDStr, success)
+
+		// Try cache first
+		var cached struct {
+			Logs  []MonitoringLog `json:"logs"`
+			Total int64           `json:"total"`
+		}
+		if err := cdb.cache.Get(key, &cached); err == nil {
+			return cached.Logs, cached.Total, nil
+		}
 	}
 
-	key := cdb.keyBuilder.MonitoringLogsKey(page, limit, hours, endpointIDStr, success)
-
-	// Try cache first
-	var cached struct {
-		Logs  []MonitoringLog `json:"logs"`
-		Total int64           `json:"total"`
-	}
-	if err := cdb.cache.Get(key, &cached); err == nil {
-		return cached.Logs, cached.Total, nil
-	}
-
-	// Cache miss, get from database
+	// Cache miss or not cacheable, get from database
 	logs, total, err := cdb.DB.GetMonitoringLogsWithPagination(page, limit, hours, endpointID, success)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Cache the result with shorter expiration for monitoring data
-	cached.Logs = logs
-	cached.Total = total
-	if err := cdb.cache.Set(key, cached, cache.CacheExpireShort); err != nil {
-		log.Printf("Failed to cache monitoring logs pagination: %v", err)
+	// Cache the result only for current day data with 24h TTL
+	if shouldCache {
+		var endpointIDStr *string
+		if endpointID != nil {
+			str := endpointID.String()
+			endpointIDStr = &str
+		}
+
+		key := cdb.keyBuilder.MonitoringLogsKey(page, limit, hours, endpointIDStr, success)
+		cached := struct {
+			Logs  []MonitoringLog `json:"logs"`
+			Total int64           `json:"total"`
+		}{
+			Logs:  logs,
+			Total: total,
+		}
+
+		if err := cdb.cache.Set(key, cached, cache.CacheExpireVeryLong); err != nil {
+			log.Printf("Failed to cache monitoring logs pagination: %v", err)
+		}
 	}
 
 	return logs, total, nil
 }
 
 func (cdb *CachedDB) GetUptimeStats(endpointID uuid.UUID, days int) (float64, error) {
-	key := cdb.keyBuilder.UptimeStatsKey(endpointID.String(), days)
-
-	// Try cache first
-	var uptime float64
-	if err := cdb.cache.Get(key, &uptime); err == nil {
-		return uptime, nil
-	}
-
-	// Cache miss, get from database
-	uptime, err := cdb.DB.GetUptimeStats(endpointID, days)
-	if err != nil {
-		return 0, err
-	}
-
-	// Cache the result for longer since uptime stats don't change frequently
-	if err := cdb.cache.Set(key, uptime, cache.CacheExpireMedium); err != nil {
-		log.Printf("Failed to cache uptime stats: %v", err)
-	}
-
-	return uptime, nil
+	// No caching - always fetch from database for accuracy
+	return cdb.DB.GetUptimeStats(endpointID, days)
 }
 
 func (cdb *CachedDB) GetLatestMonitoringStatus() (map[uuid.UUID]MonitoringLog, error) {
-	key := cache.CacheKeyLatestStatus
-
-	// Try cache first
-	var status map[uuid.UUID]MonitoringLog
-	if err := cdb.cache.Get(key, &status); err == nil {
-		return status, nil
-	}
-
-	// Cache miss, get from database
-	status, err := cdb.DB.GetLatestMonitoringStatus()
-	if err != nil {
-		return nil, err
-	}
-
-	// Cache the result with short expiration since this changes frequently
-	if err := cdb.cache.Set(key, status, cache.CacheExpireShort); err != nil {
-		log.Printf("Failed to cache latest monitoring status: %v", err)
-	}
-
-	return status, nil
+	// No caching - always fetch latest status from database for accuracy
+	return cdb.DB.GetLatestMonitoringStatus()
 }
 
 func (cdb *CachedDB) CreateMonitoringLog(log *MonitoringLog) error {
@@ -227,101 +131,37 @@ func (cdb *CachedDB) CreateMonitoringLog(log *MonitoringLog) error {
 		return err
 	}
 
-	// Invalidate related caches
+	// Invalidate current day monitoring caches only
 	cdb.invalidateMonitoringCaches()
 
 	return nil
 }
 
-// Cached Incident operations
+// Incident operations (no caching)
 
 func (cdb *CachedDB) GetIncident(id uuid.UUID) (*Incident, error) {
-	key := fmt.Sprintf(cache.CacheKeyIncident, id.String())
-
-	// Try cache first
-	var incident Incident
-	if err := cdb.cache.Get(key, &incident); err == nil {
-		return &incident, nil
-	}
-
-	// Cache miss, get from database
-	incident_ptr, err := cdb.DB.GetIncident(id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Cache the result
-	if err := cdb.cache.Set(key, *incident_ptr, cache.CacheExpireMedium); err != nil {
-		log.Printf("Failed to cache incident %s: %v", id, err)
-	}
-
-	return incident_ptr, nil
+	// No caching - direct database operation
+	return cdb.DB.GetIncident(id)
 }
 
 func (cdb *CachedDB) GetIncidentsWithPagination(page, limit int, status string, severity string) ([]Incident, int64, error) {
-	key := cdb.keyBuilder.IncidentsKey(page, limit, status, severity)
-
-	// Try cache first
-	var cached struct {
-		Incidents []Incident `json:"incidents"`
-		Total     int64      `json:"total"`
-	}
-	if err := cdb.cache.Get(key, &cached); err == nil {
-		return cached.Incidents, cached.Total, nil
-	}
-
-	// Cache miss, get from database
-	incidents, total, err := cdb.DB.GetIncidentsWithPagination(page, limit, status, severity)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Cache the result
-	cached.Incidents = incidents
-	cached.Total = total
-	if err := cdb.cache.Set(key, cached, cache.CacheExpireShort); err != nil {
-		log.Printf("Failed to cache incidents pagination: %v", err)
-	}
-
-	return incidents, total, nil
+	// No caching - direct database operation
+	return cdb.DB.GetIncidentsWithPagination(page, limit, status, severity)
 }
 
 func (cdb *CachedDB) CreateIncident(incident *Incident) error {
-	err := cdb.DB.CreateIncident(incident)
-	if err != nil {
-		return err
-	}
-
-	// Invalidate related caches
-	cdb.invalidateIncidentCaches()
-
-	return nil
+	// No caching - direct database operation
+	return cdb.DB.CreateIncident(incident)
 }
 
 func (cdb *CachedDB) UpdateIncident(incident *Incident) error {
-	err := cdb.DB.UpdateIncident(incident)
-	if err != nil {
-		return err
-	}
-
-	// Invalidate caches
-	cdb.cache.Delete(fmt.Sprintf(cache.CacheKeyIncident, incident.ID.String()))
-	cdb.invalidateIncidentCaches()
-
-	return nil
+	// No caching - direct database operation
+	return cdb.DB.UpdateIncident(incident)
 }
 
 func (cdb *CachedDB) DeleteIncident(id uuid.UUID) error {
-	err := cdb.DB.DeleteIncident(id)
-	if err != nil {
-		return err
-	}
-
-	// Invalidate caches
-	cdb.cache.Delete(fmt.Sprintf(cache.CacheKeyIncident, id.String()))
-	cdb.invalidateIncidentCaches()
-
-	return nil
+	// No caching - direct database operation
+	return cdb.DB.DeleteIncident(id)
 }
 
 // Cached User operations
@@ -387,46 +227,18 @@ func (cdb *CachedDB) CreateUser(user *User) error {
 
 // Cache invalidation helpers
 
-func (cdb *CachedDB) invalidateEndpointCaches() {
-	// Invalidate paginated endpoints caches
-	cdb.cache.DeletePattern("endpoints:page:*")
-	cdb.cache.Delete(cache.CacheKeyEnabledEndpoints)
-	cdb.cache.Delete(cache.CacheKeyHealthSummary)
-	cdb.cache.Delete(cache.CacheKeyLatestStatus)
-}
-
 func (cdb *CachedDB) invalidateMonitoringCaches() {
-	// Invalidate monitoring logs caches
-	cdb.cache.DeletePattern("monitoring_logs:*")
-	cdb.cache.DeletePattern("endpoint_logs:*")
-	cdb.cache.DeletePattern("recent_logs:*")
-	cdb.cache.DeletePattern("uptime_stats:*")
-	cdb.cache.Delete(cache.CacheKeyLatestStatus)
-	cdb.cache.Delete(cache.CacheKeyHealthSummary)
-}
-
-func (cdb *CachedDB) invalidateIncidentCaches() {
-	// Invalidate incident caches
-	cdb.cache.DeletePattern("incidents:*")
-	cdb.cache.Delete(cache.CacheKeyOpenIncidents)
+	// Only invalidate current day monitoring logs cache (24h window)
+	if err := cdb.cache.DeletePattern("monitoring_logs:*"); err != nil {
+		log.Printf("Failed to delete monitoring_logs:* pattern: %v", err)
+	}
 }
 
 // Cache warming methods
 
 func (cdb *CachedDB) WarmCache() error {
-	log.Println("Starting cache warming...")
-
-	// Warm enabled endpoints cache
-	if _, err := cdb.GetEnabledEndpoints(); err != nil {
-		log.Printf("Failed to warm enabled endpoints cache: %v", err)
-	}
-
-	// Warm latest monitoring status cache
-	if _, err := cdb.GetLatestMonitoringStatus(); err != nil {
-		log.Printf("Failed to warm latest monitoring status cache: %v", err)
-	}
-
-	log.Println("Cache warming completed")
+	log.Println("Cache warming skipped - using direct database access for consistency")
+	// No cache warming needed since we prioritize consistency over cache performance
 	return nil
 }
 

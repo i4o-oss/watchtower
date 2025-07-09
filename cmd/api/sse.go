@@ -156,6 +156,24 @@ func (h *SSEHub) BroadcastIncidentUpdate(incidentType string, incident interface
 	}
 }
 
+// BroadcastEndpointUpdate broadcasts an endpoint update to all connected clients
+func (h *SSEHub) BroadcastEndpointUpdate(eventType string, endpoint interface{}) {
+	message := SSEMessage{
+		Event: eventType, // "endpoint_created", "endpoint_updated", "endpoint_deleted"
+		Data:  endpoint,
+		ID:    fmt.Sprintf("%d", time.Now().UnixNano()),
+	}
+
+	if data, err := json.Marshal(message.Data); err == nil {
+		eventData := fmt.Sprintf("event: %s\ndata: %s\nid: %s\n\n", message.Event, string(data), message.ID)
+		select {
+		case h.broadcast <- []byte(eventData):
+		default:
+			log.Printf("SSE broadcast channel full, dropping endpoint message")
+		}
+	}
+}
+
 // BroadcastPing sends a ping event to all clients
 func (h *SSEHub) BroadcastPing() {
 	pingData := fmt.Sprintf("event: ping\ndata: {\"timestamp\":\"%s\"}\n\n", time.Now().Format(time.RFC3339))

@@ -127,16 +127,32 @@ func (m *MemoryCache) Delete(key string) error {
 	return nil
 }
 
-// DeletePattern removes all keys matching a pattern (simple prefix matching)
+// DeletePattern removes all keys matching a pattern (supports wildcards)
 func (m *MemoryCache) DeletePattern(pattern string) error {
+	if len(pattern) == 0 {
+		return nil // Safety check for empty patterns
+	}
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	// Simple pattern matching - just check if key starts with pattern
 	keysToDelete := make([]string, 0)
-	for key := range m.items {
-		if len(key) >= len(pattern) && key[:len(pattern)] == pattern {
-			keysToDelete = append(keysToDelete, key)
+
+	// Handle wildcard patterns
+	if pattern[len(pattern)-1] == '*' {
+		// Remove the '*' and match prefix
+		prefix := pattern[:len(pattern)-1]
+		for key := range m.items {
+			if len(key) >= len(prefix) && key[:len(prefix)] == prefix {
+				keysToDelete = append(keysToDelete, key)
+			}
+		}
+	} else {
+		// Exact match
+		for key := range m.items {
+			if key == pattern {
+				keysToDelete = append(keysToDelete, key)
+			}
 		}
 	}
 

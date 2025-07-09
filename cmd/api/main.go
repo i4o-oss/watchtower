@@ -14,6 +14,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/i4o-oss/watchtower/internal/cache"
 	"github.com/i4o-oss/watchtower/internal/data"
+	"github.com/i4o-oss/watchtower/internal/monitoring"
 	"github.com/i4o-oss/watchtower/internal/security"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -42,13 +43,14 @@ type CacheConfig struct {
 }
 
 type Application struct {
-	config          Config
-	logger          *log.Logger
-	db              *data.CachedDB
-	cache           cache.Cache
-	sseHub          *SSEHub
-	securityHeaders *security.SecurityHeaders
-	csrfProtection  *security.CSRFProtection
+	config           Config
+	logger           *log.Logger
+	db               *data.CachedDB
+	cache            cache.Cache
+	sseHub           *SSEHub
+	securityHeaders  *security.SecurityHeaders
+	csrfProtection   *security.CSRFProtection
+	monitoringEngine *monitoring.MonitoringEngine
 }
 
 var (
@@ -73,6 +75,16 @@ func (app *Application) gracefulShutdown(apiServer *http.Server, done chan bool)
 
 	app.logger.Info("shutting down gracefully, press Ctrl+C again to force")
 	stop() // Allow Ctrl+C to force shutdown
+
+	// Stop monitoring engine first
+	if app.monitoringEngine != nil {
+		app.logger.Info("stopping monitoring engine...")
+		if err := app.monitoringEngine.Stop(); err != nil {
+			app.logger.Error("error stopping monitoring engine", "err", err.Error())
+		} else {
+			app.logger.Info("monitoring engine stopped successfully")
+		}
+	}
 
 	// The context is used to inform the server it has 5 seconds to finish
 	// the request it is currently handling
@@ -229,18 +241,33 @@ func main() {
 		SkipReferer:    env != "production", // Skip referer validation in development
 	})
 
+	// Initialize monitoring engine
+	monitoringConfig := monitoring.DefaultEngineConfig()
+	monitoringEngine := monitoring.NewMonitoringEngine(monitoringConfig, rawDB, logger)
+
 	app := &Application{
-		config:          config,
-		logger:          logger,
-		db:              db,
-		cache:           cacheClient,
-		sseHub:          sseHub,
-		securityHeaders: securityHeaders,
-		csrfProtection:  csrfProtection,
+		config:           config,
+		logger:           logger,
+		db:               db,
+		cache:            cacheClient,
+		sseHub:           sseHub,
+		securityHeaders:  securityHeaders,
+		csrfProtection:   csrfProtection,
+		monitoringEngine: monitoringEngine,
 	}
+
+	// Set monitoring result callback to broadcast via SSE
+	monitoringEngine.SetResultCallback(app.BroadcastMonitoringResult)
 
 	// Start SSE status broadcaster
 	app.StartSSEStatusBroadcaster()
+
+	// Start monitoring engine
+	if err := app.monitoringEngine.Start(); err != nil {
+		logger.Error("failed to start monitoring engine", "err", err.Error())
+		os.Exit(1)
+	}
+	logger.Info("monitoring engine started successfully")
 
 	server := app.NewServer()
 
