@@ -180,7 +180,10 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 	const handleFieldBlur = (field: string) => {
 		const rules = endpointValidationSchema[field]
 		if (rules) {
-			const error = validateField(formData[field], rules)
+			const error = validateField(
+				formData[field as keyof typeof formData],
+				rules,
+			)
 			if (error) {
 				setFieldErrors((prev) => ({ ...prev, [field]: error }))
 			}
@@ -468,7 +471,7 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 												'check_interval_seconds',
 											)
 										}
-										min='30'
+										min='1'
 										max='86400'
 										className={
 											hasFieldError(

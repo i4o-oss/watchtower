@@ -13,6 +13,7 @@ import {
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Separator } from '~/components/ui/separator'
 import { cn } from '~/lib/utils'
+import { useSSE } from '~/hooks/useSSE'
 import {
 	AlertCircle,
 	CheckCircle,
@@ -127,8 +128,11 @@ function UptimeGraph({
 	useEffect(() => {
 		const fetchUptimeData = async () => {
 			setLoading(true)
+			const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 			try {
-				const response = await fetch(`/api/v1/uptime/${serviceId}`)
+				const response = await fetch(
+					`${API_BASE_URL}/api/v1/uptime/${serviceId}`,
+				)
 				if (response.ok) {
 					const data: UptimeResponse = await response.json()
 					setUptimeData(data.data)
@@ -236,18 +240,30 @@ function UptimeGraph({
 }
 
 // Main status page component
-export function StatusPage() {
-	const [status, setStatus] = useState<StatusResponse | null>(null)
-	const [incidents, setIncidents] = useState<IncidentsResponse | null>(null)
-	const [loading, setLoading] = useState(true)
+export function StatusPage({
+	initialData,
+}: {
+	initialData?: {
+		status: StatusResponse | null
+		incidents: IncidentsResponse | null
+	}
+}) {
+	const [status, setStatus] = useState<StatusResponse | null>(
+		initialData?.status || null,
+	)
+	const [incidents, setIncidents] = useState<IncidentsResponse | null>(
+		initialData?.incidents || null,
+	)
+	const [loading, setLoading] = useState(!initialData?.status)
 	const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 
 	// Fetch status data
 	const fetchStatus = async () => {
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 		try {
 			const [statusRes, incidentsRes] = await Promise.all([
-				fetch('/api/v1/status'),
-				fetch('/api/v1/incidents'),
+				fetch(`${API_BASE_URL}/api/v1/status`),
+				fetch(`${API_BASE_URL}/api/v1/incidents`),
 			])
 
 			if (statusRes.ok) {
@@ -268,10 +284,12 @@ export function StatusPage() {
 		}
 	}
 
-	// Initial fetch
+	// Initial fetch (only if no initial data)
 	useEffect(() => {
-		fetchStatus()
-	}, [])
+		if (!initialData?.status) {
+			fetchStatus()
+		}
+	}, [initialData?.status])
 
 	// Auto-refresh every 30 seconds
 	useEffect(() => {
@@ -280,37 +298,59 @@ export function StatusPage() {
 	}, [])
 
 	// Server-Sent Events for real-time updates
-	useEffect(() => {
-		const eventSource = new EventSource('/api/v1/events')
-
-		eventSource.addEventListener('status_update', (event) => {
-			try {
-				const data = JSON.parse(event.data)
-				// Refresh status when we get real-time updates
-				fetchStatus()
-			} catch (error) {
-				console.error('SSE message parsing error:', error)
-			}
-		})
-
-		eventSource.addEventListener('ping', (event) => {
-			// Keep-alive ping from server
-			console.debug('SSE ping received')
-		})
-
-		eventSource.onerror = (error) => {
-			console.error('SSE connection error:', error)
-			// EventSource will automatically reconnect
-		}
-
-		eventSource.onopen = () => {
-			console.debug('SSE connection established')
-		}
-
-		return () => {
-			eventSource.close()
-		}
-	}, [])
+	useSSE(
+		{
+			status_update: () => {
+				try {
+					// Refresh status when we get real-time updates
+					fetchStatus()
+				} catch (error) {
+					console.error('SSE message parsing error:', error)
+				}
+			},
+			endpoint_created: () => {
+				try {
+					// Refresh status when endpoints are created
+					fetchStatus()
+				} catch (error) {
+					console.error(
+						'Error handling endpoint_created event:',
+						error,
+					)
+				}
+			},
+			endpoint_updated: () => {
+				try {
+					// Refresh status when endpoints are updated
+					fetchStatus()
+				} catch (error) {
+					console.error(
+						'Error handling endpoint_updated event:',
+						error,
+					)
+				}
+			},
+			endpoint_deleted: () => {
+				try {
+					// Refresh status when endpoints are deleted
+					fetchStatus()
+				} catch (error) {
+					console.error(
+						'Error handling endpoint_deleted event:',
+						error,
+					)
+				}
+			},
+			ping: () => {
+				// Keep-alive ping from server
+				console.debug('SSE ping received')
+			},
+		},
+		{
+			url: `${import.meta.env.VITE_API_BASE_URL}/api/v1/events`,
+			withCredentials: false,
+		},
+	)
 
 	if (loading) {
 		return (

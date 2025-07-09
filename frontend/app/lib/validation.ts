@@ -176,7 +176,7 @@ export const endpointValidationSchema: FieldValidation = {
 	check_interval_seconds: [
 		validationRules.required('Check interval is required'),
 		validationRules.positiveNumber('Interval must be a positive number'),
-		validationRules.min(30, 'Interval must be at least 30 seconds'),
+		validationRules.min(1, 'Interval must be at least 1 second'),
 		validationRules.max(86400, 'Interval must be no more than 24 hours'),
 	],
 	headers: [validationRules.validJson('Headers must be valid JSON')],

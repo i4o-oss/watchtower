@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Button } from '~/components/ui/button'
 import {
@@ -27,6 +27,7 @@ import {
 	AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
 import { requireAuth } from '~/lib/auth'
+import { useSSE } from '~/hooks/useSSE'
 import type { Route } from './+types/endpoints'
 
 export function meta({}: Route.MetaArgs) {
@@ -60,12 +61,64 @@ export async function clientLoader() {
 }
 
 export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
-	const { endpoints: initialEndpoints, total } = loaderData
+	const { endpoints: initialEndpoints, total: initialTotal } = loaderData
 	const [endpoints, setEndpoints] = useState(initialEndpoints)
+	const [total, setTotal] = useState(initialTotal)
 	const [searchTerm, setSearchTerm] = useState('')
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 	const [endpointToDelete, setEndpointToDelete] = useState<any>(null)
 	const navigate = useNavigate()
+
+	// Function to refresh endpoints data from server
+	const refreshEndpoints = async () => {
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+		try {
+			const response = await fetch(
+				`${API_BASE_URL}/api/v1/admin/endpoints`,
+				{
+					method: 'GET',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+				},
+			)
+
+			if (response.ok) {
+				const data = await response.json()
+				setEndpoints(data.endpoints || [])
+				setTotal(data.total || 0)
+			}
+		} catch (error) {
+			console.error('Error refreshing endpoints:', error)
+		}
+	}
+
+	// Real-time updates via Server-Sent Events
+	useSSE({
+		endpoint_created: () => {
+			try {
+				// Re-fetch data to ensure consistency instead of updating local state
+				refreshEndpoints()
+			} catch (error) {
+				console.error('Error handling endpoint_created event:', error)
+			}
+		},
+		endpoint_updated: () => {
+			try {
+				// Re-fetch data to ensure consistency instead of updating local state
+				refreshEndpoints()
+			} catch (error) {
+				console.error('Error handling endpoint_updated event:', error)
+			}
+		},
+		endpoint_deleted: () => {
+			try {
+				// Re-fetch data to ensure consistency instead of updating local state
+				refreshEndpoints()
+			} catch (error) {
+				console.error('Error handling endpoint_deleted event:', error)
+			}
+		},
+	})
 
 	const filteredEndpoints = endpoints.filter(
 		(endpoint: any) =>

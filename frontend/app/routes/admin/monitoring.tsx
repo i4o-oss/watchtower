@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router'
+import { useState, useEffect, useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { Button } from '~/components/ui/button'
 import {
 	Card,
@@ -18,6 +18,7 @@ import {
 	SelectValue,
 } from '~/components/ui/select'
 import { requireAuth } from '~/lib/auth'
+import { useSSE } from '~/hooks/useSSE'
 import { LazyMonitoringCharts as MonitoringCharts } from '~/components/lazy-monitoring-charts'
 import type { Route } from './+types/monitoring'
 
@@ -28,18 +29,25 @@ export function meta({}: Route.MetaArgs) {
 	]
 }
 
-export async function clientLoader() {
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 	await requireAuth('/login')
 
 	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
+	// Get timeRange from URL params for initial load
+	const url = new URL(request.url)
+	const timeRange = url.searchParams.get('timeRange') || '24'
+
 	try {
 		const [logsRes, endpointsRes] = await Promise.all([
-			fetch(`${API_BASE_URL}/api/v1/admin/monitoring-logs?limit=100`, {
-				method: 'GET',
-				credentials: 'include',
-				headers: { 'Content-Type': 'application/json' },
-			}),
+			fetch(
+				`${API_BASE_URL}/api/v1/admin/monitoring-logs?hours=${timeRange}&limit=100`,
+				{
+					method: 'GET',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+				},
+			),
 			fetch(`${API_BASE_URL}/api/v1/admin/endpoints`, {
 				method: 'GET',
 				credentials: 'include',
@@ -66,18 +74,37 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 	const { logs: initialLogs, endpoints } = loaderData
 	const [logs, setLogs] = useState(initialLogs.logs)
 	const [filteredLogs, setFilteredLogs] = useState(initialLogs.logs)
-	const [searchTerm, setSearchTerm] = useState('')
-	const [statusFilter, setStatusFilter] = useState('all')
-	const [endpointFilter, setEndpointFilter] = useState('all')
-	const [timeRange, setTimeRange] = useState('24')
+	const [searchParams, setSearchParams] = useSearchParams()
 
-	// Create endpoint lookup map
-	const endpointMap = endpoints.endpoints.reduce(
-		(acc: any, endpoint: any) => {
-			acc[endpoint.id] = endpoint
-			return acc
-		},
-		{},
+	// Get filter values from URL params
+	const searchTerm = searchParams.get('search') || ''
+	const statusFilter = searchParams.get('status') || 'all'
+	const endpointFilter = searchParams.get('endpoint') || 'all'
+	const timeRange = searchParams.get('timeRange') || '24'
+
+	// Helper function to update URL params
+	const updateFilter = (key: string, value: string) => {
+		const newParams = new URLSearchParams(searchParams)
+		if (
+			value === '' ||
+			value === 'all' ||
+			(key === 'timeRange' && value === '24')
+		) {
+			newParams.delete(key)
+		} else {
+			newParams.set(key, value)
+		}
+		setSearchParams(newParams, { replace: true })
+	}
+
+	// Create endpoint lookup map (memoized to prevent infinite re-renders)
+	const endpointMap = useMemo(
+		() =>
+			endpoints.endpoints.reduce((acc: any, endpoint: any) => {
+				acc[endpoint.id] = endpoint
+				return acc
+			}, {}),
+		[endpoints.endpoints],
 	)
 
 	useEffect(() => {
@@ -141,6 +168,18 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 		refreshLogs()
 	}, [timeRange])
 
+	// Real-time updates via Server-Sent Events
+	useSSE({
+		status_update: () => {
+			try {
+				// Refresh logs when we get monitoring updates
+				refreshLogs()
+			} catch (error) {
+				console.error('Error parsing status_update event:', error)
+			}
+		},
+	})
+
 	const getStatusBadge = (success: boolean) => {
 		return (
 			<Badge variant={success ? 'default' : 'destructive'}>
@@ -185,14 +224,18 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 							<Input
 								placeholder='Search endpoints...'
 								value={searchTerm}
-								onChange={(e) => setSearchTerm(e.target.value)}
+								onChange={(e) =>
+									updateFilter('search', e.target.value)
+								}
 							/>
 						</div>
 
 						<div>
 							<Select
 								value={statusFilter}
-								onValueChange={setStatusFilter}
+								onValueChange={(value) =>
+									updateFilter('status', value)
+								}
 							>
 								<SelectTrigger>
 									<SelectValue placeholder='All statuses' />
@@ -214,7 +257,9 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 						<div>
 							<Select
 								value={endpointFilter}
-								onValueChange={setEndpointFilter}
+								onValueChange={(value) =>
+									updateFilter('endpoint', value)
+								}
 							>
 								<SelectTrigger>
 									<SelectValue placeholder='All endpoints' />
@@ -240,7 +285,9 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 						<div>
 							<Select
 								value={timeRange}
-								onValueChange={setTimeRange}
+								onValueChange={(value) =>
+									updateFilter('timeRange', value)
+								}
 							>
 								<SelectTrigger>
 									<SelectValue />
@@ -442,7 +489,7 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 				<div className='mt-8'>
 					<MonitoringCharts
 						logs={logs}
-						endpoints={endpoints}
+						endpoints={endpoints.endpoints}
 						timeRange={timeRange}
 					/>
 				</div>

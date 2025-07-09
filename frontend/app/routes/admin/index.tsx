@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { Button } from '~/components/ui/button'
 import {
@@ -9,6 +10,7 @@ import {
 } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
 import { requireAuth } from '~/lib/auth'
+import { useSSE } from '~/hooks/useSSE'
 import type { Route } from './+types/index'
 
 export function meta({}: Route.MetaArgs) {
@@ -64,7 +66,81 @@ export async function clientLoader() {
 }
 
 export default function AdminIndex({ loaderData }: Route.ComponentProps) {
-	const { endpoints, logs, incidents } = loaderData
+	const [endpoints, setEndpoints] = useState(loaderData.endpoints)
+	const [logs, setLogs] = useState(loaderData.logs)
+	const [incidents, setIncidents] = useState(loaderData.incidents)
+
+	// Real-time updates via Server-Sent Events
+	useSSE({
+		endpoint_created: (event) => {
+			try {
+				const newEndpoint = JSON.parse(event.data)
+				setEndpoints((prev: any) => ({
+					...prev,
+					endpoints: [...prev.endpoints, newEndpoint],
+					total: prev.total + 1,
+				}))
+			} catch (error) {
+				console.error('Error parsing endpoint_created event:', error)
+			}
+		},
+		endpoint_updated: (event) => {
+			try {
+				const updatedEndpoint = JSON.parse(event.data)
+				setEndpoints((prev: any) => ({
+					...prev,
+					endpoints: prev.endpoints.map((ep: any) =>
+						ep.id === updatedEndpoint.id ? updatedEndpoint : ep,
+					),
+				}))
+			} catch (error) {
+				console.error('Error parsing endpoint_updated event:', error)
+			}
+		},
+		endpoint_deleted: (event) => {
+			try {
+				const deletedEndpoint = JSON.parse(event.data)
+				setEndpoints((prev: any) => ({
+					...prev,
+					endpoints: prev.endpoints.filter(
+						(ep: any) => ep.id !== deletedEndpoint.id,
+					),
+					total: prev.total - 1,
+				}))
+			} catch (error) {
+				console.error('Error parsing endpoint_deleted event:', error)
+			}
+		},
+		status_update: (event) => {
+			try {
+				// Refresh logs when we get monitoring updates
+				refreshMonitoringLogs()
+			} catch (error) {
+				console.error('Error parsing status_update event:', error)
+			}
+		},
+	})
+
+	// Function to refresh monitoring logs
+	const refreshMonitoringLogs = async () => {
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+		try {
+			const response = await fetch(
+				`${API_BASE_URL}/api/v1/admin/monitoring-logs?limit=10`,
+				{
+					method: 'GET',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+				},
+			)
+			if (response.ok) {
+				const newLogs = await response.json()
+				setLogs(newLogs)
+			}
+		} catch (error) {
+			console.error('Error refreshing monitoring logs:', error)
+		}
+	}
 
 	const activeEndpoints = endpoints.endpoints.filter(
 		(e: any) => e.enabled,
