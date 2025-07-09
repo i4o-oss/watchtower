@@ -12,15 +12,16 @@
 4. [Development Setup](#development-setup)
 5. [Core Components Deep Dive](#core-components-deep-dive)
 6. [Database Layer](#database-layer)
-7. [API Layer](#api-layer)
-8. [Security](#security)
-9. [Frontend Architecture](#frontend-architecture)
-10. [Testing Strategy](#testing-strategy)
-11. [Deployment & DevOps](#deployment--devops)
-12. [Development Workflows](#development-workflows)
-13. [Code Patterns & Conventions](#code-patterns--conventions)
-14. [Troubleshooting](#troubleshooting)
-15. [Learning Path](#learning-path)
+7. [Caching Strategy](#caching-strategy)
+8. [API Layer](#api-layer)
+9. [Security](#security)
+10. [Frontend Architecture](#frontend-architecture)
+11. [Testing Strategy](#testing-strategy)
+12. [Deployment & DevOps](#deployment--devops)
+13. [Development Workflows](#development-workflows)
+14. [Code Patterns & Conventions](#code-patterns--conventions)
+15. [Troubleshooting](#troubleshooting)
+16. [Learning Path](#learning-path)
 
 ---
 
@@ -306,47 +307,58 @@ just docker-build     # Build Docker images
 
 ### 1. Monitoring Engine (`internal/monitoring/`)
 
-The heart of the application. Responsible for:
-- Scheduling endpoint checks
-- Executing HTTP requests
-- Detecting incidents
-- Storing monitoring results
+The heart of the application that runs as an integrated service within the main API server. Responsible for:
+- Scheduling endpoint checks based on configured intervals
+- Executing HTTP requests concurrently via worker pool
+- Detecting incidents from monitoring results
+- Storing monitoring results and broadcasting real-time updates
 
 #### Key Components:
 
 **Engine (`engine.go`)**:
 ```go
 type MonitoringEngine struct {
-    db          *data.DB
-    scheduler   *Scheduler
-    workerPool  *WorkerPool
-    httpClient  *HTTPClient
-    detector    *IncidentDetector
+    workerPool       *WorkerPool
+    scheduler        *Scheduler
+    incidentDetector *IncidentDetector
+    db               *data.DB
+    logger           *log.Logger
+    resultCallback   ResultCallback  // For SSE broadcasting
+    // ... lifecycle management
 }
 ```
 
+**Integration with Main Application**:
+- Starts automatically when the API server starts
+- Connects directly to admin API for real-time endpoint management
+- Broadcasts monitoring results via Server-Sent Events (SSE)
+- Gracefully shuts down with the main application
+
 **Scheduler (`scheduler.go`)**:
-- Manages when endpoints should be checked
-- Respects endpoint-specific intervals
-- Handles load balancing across workers
+- Manages when endpoints should be checked based on configured intervals
+- Automatically picks up new endpoints added via admin API
+- Handles dynamic endpoint updates and removals
+- Respects endpoint-specific timing and load balancing
 
 **Worker Pool (`worker_pool.go`)**:
-- Concurrent execution of monitoring tasks
-- Configurable worker count
-- Job queuing and result handling
+- Concurrent execution of monitoring tasks using configurable worker count
+- Job queuing and result processing with callback system
+- Integrates with SSE system for real-time result broadcasting
+- Handles monitoring result storage and real-time updates
 
 **HTTP Client (`http_client.go`)**:
-- Robust HTTP client with retry logic
-- Configurable timeouts and redirects
-- Response body size limiting
-- Error handling and classification
+- Robust HTTP client with retry logic and exponential backoff
+- Configurable timeouts, redirects, and response body size limiting
+- Comprehensive error handling and classification
+- Connection pooling and resource management
 
-#### Flow:
-1. Scheduler identifies due endpoints
-2. Jobs are queued to worker pool
-3. Workers execute HTTP requests via HTTP client
-4. Results are stored in database
-5. Incident detector analyzes results
+#### Real-time Monitoring Flow:
+1. **Endpoint Creation**: Admin creates endpoint → Immediately added to monitoring engine
+2. **Scheduling**: Scheduler identifies due endpoints based on intervals
+3. **Execution**: Jobs queued to worker pool for concurrent processing
+4. **HTTP Monitoring**: Workers execute HTTP requests via HTTP client
+5. **Result Processing**: Results stored in database and broadcast via SSE
+6. **Real-time Updates**: Frontend receives live status updates without polling
 
 ### 2. Database Layer (`internal/data/`)
 
@@ -400,53 +412,204 @@ type Incident struct {
 
 ### 3. API Layer (`cmd/api/`)
 
-RESTful API with clear separation of concerns.
+RESTful API with integrated monitoring engine and real-time updates.
+
+#### Application Structure:
+```go
+type Application struct {
+    config           Config
+    logger           *log.Logger
+    db               *data.CachedDB
+    cache            cache.Cache
+    sseHub           *SSEHub
+    securityHeaders  *security.SecurityHeaders
+    csrfProtection   *security.CSRFProtection
+    monitoringEngine *monitoring.MonitoringEngine  // Integrated monitoring
+}
+```
 
 #### Route Structure:
 ```go
 // Public routes (no auth required)
-r.HandleFunc("/api/public/status", handlers.GetPublicStatus)
-r.HandleFunc("/api/public/endpoints", handlers.GetPublicEndpoints)
+r.HandleFunc("/api/v1/status", handlers.GetPublicStatus)
+r.HandleFunc("/api/v1/uptime/{id}", handlers.GetUptimeData)
+r.HandleFunc("/api/v1/incidents", handlers.GetPublicIncidents)
+r.HandleFunc("/api/v1/events", handlers.HandleSSE)  // Real-time updates
 
 // Admin routes (auth required)
-admin := r.PathPrefix("/api/admin").Subrouter()
+admin := r.PathPrefix("/api/v1/admin").Subrouter()
 admin.Use(middleware.RequireAuth)
-admin.HandleFunc("/endpoints", handlers.GetEndpoints)
-admin.HandleFunc("/incidents", handlers.GetIncidents)
+admin.HandleFunc("/endpoints", handlers.EndpointCRUD)
+admin.HandleFunc("/incidents", handlers.IncidentCRUD)
+admin.HandleFunc("/monitoring-logs", handlers.GetMonitoringLogs)
+```
+
+#### Integrated Endpoint Management:
+When endpoints are created, updated, or deleted via the admin API:
+
+```go
+func (app *Application) createEndpoint(w http.ResponseWriter, r *http.Request) {
+    // 1. Create endpoint in database
+    if err := app.db.CreateEndpoint(endpoint); err != nil {
+        // Handle error
+        return
+    }
+    
+    // 2. Broadcast real-time update via SSE
+    app.sseHub.BroadcastEndpointUpdate("endpoint_created", endpoint)
+    
+    // 3. Add to monitoring engine immediately
+    if app.monitoringEngine != nil && app.monitoringEngine.IsRunning() {
+        if err := app.monitoringEngine.AddEndpoint(endpoint); err != nil {
+            app.logger.Error("Error adding endpoint to monitoring", "err", err)
+        }
+    }
+    
+    app.writeJSON(w, http.StatusCreated, endpoint)
+}
 ```
 
 #### Key Handlers:
-- **Endpoint Management**: CRUD operations for monitoring endpoints
-- **Incident Management**: View, create, update incidents
+- **Endpoint Management**: CRUD operations with automatic monitoring integration
+- **Incident Management**: View, create, update incidents with timeline tracking
 - **Monitoring Data**: Historical logs and real-time metrics
-- **Authentication**: Login, logout, session management
+- **Authentication**: Session-based auth with CSRF protection
+- **Real-time Updates**: SSE for live admin dashboard and status page updates
 
 ### 4. Real-time Updates (SSE)
 
-Server-Sent Events for live dashboard updates.
+Comprehensive Server-Sent Events system for live updates across the application.
 
-#### Implementation:
+#### SSE Hub Implementation:
 ```go
-func (app *Application) HandleSSE(w http.ResponseWriter, r *http.Request) {
-    // Setup SSE headers
-    w.Header().Set("Content-Type", "text/event-stream")
-    w.Header().Set("Cache-Control", "no-cache")
-    w.Header().Set("Connection", "keep-alive")
-    
-    // Stream updates
-    for {
-        select {
-        case <-r.Context().Done():
-            return
-        case <-time.After(5 * time.Second):
-            // Send periodic updates
-            data, _ := json.Marshal(getCurrentStats())
-            fmt.Fprintf(w, "data: %s\n\n", data)
-            w.(http.Flusher).Flush()
+type SSEHub struct {
+    clients    map[*SSEClient]bool
+    broadcast  chan []byte
+    register   chan *SSEClient
+    unregister chan *SSEClient
+}
+
+// Broadcasts endpoint changes
+func (h *SSEHub) BroadcastEndpointUpdate(eventType string, endpoint interface{}) {
+    message := SSEMessage{
+        Event: eventType, // "endpoint_created", "endpoint_updated", "endpoint_deleted"
+        Data:  endpoint,
+        ID:    fmt.Sprintf("%d", time.Now().UnixNano()),
+    }
+    // Send to all connected clients
+}
+
+// Broadcasts monitoring results
+func (h *SSEHub) BroadcastStatusUpdate(endpointID, endpointName, status string, responseTime *int) {
+    update := StatusUpdateMessage{
+        EndpointID:   endpointID,
+        EndpointName: endpointName,
+        Status:       status,
+        ResponseTime: responseTime,
+        Timestamp:    time.Now(),
+    }
+    // Broadcast to all clients
+}
+```
+
+#### Reusable SSE Hook (Frontend)
+
+To reduce code duplication and provide consistent SSE handling across components, use the `useSSE` hook:
+
+```typescript
+// hooks/useSSE.ts
+import { useEffect, useRef } from 'react'
+
+export interface SSEEventHandler {
+    (event: MessageEvent): void
+}
+
+export interface SSEOptions {
+    url?: string
+    withCredentials?: boolean
+    onOpen?: () => void
+    onError?: (error: Event) => void
+}
+
+export interface SSEEventConfig {
+    [eventType: string]: SSEEventHandler
+}
+
+export function useSSE(events: SSEEventConfig, options: SSEOptions = {}) {
+    const eventSourceRef = useRef<EventSource | null>(null)
+    const {
+        url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/events`,
+        withCredentials = true,
+        onOpen,
+        onError,
+    } = options
+
+    useEffect(() => {
+        const eventSource = new EventSource(url, { withCredentials })
+        eventSourceRef.current = eventSource
+
+        // Set up event listeners
+        Object.entries(events).forEach(([eventType, handler]) => {
+            eventSource.addEventListener(eventType, handler)
+        })
+
+        eventSource.onopen = () => {
+            console.debug('SSE connection established')
+            onOpen?.()
         }
+
+        eventSource.onerror = (error) => {
+            console.error('SSE connection error:', error)
+            onError?.(error)
+        }
+
+        return () => {
+            eventSource.close()
+        }
+    }, [url, withCredentials, onOpen, onError])
+
+    return {
+        close: () => {
+            eventSourceRef.current?.close()
+        },
+        readyState: eventSourceRef.current?.readyState,
     }
 }
 ```
+
+#### Usage Example:
+```typescript
+// In any component that needs real-time updates
+export default function AdminEndpoints() {
+    const [endpoints, setEndpoints] = useState(initialData)
+    
+    // Use SSE hook for real-time updates
+    useSSE({
+        endpoint_created: (event) => {
+            const newEndpoint = JSON.parse(event.data)
+            setEndpoints(prev => [...prev, newEndpoint])
+        },
+        endpoint_updated: (event) => {
+            const updatedEndpoint = JSON.parse(event.data)
+            setEndpoints(prev => 
+                prev.map(ep => ep.id === updatedEndpoint.id ? updatedEndpoint : ep)
+            )
+        },
+        endpoint_deleted: (event) => {
+            const deletedEndpoint = JSON.parse(event.data)
+            setEndpoints(prev => prev.filter(ep => ep.id !== deletedEndpoint.id))
+        },
+    })
+}
+```
+
+#### Real-time Event Types:
+- **endpoint_created**: New endpoint added to monitoring
+- **endpoint_updated**: Endpoint configuration changed
+- **endpoint_deleted**: Endpoint removed from monitoring
+- **status_update**: Live monitoring results from worker pool
+- **incident_created/updated**: Incident management updates
+- **ping**: Keep-alive events
 
 ---
 
@@ -531,6 +694,264 @@ func (db *DB) GetRecentLogs(hours int, limit int) ([]MonitoringLog, error) {
     return logs, err
 }
 ```
+
+---
+
+## Caching Strategy
+
+### Overview
+
+Watchtower implements a focused caching strategy that prioritizes **data consistency over cache performance** for user-facing operations. The system uses Redis as the primary cache with in-memory fallback, but only for specific use cases where consistency is less critical.
+
+### Caching Philosophy
+
+1. **Consistency First**: Critical user operations (admin dashboard, status page) always fetch fresh data
+2. **Strategic Caching**: Only cache data where consistency is less critical or data is relatively stable
+3. **Simplified Management**: Avoid complex cache invalidation patterns by not caching frequently changing data
+
+### What We Cache
+
+#### ✅ Data We Cache
+
+1. **Rate Limiting Data**
+   - Purpose: Prevent API abuse
+   - TTL: 1 minute
+   - Rationale: Brief inconsistency acceptable for rate limiting
+
+2. **User Authentication Data**
+   - Purpose: Reduce database load for frequent auth checks
+   - TTL: 1 hour
+   - Rationale: User data changes infrequently
+
+3. **Current Day Monitoring Logs** (Only for queries ≤ 24 hours)
+   - Purpose: Performance optimization for dashboard charts
+   - TTL: 24 hours
+   - Rationale: Current day data is relatively stable after initial creation
+
+#### ❌ Data We DON'T Cache
+
+1. **Endpoint Operations** (Create, Read, Update, Delete)
+   - Always fetch from database
+   - Critical for admin dashboard consistency
+   - Ensures new endpoints appear immediately
+
+2. **Incident Operations** (Create, Read, Update, Delete)
+   - Always fetch from database
+   - Critical for incident management accuracy
+
+3. **Uptime Statistics**
+   - Always calculated fresh
+   - Ensures accuracy for status pages
+
+4. **Latest Monitoring Status**
+   - Always fetch from database
+   - Critical for real-time status accuracy
+
+### Implementation Details
+
+#### Cache Layer Architecture
+
+```go
+// CachedDB wraps the regular DB with strategic caching
+type CachedDB struct {
+    *DB
+    cache      cache.Cache
+    keyBuilder *CacheKeyBuilder
+}
+```
+
+#### Cache Backend Selection
+
+The system automatically selects the cache backend based on configuration:
+
+```bash
+# .env configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=your_password
+CACHE_ENABLED=true  # Required to enable Redis
+```
+
+- **Redis**: Used when `CACHE_ENABLED=true` and Redis credentials are provided
+- **In-Memory**: Fallback when Redis is unavailable or not configured
+
+#### Key Cache Operations
+
+**User Authentication Caching:**
+```go
+func (cdb *CachedDB) GetUserByEmail(email string) (*User, error) {
+    key := fmt.Sprintf(cache.CacheKeyUserByEmail, email)
+    
+    // Try cache first
+    var user User
+    if err := cdb.cache.Get(key, &user); err == nil {
+        return &user, nil
+    }
+    
+    // Cache miss, get from database and cache result
+    user_ptr, err := cdb.DB.GetUserByEmail(email)
+    if err != nil {
+        return nil, err
+    }
+    
+    cdb.cache.Set(key, *user_ptr, cache.CacheExpireLong)
+    return user_ptr, nil
+}
+```
+
+**Monitoring Logs Conditional Caching:**
+```go
+func (cdb *CachedDB) GetMonitoringLogsWithPagination(page, limit, hours int, endpointID *uuid.UUID, success *bool) ([]MonitoringLog, int64, error) {
+    // Only cache if hours <= 24 (current day data)
+    shouldCache := hours <= 24
+    
+    if shouldCache {
+        // Try cache first, fall back to database
+        // Cache result with 24h TTL
+    }
+    
+    // Always fetch from database for longer periods
+    return cdb.DB.GetMonitoringLogsWithPagination(page, limit, hours, endpointID, success)
+}
+```
+
+**Direct Database Access (No Caching):**
+```go
+func (cdb *CachedDB) GetEndpointsWithPagination(page, limit int, enabled *bool) ([]Endpoint, int64, error) {
+    // Always fetch from database to ensure immediate consistency after create/update/delete
+    // This is the most critical endpoint for admin UI, so we prioritize consistency over cache performance
+    return cdb.DB.GetEndpointsWithPagination(page, limit, enabled)
+}
+```
+
+### Cache Key Patterns
+
+The system uses consistent cache key patterns defined in `internal/cache/cache.go`:
+
+```go
+const (
+    // User caching
+    CacheKeyUser        = "user:%s"
+    CacheKeyUserByEmail = "user:email:%s"
+    
+    // Monitoring logs caching (current day only)
+    CacheKeyMonitoringLogs = "monitoring_logs:page:%d:limit:%d:hours:%d:endpoint:%s:success:%v"
+    
+    // Rate limiting
+    CacheKeyRateLimit = "rate_limit:%s:%s" // IP:endpoint
+    
+    // Session caching
+    CacheKeySession = "session:%s"
+)
+```
+
+### Cache Invalidation
+
+#### Minimal Invalidation Strategy
+
+Since we cache very little data, cache invalidation is simplified:
+
+1. **Monitoring Logs**: Invalidate only current day caches when new logs are created
+2. **User Data**: Rarely invalidated (users change infrequently)
+3. **No Endpoint/Incident Invalidation**: Not needed since we don't cache this data
+
+#### Pattern Matching Support
+
+The cache layer supports wildcard pattern deletion:
+
+```go
+// Memory cache wildcard support
+if pattern[len(pattern)-1] == '*' {
+    prefix := pattern[:len(pattern)-1]
+    for key := range m.items {
+        if len(key) >= len(prefix) && key[:len(prefix)] == prefix {
+            keysToDelete = append(keysToDelete, key)
+        }
+    }
+}
+```
+
+### Cache Expiration Times
+
+```go
+const (
+    CacheExpireShort    = 5 * time.Minute   // For frequently changing data
+    CacheExpireMedium   = 15 * time.Minute  // For semi-static data
+    CacheExpireLong     = 1 * time.Hour     // For static data (users)
+    CacheExpireVeryLong = 24 * time.Hour    // For very static data (monitoring logs)
+    
+    // Rate limiting
+    RateLimitExpire = 1 * time.Minute
+    
+    // Session expiration
+    SessionExpire = 24 * time.Hour
+)
+```
+
+### Monitoring and Health Checks
+
+#### Cache Health
+
+The application includes cache health monitoring:
+
+```go
+func (cdb *CachedDB) GetCacheStats() map[string]interface{} {
+    return map[string]interface{}{
+        "cache_type": "redis",
+        "status":     "connected",
+    }
+}
+```
+
+#### Performance Considerations
+
+1. **Database Load**: Reduced for user auth and rate limiting
+2. **Memory Usage**: Minimal due to focused caching strategy
+3. **Consistency**: Prioritized over cache hit rates
+4. **Complexity**: Greatly reduced by avoiding complex invalidation
+
+### Development Guidelines
+
+#### When to Add Caching
+
+Only add caching for new data if:
+1. Data changes infrequently
+2. Consistency can tolerate brief delays
+3. Performance benefits justify added complexity
+
+#### When NOT to Cache
+
+Avoid caching for:
+1. User-facing CRUD operations
+2. Real-time status data
+3. Frequently changing data
+4. Critical accuracy requirements
+
+#### Testing Cache Behavior
+
+```bash
+# Test with Redis enabled
+CACHE_ENABLED=true go test ./internal/data
+
+# Test with memory cache fallback
+CACHE_ENABLED=false go test ./internal/data
+
+# Test cache invalidation
+redis-cli FLUSHALL  # Clear all cache data
+```
+
+### Migration from Heavy Caching
+
+This focused strategy replaces a previous heavy caching approach that caused consistency issues. Key changes:
+
+1. **Removed**: Endpoint caching (all operations)
+2. **Removed**: Incident caching (all operations)
+3. **Removed**: Uptime statistics caching
+4. **Kept**: User authentication caching
+5. **Modified**: Monitoring logs (current day only)
+6. **Kept**: Rate limiting caching
+
+This change prioritizes user experience and data accuracy over theoretical performance gains.
 
 ---
 
@@ -930,7 +1351,7 @@ CSP_REPORT_URI=/csp-report       # CSP violation reporting
 
 ### React Architecture
 
-The frontend is built with modern React patterns:
+The frontend is built with modern React patterns using React Router v7:
 
 #### Project Structure:
 ```
@@ -940,10 +1361,13 @@ frontend/app/
 │   ├── admin-layout.tsx # Admin dashboard layout
 │   ├── status-page.tsx  # Public status page
 │   └── monitoring-charts.tsx # Data visualization
-├── routes/              # Page components
+├── routes/              # Page components (React Router v7)
 │   ├── admin/           # Admin pages
 │   ├── dashboard.tsx    # Main dashboard
 │   └── login.tsx        # Authentication
+├── hooks/               # Custom React hooks
+│   ├── useSSE.ts       # Server-Sent Events hook
+│   └── useAuth.ts      # Authentication hook
 ├── lib/                 # Utilities and hooks
 │   ├── api.ts          # API client
 │   ├── auth.tsx        # Authentication context
@@ -951,25 +1375,155 @@ frontend/app/
 └── root.tsx            # App root component
 ```
 
+#### React Router v7 Patterns
+
+**Data Loading with clientLoader:**
+```typescript
+// Use clientLoader instead of useEffect for initial data loading
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+    await requireAuth('/login')
+    
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+    const url = new URL(request.url)
+    const timeRange = url.searchParams.get('timeRange') || '24'
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/admin/monitoring-logs?hours=${timeRange}`)
+        return response.ok ? response.json() : { logs: [] }
+    } catch (error) {
+        return { logs: [] }
+    }
+}
+
+export default function MonitoringRoute({ loaderData }: Route.ComponentProps) {
+    // Use data from loader instead of useEffect
+    const [logs, setLogs] = useState(loaderData.logs)
+    // ... rest of component
+}
+```
+
+**URL-based Filtering:**
+```typescript
+// Use URL search params for filters (bookmarkable, shareable)
+export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
+    const [searchParams, setSearchParams] = useSearchParams()
+    
+    // Get filter values from URL
+    const searchTerm = searchParams.get('search') || ''
+    const statusFilter = searchParams.get('status') || 'all'
+    const endpointFilter = searchParams.get('endpoint') || 'all'
+    const timeRange = searchParams.get('timeRange') || '24'
+    
+    // Helper to update URL params
+    const updateFilter = (key: string, value: string) => {
+        const newParams = new URLSearchParams(searchParams)
+        if (value === '' || value === 'all' || (key === 'timeRange' && value === '24')) {
+            newParams.delete(key)
+        } else {
+            newParams.set(key, value)
+        }
+        setSearchParams(newParams, { replace: true })
+    }
+    
+    // Use in form controls
+    return (
+        <div>
+            <Input
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => updateFilter('search', e.target.value)}
+            />
+            <Select
+                value={statusFilter}
+                onValueChange={(value) => updateFilter('status', value)}
+            >
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="success">Success Only</SelectItem>
+                <SelectItem value="failed">Failed Only</SelectItem>
+            </Select>
+        </div>
+    )
+}
+```
+
+**Benefits of URL-based Filtering:**
+- ✅ Bookmarkable filtered views
+- ✅ Shareable links with specific filters
+- ✅ Browser back/forward navigation works
+- ✅ SEO-friendly URLs
+- ✅ Maintains state across page refreshes
+
 ### Key Components
 
 #### Admin Dashboard (`routes/admin/`)
-- **Endpoints Management**: CRUD interface for monitoring endpoints
-- **Incident Management**: View and manage incidents
-- **Monitoring Dashboard**: Real-time monitoring data
-- **Performance Analytics**: Charts and metrics
+- **Endpoints Management**: CRUD interface with real-time updates via SSE
+- **Live Endpoint Count**: Automatically updates when endpoints are added/removed
+- **Incident Management**: View and manage incidents with real-time status updates
+- **Monitoring Dashboard**: Live monitoring data without page refresh
+- **Performance Analytics**: Charts with real-time data streaming
+
+**Real-time Admin Interface** (`routes/admin/endpoints.tsx`):
+```typescript
+export default function AdminEndpoints() {
+    const [endpoints, setEndpoints] = useState(initialEndpoints)
+    const [total, setTotal] = useState(initialTotal)
+    
+    // Real-time updates via Server-Sent Events
+    useEffect(() => {
+        const eventSource = new EventSource(`${API_BASE_URL}/api/v1/events`, {
+            withCredentials: true,
+        })
+        
+        eventSource.addEventListener('endpoint_created', (event) => {
+            const newEndpoint = JSON.parse(event.data)
+            setEndpoints(prev => [...prev, newEndpoint])
+            setTotal(prev => prev + 1)
+        })
+        
+        eventSource.addEventListener('endpoint_updated', (event) => {
+            const updatedEndpoint = JSON.parse(event.data)
+            setEndpoints(prev => 
+                prev.map(ep => ep.id === updatedEndpoint.id ? updatedEndpoint : ep)
+            )
+        })
+        
+        eventSource.addEventListener('endpoint_deleted', (event) => {
+            const deletedEndpoint = JSON.parse(event.data)
+            setEndpoints(prev => prev.filter(ep => ep.id !== deletedEndpoint.id))
+            setTotal(prev => prev - 1)
+        })
+        
+        return () => eventSource.close()
+    }, [])
+}
+```
 
 #### Status Page (`components/status-page.tsx`)
 - **Public Interface**: No authentication required
-- **Real-time Updates**: Live status information
-- **Incident Timeline**: Public incident history
-- **Performance Metrics**: Response time charts
+- **Real-time Updates**: Live status information via SSE connection
+- **Incident Timeline**: Public incident history with live updates
+- **Performance Metrics**: Response time charts with streaming data
+
+**Real-time Status Updates**:
+```typescript
+useEffect(() => {
+    const eventSource = new EventSource('/api/v1/events')
+    
+    eventSource.addEventListener('status_update', (event) => {
+        const data = JSON.parse(event.data)
+        // Update status displays in real-time
+        fetchStatus() // Refresh current status
+    })
+    
+    return () => eventSource.close()
+}, [])
+```
 
 #### Data Visualization (`components/monitoring-charts.tsx`)
-- **Response Time Charts**: Historical performance data
-- **Uptime Statistics**: Availability metrics
-- **Error Rate Trends**: Error analysis
-- **Interactive Dashboards**: Drill-down capabilities
+- **Response Time Charts**: Historical performance data with live updates
+- **Uptime Statistics**: Availability metrics updated in real-time
+- **Error Rate Trends**: Error analysis with streaming data
+- **Interactive Dashboards**: Drill-down capabilities with live data
 
 ### State Management
 
@@ -1511,13 +2065,19 @@ Monitor security-related metrics:
 2. **Backend Development**:
    ```bash
    # Make changes to Go code
-   # Add tests
+   # Add tests for new functionality
    just test
+   
+   # Test monitoring engine integration if applicable
+   just test-monitoring
    
    # Update database schema if needed
    just db-migrate-create add_endpoint_groups
    # Edit migration file
    just db-migrate-up
+   
+   # Test with running monitoring engine
+   just dev # Runs API server with integrated monitoring
    ```
 
 3. **Frontend Development**:
@@ -1530,12 +2090,22 @@ Monitor security-related metrics:
 
 4. **Integration Testing**:
    ```bash
-   # Start full stack
+   # Start full stack with integrated monitoring
    just dev
    
-   # Test end-to-end functionality
-   # Check API endpoints
-   # Verify UI updates
+   # Test monitoring integration:
+   # 1. Create endpoint via admin API
+   # 2. Verify it appears in admin UI immediately (SSE)
+   # 3. Check monitoring starts automatically (logs)
+   # 4. Verify status updates appear in real-time
+   
+   # Test API endpoints
+   curl -X POST localhost:8080/api/v1/admin/endpoints \
+     -H "Content-Type: application/json" \
+     -d '{"name":"test","url":"https://example.com","enabled":true}'
+   
+   # Verify UI updates in real-time
+   # Open admin dashboard and watch for live updates
    ```
 
 5. **Code Review**:
@@ -1812,6 +2382,57 @@ export const useEndpoints = () => {
 };
 ```
 
+#### Avoiding Infinite Re-renders
+
+**Problem:** useEffect dependencies that change on every render cause infinite loops.
+
+**Solution:** Use useMemo for objects/arrays that are recalculated:
+
+```typescript
+// ❌ Bad - Creates new object on every render
+const endpointMap = endpoints.reduce((acc, endpoint) => {
+    acc[endpoint.id] = endpoint
+    return acc
+}, {})
+
+useEffect(() => {
+    // This runs on every render because endpointMap is always "new"
+    filterLogs(endpointMap)
+}, [logs, endpointMap]) // endpointMap changes every render!
+
+// ✅ Good - Memoize the calculated value
+const endpointMap = useMemo(
+    () => endpoints.reduce((acc, endpoint) => {
+        acc[endpoint.id] = endpoint
+        return acc
+    }, {}),
+    [endpoints] // Only recalculate when endpoints actually change
+)
+
+useEffect(() => {
+    // This only runs when logs or endpointMap actually change
+    filterLogs(endpointMap)
+}, [logs, endpointMap])
+```
+
+**Common Patterns:**
+```typescript
+// Memoize expensive calculations
+const expensiveValue = useMemo(() => {
+    return heavyCalculation(data)
+}, [data])
+
+// Memoize filtered/transformed data
+const filteredItems = useMemo(() => {
+    return items.filter(item => item.status === 'active')
+}, [items])
+
+// Memoize callbacks when passing to child components
+const handleClick = useCallback((id: string) => {
+    onItemClick(id)
+}, [onItemClick])
+```
+
 ### Database Patterns
 
 #### Model Definition
@@ -1878,6 +2499,46 @@ func (r *endpointRepository) GetEnabled() ([]Endpoint, error) {
 ## Troubleshooting
 
 ### Common Issues
+
+#### Monitoring Engine Issues
+
+**Problem**: New endpoints not being monitored
+**Solution**:
+```bash
+# Check monitoring engine is running
+curl localhost:8080/api/v1/admin/health
+
+# Check logs for monitoring engine
+tail -f /var/log/watchtower.log | grep "monitoring"
+
+# Verify endpoint was added to engine
+# Look for: "Added endpoint to monitoring engine" in logs
+
+# Restart if needed - monitoring engine starts with API server
+systemctl restart watchtower
+```
+
+**Problem**: SSE connections not working
+**Solution**:
+```bash
+# Test SSE endpoint directly
+curl -N -H "Accept: text/event-stream" localhost:8080/api/v1/events
+
+# Check browser console for SSE errors
+# Verify no proxy is blocking event-stream connections
+
+# Check CORS settings for cross-origin requests
+```
+
+**Problem**: Admin interface not updating in real-time
+**Solution**:
+```javascript
+// Check browser console for SSE connection errors
+// Verify EventSource connection:
+const eventSource = new EventSource('/api/v1/events')
+eventSource.onopen = () => console.log('SSE connected')
+eventSource.onerror = (e) => console.error('SSE error', e)
+```
 
 #### Database Connection Issues
 

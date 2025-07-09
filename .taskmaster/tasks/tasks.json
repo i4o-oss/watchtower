@@ -733,11 +733,68 @@
 						"testStrategy": "Test custom domain configuration and SSL certificate installation. Verify health check endpoints are accessible and responding correctly. Test auto-scaling by simulating load and monitoring resource usage. Validate log aggregation by generating test logs and verifying they appear in Railway dashboard. Test monitoring alerts by simulating error conditions."
 					}
 				]
+			},
+			{
+				"id": 15,
+				"title": "Critical Status Monitoring Issues: Fix admin endpoint refresh, endpoint counting, and implement automatic monitoring startup for new endpoints",
+				"description": "Resolve three critical issues: admin route not showing recently added endpoints without server restart, incorrect endpoint count due to stale data, and new endpoints not being monitored automatically after creation.",
+				"details": "Issue 1: Fix admin route endpoint refresh by implementing real-time data fetching or WebSocket updates to show newly added endpoints immediately without requiring server restart. Update the admin frontend to poll for new endpoints or establish WebSocket connection for live updates. Issue 2: Fix endpoint counting by identifying and resolving stale data issues - likely caused by caching problems or database query issues. Implement proper cache invalidation or remove problematic caching layers. Update count queries to use fresh data and add proper indexing if needed. Issue 3: CRITICAL - Implement automatic monitoring startup for new endpoints by ensuring the monitoring engine worker pool dynamically picks up new endpoints. Add event-driven monitoring startup that triggers when new endpoints are created through the admin API. Modify the monitoring engine to periodically check for new endpoints or implement a notification system that alerts workers when new endpoints are added. Ensure database triggers or application-level events properly notify the monitoring system of new endpoints.",
+				"testStrategy": "Test that newly created endpoints appear in admin interface immediately without server restart. Verify endpoint count displays correctly and updates in real-time when endpoints are added/removed. Test that new endpoints automatically begin monitoring within expected timeframe after creation. Validate that monitoring results are logged for new endpoints. Test WebSocket or polling mechanism for real-time updates. Verify no memory leaks or performance issues with dynamic monitoring startup. Test edge cases like rapid endpoint creation and deletion.",
+				"status": "done",
+				"dependencies": [4, 5, 9],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Implement real-time admin endpoint refresh mechanism",
+						"description": "Fix admin route not showing recently added endpoints without server restart by implementing WebSocket connection or polling mechanism for live updates",
+						"dependencies": [],
+						"details": "Create WebSocket endpoint or implement polling system to push new endpoint data to admin frontend in real-time. Update admin UI to establish WebSocket connection or poll for updates every 30 seconds. Ensure proper error handling and reconnection logic for WebSocket failures.",
+						"status": "done",
+						"testStrategy": "Test by adding new endpoint through API and verifying it appears in admin interface within 30 seconds without page refresh. Test WebSocket connection stability and reconnection on network interruptions."
+					},
+					{
+						"id": 2,
+						"title": "Fix endpoint counting and resolve stale data issues",
+						"description": "Identify and resolve stale data problems causing incorrect endpoint counts by implementing proper cache invalidation or removing problematic caching layers",
+						"dependencies": [],
+						"details": "Audit existing caching mechanisms and database queries for endpoint counting. Remove or fix cache invalidation issues. Update count queries to use fresh data with proper indexing. Implement cache-busting strategies or remove caching for endpoint counts if necessary.",
+						"status": "done",
+						"testStrategy": "Test endpoint count accuracy by adding/removing endpoints and verifying counts update immediately. Load test with multiple concurrent endpoint operations to ensure count consistency."
+					},
+					{
+						"id": 3,
+						"title": "Design monitoring engine notification system",
+						"description": "Design event-driven architecture for notifying monitoring engine when new endpoints are created",
+						"dependencies": [],
+						"details": "Design notification system using database triggers, application events, or message queues to alert monitoring workers of new endpoints. Define event schema and delivery mechanisms. Plan integration points with existing monitoring engine architecture.",
+						"status": "done",
+						"testStrategy": "Create design document with event flow diagrams and integration points. Review architecture for scalability and reliability requirements."
+					},
+					{
+						"id": 4,
+						"title": "Implement automatic monitoring startup for new endpoints",
+						"description": "Modify monitoring engine to automatically detect and start monitoring new endpoints through event-driven system",
+						"dependencies": [3],
+						"details": "Implement the designed notification system to trigger monitoring startup when new endpoints are created. Modify monitoring engine worker pool to dynamically add new endpoints to monitoring queue. Add periodic health checks to ensure all endpoints are being monitored.",
+						"status": "done",
+						"testStrategy": "Test by creating new endpoint through admin API and verifying monitoring starts automatically within 60 seconds. Test with multiple concurrent endpoint additions and verify all are picked up by monitoring system."
+					},
+					{
+						"id": 5,
+						"title": "Integration testing and monitoring system validation",
+						"description": "Perform end-to-end testing of all three fixes working together and validate monitoring system reliability",
+						"dependencies": [1, 2, 4],
+						"details": "Test complete workflow: create endpoint through admin API, verify it appears in admin interface immediately, confirm correct endpoint count, and validate monitoring starts automatically. Test edge cases, error scenarios, and system recovery. Validate monitoring system performance under load.",
+						"status": "done",
+						"testStrategy": "End-to-end test scenarios covering all three fixes. Load testing with multiple endpoints being added simultaneously. Chaos testing to ensure system recovery from failures."
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-07-07T12:22:25.759Z",
+			"updated": "2025-07-08T12:19:08.163Z",
 			"description": "Tasks for master context"
 		}
 	}
