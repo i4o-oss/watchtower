@@ -99,11 +99,13 @@ export default function EditEndpoint({
 				} catch {
 					// Try to parse as key:value pairs
 					const lines = formData.headers.split('\n')
-					headers = {}
+					headers = {} as { [key: string]: string }
 					for (const line of lines) {
 						const [key, ...valueParts] = line.split(':')
 						if (key && valueParts.length > 0) {
-							headers[key.trim()] = valueParts.join(':').trim()
+							;(headers as { [key: string]: string })[
+								key.trim()
+							] = valueParts.join(':').trim()
 						}
 					}
 				}

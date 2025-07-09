@@ -50,7 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const getCSRFToken = async (): Promise<string | null> => {
 		try {
 			const response = await api.get('/api/v1/csrf-token')
-			const data = await handleApiResponse(response)
+			const data = (await handleApiResponse(response)) as {
+				csrf_token: string
+			}
 			return data.csrf_token
 		} catch (error) {
 			console.error('Failed to get CSRF token:', error)
@@ -62,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const checkAuth = async () => {
 		try {
 			const response = await api.get('/api/v1/auth/me')
-			const user = await handleApiResponse(response)
+			const user = (await handleApiResponse(response)) as User
 			setAuthState({
 				user,
 				isLoading: false,
@@ -248,7 +250,7 @@ export interface AuthCheckResult {
 export async function checkAuthStatus(): Promise<AuthCheckResult> {
 	try {
 		const response = await api.get('/api/v1/auth/me')
-		const user = await handleApiResponse(response)
+		const user = (await handleApiResponse(response)) as User
 		return { isAuthenticated: true, user }
 	} catch (error) {
 		console.error('Auth check failed:', error)
