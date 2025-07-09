@@ -45,6 +45,15 @@ lint:
     bun run lint
     # golangci-lint run ./...
 
+serve:
+	just tidy
+	just fmt
+	just build
+	#!/usr/bin/env -S parallel --shebang --ungroup
+	just server-dev
+	just frontend-dev
+
+
 tidy:
     cd {{FRONTEND_DIR}} && bun i
     @go mod tidy
