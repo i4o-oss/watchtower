@@ -62,57 +62,9 @@ func (cdb *CachedDB) DeleteEndpoint(id uuid.UUID) error {
 // Cached Monitoring Log operations
 
 func (cdb *CachedDB) GetMonitoringLogsWithPagination(page, limit, hours int, endpointID *uuid.UUID, success *bool) ([]MonitoringLog, int64, error) {
-	// Only cache if hours <= 24 (current day data)
-	shouldCache := hours <= 24
-
-	if shouldCache {
-		var endpointIDStr *string
-		if endpointID != nil {
-			str := endpointID.String()
-			endpointIDStr = &str
-		}
-
-		key := cdb.keyBuilder.MonitoringLogsKey(page, limit, hours, endpointIDStr, success)
-
-		// Try cache first
-		var cached struct {
-			Logs  []MonitoringLog `json:"logs"`
-			Total int64           `json:"total"`
-		}
-		if err := cdb.cache.Get(key, &cached); err == nil {
-			return cached.Logs, cached.Total, nil
-		}
-	}
-
-	// Cache miss or not cacheable, get from database
-	logs, total, err := cdb.DB.GetMonitoringLogsWithPagination(page, limit, hours, endpointID, success)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Cache the result only for current day data with 24h TTL
-	if shouldCache {
-		var endpointIDStr *string
-		if endpointID != nil {
-			str := endpointID.String()
-			endpointIDStr = &str
-		}
-
-		key := cdb.keyBuilder.MonitoringLogsKey(page, limit, hours, endpointIDStr, success)
-		cached := struct {
-			Logs  []MonitoringLog `json:"logs"`
-			Total int64           `json:"total"`
-		}{
-			Logs:  logs,
-			Total: total,
-		}
-
-		if err := cdb.cache.Set(key, cached, cache.CacheExpireVeryLong); err != nil {
-			log.Printf("Failed to cache monitoring logs pagination: %v", err)
-		}
-	}
-
-	return logs, total, nil
+	// Always fetch from database to ensure fresh monitoring logs
+	// No caching for monitoring logs as they need to show real-time data
+	return cdb.DB.GetMonitoringLogsWithPagination(page, limit, hours, endpointID, success)
 }
 
 func (cdb *CachedDB) GetUptimeStats(endpointID uuid.UUID, days int) (float64, error) {
@@ -126,15 +78,8 @@ func (cdb *CachedDB) GetLatestMonitoringStatus() (map[uuid.UUID]MonitoringLog, e
 }
 
 func (cdb *CachedDB) CreateMonitoringLog(log *MonitoringLog) error {
-	err := cdb.DB.CreateMonitoringLog(log)
-	if err != nil {
-		return err
-	}
-
-	// Invalidate current day monitoring caches only
-	cdb.invalidateMonitoringCaches()
-
-	return nil
+	// No caching for monitoring logs - direct database operation
+	return cdb.DB.CreateMonitoringLog(log)
 }
 
 // Incident operations (no caching)
@@ -226,13 +171,6 @@ func (cdb *CachedDB) CreateUser(user *User) error {
 }
 
 // Cache invalidation helpers
-
-func (cdb *CachedDB) invalidateMonitoringCaches() {
-	// Only invalidate current day monitoring logs cache (24h window)
-	if err := cdb.cache.DeletePattern("monitoring_logs:*"); err != nil {
-		log.Printf("Failed to delete monitoring_logs:* pattern: %v", err)
-	}
-}
 
 // Cache warming methods
 

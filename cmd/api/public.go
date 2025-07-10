@@ -227,7 +227,7 @@ func (app *Application) getUptimeData(w http.ResponseWriter, r *http.Request) {
 
 // getPublicIncidents returns published incidents
 func (app *Application) getPublicIncidents(w http.ResponseWriter, r *http.Request) {
-	// Get incidents (for now, return all open incidents)
+	// Get open incidents (non-resolved incidents that should be visible on status page)
 	incidents, err := app.db.GetOpenIncidents()
 	if err != nil {
 		app.logger.Error("failed to get incidents", "error", err)

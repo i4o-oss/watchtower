@@ -248,54 +248,6 @@ func (c *SSEClient) writeMessage(message []byte) error {
 	return nil
 }
 
-// StartSSEStatusBroadcaster starts a goroutine that periodically broadcasts status updates
-func (app *Application) StartSSEStatusBroadcaster() {
-	go func() {
-		ticker := time.NewTicker(30 * time.Second) // Broadcast every 30 seconds
-		defer ticker.Stop()
-
-		for range ticker.C {
-			app.broadcastCurrentStatus()
-		}
-	}()
-}
-
-// broadcastCurrentStatus gets current status and broadcasts it to SSE clients
-func (app *Application) broadcastCurrentStatus() {
-	endpoints, err := app.db.GetEndpoints()
-	if err != nil {
-		app.logger.Error("failed to get endpoints for SSE status broadcast", "error", err)
-		return
-	}
-
-	for _, endpoint := range endpoints {
-		if !endpoint.Enabled {
-			continue
-		}
-
-		// Get latest monitoring log
-		logs, err := app.db.GetMonitoringLogs(endpoint.ID, 1)
-		if err != nil {
-			continue
-		}
-
-		if len(logs) > 0 {
-			log := logs[0]
-			status := "operational"
-			if !log.Success {
-				status = "outage"
-			}
-
-			app.sseHub.BroadcastStatusUpdate(
-				endpoint.ID.String(),
-				endpoint.Name,
-				status,
-				log.ResponseTimeMs,
-			)
-		}
-	}
-}
-
 // Helper method to broadcast when monitoring results come in
 func (app *Application) BroadcastMonitoringResult(endpointID, endpointName string, success bool, responseTime *int) {
 	status := "operational"

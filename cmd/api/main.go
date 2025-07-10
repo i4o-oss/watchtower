@@ -259,9 +259,6 @@ func main() {
 	// Set monitoring result callback to broadcast via SSE
 	monitoringEngine.SetResultCallback(app.BroadcastMonitoringResult)
 
-	// Start SSE status broadcaster
-	app.StartSSEStatusBroadcaster()
-
 	// Start monitoring engine
 	if err := app.monitoringEngine.Start(); err != nil {
 		logger.Error("failed to start monitoring engine", "err", err.Error())

@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -30,8 +29,7 @@ func (app *Application) routes() http.Handler {
 
 	// API routes with /api/v1 prefix
 	r.Route("/api/v1", func(r chi.Router) {
-		// Apply rate limiting to all API routes
-		r.Use(app.bypassRateLimitMiddleware)
+		// Note: Rate limiting is applied selectively per route group below
 
 		// CSRF token endpoint
 		r.Get("/csrf-token", app.csrfProtection.GetTokenHandler())
@@ -54,20 +52,20 @@ func (app *Application) routes() http.Handler {
 			r.Post("/auth/login", app.login)
 		})
 
-		// Logout route (with CSRF protection)
+		// Logout route (with CSRF protection, no rate limiting for authenticated users)
 		r.Group(func(r chi.Router) {
 			r.Use(app.csrfProtection.Middleware())
 			r.Post("/auth/logout", app.logout)
 		})
 
-		// Protected routes (with CSRF protection)
+		// Protected routes (with CSRF protection, no rate limiting for authenticated users)
 		r.Group(func(r chi.Router) {
 			r.Use(app.csrfProtection.Middleware())
 			r.Use(app.requireAuth)
 			r.Get("/auth/me", app.me)
 		})
 
-		// Admin routes (with CSRF protection)
+		// Admin routes (with CSRF protection, no rate limiting for authenticated users)
 		r.Route("/admin", func(r chi.Router) {
 			r.Use(app.csrfProtection.Middleware())
 			r.Use(app.requireAuth)
@@ -138,11 +136,4 @@ func (app *Application) routes() http.Handler {
 	})
 
 	return r
-}
-
-// Legacy health endpoint - replaced by app.healthCheck
-func health(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status": "ok", "timestamp": "` + time.Now().Format(time.RFC3339) + `"}`))
 }

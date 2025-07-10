@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/i4o-oss/watchtower/internal/constants"
 	"github.com/i4o-oss/watchtower/internal/data"
 )
 
@@ -45,20 +46,7 @@ type ListEndpointsResponse struct {
 // listEndpoints handles GET /api/v1/admin/endpoints
 func (app *Application) listEndpoints(w http.ResponseWriter, r *http.Request) {
 	// Parse pagination parameters
-	page := 1
-	limit := 50
-
-	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
-		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
-			page = p
-		}
-	}
-
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
-		}
-	}
+	pagination := parsePaginationParams(r)
 
 	// Parse enabled filter
 	var enabled *bool
@@ -69,18 +57,17 @@ func (app *Application) listEndpoints(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Use database-level pagination
-	endpoints, total, err := app.db.GetEndpointsWithPagination(page, limit, enabled)
+	endpoints, total, err := app.db.GetEndpointsWithPagination(pagination.Page, pagination.Limit, enabled)
 	if err != nil {
-		app.logger.Error("Error getting endpoints", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.logErrorAndRespond(w, http.StatusInternalServerError, constants.ErrInternalServer, "Error getting endpoints", err)
 		return
 	}
 
 	response := ListEndpointsResponse{
 		Endpoints: endpoints,
 		Total:     int(total),
-		Page:      page,
-		Limit:     limit,
+		Page:      pagination.Page,
+		Limit:     pagination.Limit,
 	}
 
 	app.writeJSON(w, http.StatusOK, response)
@@ -132,7 +119,7 @@ func (app *Application) createEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	if err := app.db.CreateEndpoint(endpoint); err != nil {
 		app.logger.Error("Error creating endpoint", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -154,10 +141,9 @@ func (app *Application) createEndpoint(w http.ResponseWriter, r *http.Request) {
 
 // getEndpoint handles GET /api/v1/admin/endpoints/{id}
 func (app *Application) getEndpoint(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := parseUUIDParam(r, "id")
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid endpoint ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidEndpointID)
 		return
 	}
 
@@ -173,10 +159,9 @@ func (app *Application) getEndpoint(w http.ResponseWriter, r *http.Request) {
 
 // updateEndpoint handles PUT /api/v1/admin/endpoints/{id}
 func (app *Application) updateEndpoint(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := uuid.Parse(idStr)
+	id, err := parseUUIDParam(r, "id")
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid endpoint ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidEndpointID)
 		return
 	}
 
@@ -222,7 +207,7 @@ func (app *Application) updateEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	if err := app.db.UpdateEndpoint(endpoint); err != nil {
 		app.logger.Error("Error updating endpoint", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -247,7 +232,7 @@ func (app *Application) deleteEndpoint(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid endpoint ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidEndpointID)
 		return
 	}
 
@@ -261,7 +246,7 @@ func (app *Application) deleteEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	if err := app.db.DeleteEndpoint(id); err != nil {
 		app.logger.Error("Error deleting endpoint", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -310,12 +295,7 @@ func (app *Application) listMonitoringLogs(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Parse hours parameter (default to 24 hours)
-	hours := 24
-	if hoursStr := r.URL.Query().Get("hours"); hoursStr != "" {
-		if h, err := strconv.Atoi(hoursStr); err == nil && h > 0 && h <= 720 { // Max 30 days
-			hours = h
-		}
-	}
+	hours := parseTimeHoursParam(r)
 
 	// Parse endpoint filter
 	var endpointID *uuid.UUID
@@ -337,7 +317,7 @@ func (app *Application) listMonitoringLogs(w http.ResponseWriter, r *http.Reques
 	logs, total, err := app.db.GetMonitoringLogsWithPagination(page, limit, hours, endpointID, success)
 	if err != nil {
 		app.logger.Error("Error getting monitoring logs", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -353,25 +333,19 @@ func (app *Application) listMonitoringLogs(w http.ResponseWriter, r *http.Reques
 
 // getEndpointLogs handles GET /api/v1/admin/endpoints/{id}/logs
 func (app *Application) getEndpointLogs(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	endpointID, err := uuid.Parse(idStr)
+	endpointID, err := parseUUIDParam(r, "id")
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid endpoint ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidEndpointID)
 		return
 	}
 
 	// Parse pagination parameters
-	limit := 50
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 200 {
-			limit = l
-		}
-	}
+	limit := parseLimitParam(r, constants.DefaultLimit, constants.MaxLogsLimit)
 
 	logs, err := app.db.GetMonitoringLogs(endpointID, limit)
 	if err != nil {
 		app.logger.Error("Error getting endpoint logs", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -435,7 +409,7 @@ func (app *Application) listIncidents(w http.ResponseWriter, r *http.Request) {
 	incidents, total, err := app.db.GetIncidentsWithPagination(page, limit, status, severity)
 	if err != nil {
 		app.logger.Error("Error getting incidents", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -489,7 +463,7 @@ func (app *Application) createIncident(w http.ResponseWriter, r *http.Request) {
 
 	if err := app.db.CreateIncident(incident); err != nil {
 		app.logger.Error("Error creating incident", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -541,6 +515,9 @@ func (app *Application) createIncident(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Broadcast incident creation event via SSE
+	app.sseHub.BroadcastIncidentUpdate("incident_created", incident)
+
 	app.writeJSON(w, http.StatusCreated, IncidentResponse{Incident: incident})
 }
 
@@ -549,7 +526,7 @@ func (app *Application) getIncident(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid incident ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidIncidentID)
 		return
 	}
 
@@ -568,7 +545,7 @@ func (app *Application) updateIncident(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid incident ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidIncidentID)
 		return
 	}
 
@@ -667,7 +644,7 @@ func (app *Application) updateIncident(w http.ResponseWriter, r *http.Request) {
 
 	if err := app.db.UpdateIncident(incident); err != nil {
 		app.logger.Error("Error updating incident", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -679,6 +656,9 @@ func (app *Application) updateIncident(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Broadcast incident update event via SSE
+	app.sseHub.BroadcastIncidentUpdate("incident_updated", incident)
+
 	app.writeJSON(w, http.StatusOK, IncidentResponse{Incident: incident})
 }
 
@@ -687,15 +667,26 @@ func (app *Application) deleteIncident(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid incident ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidIncidentID)
+		return
+	}
+
+	// Get incident for SSE broadcast before deleting
+	incident, err := app.db.GetIncident(id)
+	if err != nil {
+		app.logger.Error("Error getting incident for deletion", "err", err.Error())
+		app.errorResponse(w, http.StatusNotFound, "Incident not found")
 		return
 	}
 
 	if err := app.db.DeleteIncident(id); err != nil {
 		app.logger.Error("Error deleting incident", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
+
+	// Broadcast incident deletion event via SSE
+	app.sseHub.BroadcastIncidentUpdate("incident_deleted", incident)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -712,7 +703,7 @@ func (app *Application) associateEndpointsWithIncident(w http.ResponseWriter, r 
 	idStr := chi.URLParam(r, "id")
 	incidentID, err := uuid.Parse(idStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid incident ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidIncidentID)
 		return
 	}
 
@@ -787,13 +778,13 @@ func (app *Application) removeEndpointFromIncident(w http.ResponseWriter, r *htt
 
 	incidentID, err := uuid.Parse(incidentIDStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid incident ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidIncidentID)
 		return
 	}
 
 	endpointID, err := uuid.Parse(endpointIDStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid endpoint ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidEndpointID)
 		return
 	}
 
@@ -806,7 +797,7 @@ func (app *Application) removeEndpointFromIncident(w http.ResponseWriter, r *htt
 
 	if err := app.db.DeleteEndpointIncident(endpointID, incidentID); err != nil {
 		app.logger.Error("Error removing endpoint from incident", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -841,14 +832,14 @@ func (app *Application) getIncidentEndpoints(w http.ResponseWriter, r *http.Requ
 	idStr := chi.URLParam(r, "id")
 	incidentID, err := uuid.Parse(idStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid incident ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidIncidentID)
 		return
 	}
 
 	endpointIncidents, err := app.db.GetEndpointIncidents(incidentID)
 	if err != nil {
 		app.logger.Error("Error getting incident endpoints", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -862,14 +853,14 @@ func (app *Application) getEndpointIncidents(w http.ResponseWriter, r *http.Requ
 	idStr := chi.URLParam(r, "id")
 	endpointID, err := uuid.Parse(idStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid endpoint ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidEndpointID)
 		return
 	}
 
 	incidents, err := app.db.GetIncidentsByEndpoint(endpointID)
 	if err != nil {
 		app.logger.Error("Error getting endpoint incidents", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -884,14 +875,14 @@ func (app *Application) getIncidentTimeline(w http.ResponseWriter, r *http.Reque
 	idStr := chi.URLParam(r, "id")
 	incidentID, err := uuid.Parse(idStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid incident ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidIncidentID)
 		return
 	}
 
 	timeline, err := app.db.GetIncidentTimeline(incidentID)
 	if err != nil {
 		app.logger.Error("Error getting incident timeline", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 
@@ -906,7 +897,7 @@ func (app *Application) addIncidentComment(w http.ResponseWriter, r *http.Reques
 	idStr := chi.URLParam(r, "id")
 	incidentID, err := uuid.Parse(idStr)
 	if err != nil {
-		app.errorResponse(w, http.StatusBadRequest, "Invalid incident ID")
+		app.errorResponse(w, http.StatusBadRequest, constants.ErrInvalidIncidentID)
 		return
 	}
 
@@ -948,7 +939,7 @@ func (app *Application) addIncidentComment(w http.ResponseWriter, r *http.Reques
 
 	if err := app.db.CreateIncidentTimeline(timeline); err != nil {
 		app.logger.Error("Error creating incident comment", "err", err.Error())
-		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
 	}
 

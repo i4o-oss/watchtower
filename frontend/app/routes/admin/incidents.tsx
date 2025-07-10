@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Button } from '~/components/ui/button'
+import { useSSE } from '~/hooks/useSSE'
 import {
 	Card,
 	CardContent,
@@ -76,6 +77,60 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 	const [incidentToDelete, setIncidentToDelete] = useState<any>(null)
 	const navigate = useNavigate()
 
+	// Real-time updates via Server-Sent Events
+	useSSE(
+		{
+			incident_created: (event) => {
+				try {
+					const newIncident = JSON.parse(event.data)
+					setIncidents((prev: any) => [...prev, newIncident])
+				} catch (error) {
+					console.error(
+						'Error parsing incident_created event:',
+						error,
+					)
+				}
+			},
+			incident_updated: (event) => {
+				try {
+					const updatedIncident = JSON.parse(event.data)
+					setIncidents((prev: any) =>
+						prev.map((incident: any) =>
+							incident.id === updatedIncident.id
+								? updatedIncident
+								: incident,
+						),
+					)
+				} catch (error) {
+					console.error(
+						'Error parsing incident_updated event:',
+						error,
+					)
+				}
+			},
+			incident_deleted: (event) => {
+				try {
+					const deletedIncident = JSON.parse(event.data)
+					setIncidents((prev: any) =>
+						prev.filter(
+							(incident: any) =>
+								incident.id !== deletedIncident.id,
+						),
+					)
+				} catch (error) {
+					console.error(
+						'Error parsing incident_deleted event:',
+						error,
+					)
+				}
+			},
+		},
+		{
+			url: `${import.meta.env.VITE_API_BASE_URL}/api/v1/events`,
+			withCredentials: true,
+		},
+	)
+
 	const filteredIncidents = incidents.filter((incident: any) => {
 		const matchesSearch =
 			incident.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -103,11 +158,10 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 				},
 			)
 
-			if (response.ok) {
-				setIncidents(incidents.filter((i: any) => i.id !== incident.id))
-			} else {
+			if (!response.ok) {
 				console.error('Failed to delete incident')
 			}
+			// Note: The incident will be removed via SSE event, no need to update local state here
 		} catch (error) {
 			console.error('Error deleting incident:', error)
 		}
@@ -130,13 +184,10 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 				},
 			)
 
-			if (response.ok) {
-				setIncidents(
-					incidents.map((i: any) =>
-						i.id === incident.id ? { ...i, status: newStatus } : i,
-					),
-				)
+			if (!response.ok) {
+				console.error('Failed to update incident status')
 			}
+			// Note: The incident will be updated via SSE event, no need to update local state here
 		} catch (error) {
 			console.error('Error updating incident status:', error)
 		}

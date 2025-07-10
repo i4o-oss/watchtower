@@ -136,6 +136,14 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 
 	const updateFormData = (field: string, value: any) => {
 		setFormData((prev) => ({ ...prev, [field]: value }))
+		// Clear field error when user starts typing
+		if (fieldErrors[field]) {
+			setFieldErrors((prev) => {
+				const newErrors = { ...prev }
+				delete newErrors[field]
+				return newErrors
+			})
+		}
 	}
 
 	return (
@@ -179,10 +187,17 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 									placeholder='Brief description of the incident'
 									required
 								/>
+								{fieldErrors.title && (
+									<p className='text-sm text-red-500'>
+										{fieldErrors.title}
+									</p>
+								)}
 							</div>
 
 							<div className='space-y-2'>
-								<Label htmlFor='description'>Description</Label>
+								<Label htmlFor='description'>
+									Description *
+								</Label>
 								<Textarea
 									id='description'
 									value={formData.description}
@@ -194,7 +209,13 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 									}
 									placeholder='Detailed description of what happened and current status'
 									rows={4}
+									required
 								/>
+								{fieldErrors.description && (
+									<p className='text-sm text-red-500'>
+										{fieldErrors.description}
+									</p>
+								)}
 							</div>
 
 							<div className='grid grid-cols-2 gap-4'>
@@ -221,6 +242,11 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 											</SelectItem>
 										</SelectContent>
 									</Select>
+									{fieldErrors.severity && (
+										<p className='text-sm text-red-500'>
+											{fieldErrors.severity}
+										</p>
+									)}
 								</div>
 
 								<div className='space-y-2'>
@@ -246,6 +272,11 @@ export default function NewIncident({ loaderData }: Route.ComponentProps) {
 											</SelectItem>
 										</SelectContent>
 									</Select>
+									{fieldErrors.status && (
+										<p className='text-sm text-red-500'>
+											{fieldErrors.status}
+										</p>
+									)}
 								</div>
 							</div>
 

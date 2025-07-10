@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Button } from '~/components/ui/button'
 import {
@@ -168,12 +168,21 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 		refreshLogs()
 	}, [timeRange])
 
+	// Throttle SSE refresh calls to prevent rate limiting
+	const refreshThrottleRef = useRef<NodeJS.Timeout | null>(null)
+
 	// Real-time updates via Server-Sent Events
 	useSSE({
 		status_update: () => {
 			try {
-				// Refresh logs when we get monitoring updates
-				refreshLogs()
+				// Throttle refresh calls to prevent rate limiting
+				if (refreshThrottleRef.current) {
+					clearTimeout(refreshThrottleRef.current)
+				}
+
+				refreshThrottleRef.current = setTimeout(() => {
+					refreshLogs()
+				}, 2000) // Wait 2 seconds before refreshing
 			} catch (error) {
 				console.error('Error parsing status_update event:', error)
 			}

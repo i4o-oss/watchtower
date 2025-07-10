@@ -71,55 +71,161 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	const [incidents, setIncidents] = useState(loaderData.incidents)
 
 	// Real-time updates via Server-Sent Events
-	useSSE({
-		endpoint_created: (event) => {
-			try {
-				const newEndpoint = JSON.parse(event.data)
-				setEndpoints((prev: any) => ({
-					...prev,
-					endpoints: [...prev.endpoints, newEndpoint],
-					total: prev.total + 1,
-				}))
-			} catch (error) {
-				console.error('Error parsing endpoint_created event:', error)
-			}
+	useSSE(
+		{
+			endpoint_created: (event) => {
+				try {
+					const newEndpoint = JSON.parse(event.data)
+					setEndpoints((prev: any) => ({
+						...prev,
+						endpoints: [...prev.endpoints, newEndpoint],
+						total: prev.total + 1,
+					}))
+				} catch (error) {
+					console.error(
+						'Error parsing endpoint_created event:',
+						error,
+					)
+				}
+			},
+			endpoint_updated: (event) => {
+				try {
+					const updatedEndpoint = JSON.parse(event.data)
+					setEndpoints((prev: any) => ({
+						...prev,
+						endpoints: prev.endpoints.map((ep: any) =>
+							ep.id === updatedEndpoint.id ? updatedEndpoint : ep,
+						),
+					}))
+				} catch (error) {
+					console.error(
+						'Error parsing endpoint_updated event:',
+						error,
+					)
+				}
+			},
+			endpoint_deleted: (event) => {
+				try {
+					const deletedEndpoint = JSON.parse(event.data)
+					setEndpoints((prev: any) => ({
+						...prev,
+						endpoints: prev.endpoints.filter(
+							(ep: any) => ep.id !== deletedEndpoint.id,
+						),
+						total: prev.total - 1,
+					}))
+				} catch (error) {
+					console.error(
+						'Error parsing endpoint_deleted event:',
+						error,
+					)
+				}
+			},
+			status_update: (event) => {
+				try {
+					// Refresh logs when we get monitoring updates
+					refreshMonitoringLogs()
+				} catch (error) {
+					console.error('Error parsing status_update event:', error)
+				}
+			},
+			incident_created: (event) => {
+				try {
+					const newIncident = JSON.parse(event.data)
+					setIncidents((prev: any) => ({
+						...prev,
+						incidents: [...prev.incidents, newIncident],
+						total: prev.total + 1,
+					}))
+				} catch (error) {
+					console.error(
+						'Error parsing incident_created event:',
+						error,
+					)
+				}
+			},
+			incident_updated: (event) => {
+				try {
+					const updatedIncident = JSON.parse(event.data)
+					setIncidents((prev: any) => {
+						// If incident is now resolved, remove it from the list
+						if (updatedIncident.status === 'resolved') {
+							return {
+								...prev,
+								incidents: prev.incidents.filter(
+									(incident: any) =>
+										incident.id !== updatedIncident.id,
+								),
+								total: prev.total - 1,
+							}
+						}
+
+						// Check if incident exists in current list
+						const existingIncidentIndex = prev.incidents.findIndex(
+							(incident: any) =>
+								incident.id === updatedIncident.id,
+						)
+
+						if (existingIncidentIndex !== -1) {
+							// Update existing incident
+							return {
+								...prev,
+								incidents: prev.incidents.map(
+									(incident: any) =>
+										incident.id === updatedIncident.id
+											? updatedIncident
+											: incident,
+								),
+							}
+						} else {
+							// Add new incident if it should be visible (open or investigating)
+							if (
+								updatedIncident.status === 'open' ||
+								updatedIncident.status === 'investigating'
+							) {
+								return {
+									...prev,
+									incidents: [
+										...prev.incidents,
+										updatedIncident,
+									],
+									total: prev.total + 1,
+								}
+							}
+							return prev
+						}
+					})
+				} catch (error) {
+					console.error(
+						'Error parsing incident_updated event:',
+						error,
+					)
+				}
+			},
+			incident_deleted: (event) => {
+				try {
+					const deletedIncident = JSON.parse(event.data)
+					setIncidents((prev: any) => ({
+						...prev,
+						incidents: prev.incidents.filter(
+							(incident: any) =>
+								incident.id !== deletedIncident.id,
+						),
+						total: prev.total - 1,
+					}))
+				} catch (error) {
+					console.error(
+						'Error parsing incident_deleted event:',
+						error,
+					)
+				}
+			},
 		},
-		endpoint_updated: (event) => {
-			try {
-				const updatedEndpoint = JSON.parse(event.data)
-				setEndpoints((prev: any) => ({
-					...prev,
-					endpoints: prev.endpoints.map((ep: any) =>
-						ep.id === updatedEndpoint.id ? updatedEndpoint : ep,
-					),
-				}))
-			} catch (error) {
-				console.error('Error parsing endpoint_updated event:', error)
-			}
+		{
+			url: `${import.meta.env.VITE_API_BASE_URL}/api/v1/events`,
+			withCredentials: true,
 		},
-		endpoint_deleted: (event) => {
-			try {
-				const deletedEndpoint = JSON.parse(event.data)
-				setEndpoints((prev: any) => ({
-					...prev,
-					endpoints: prev.endpoints.filter(
-						(ep: any) => ep.id !== deletedEndpoint.id,
-					),
-					total: prev.total - 1,
-				}))
-			} catch (error) {
-				console.error('Error parsing endpoint_deleted event:', error)
-			}
-		},
-		status_update: (event) => {
-			try {
-				// Refresh logs when we get monitoring updates
-				refreshMonitoringLogs()
-			} catch (error) {
-				console.error('Error parsing status_update event:', error)
-			}
-		},
-	})
+	)
 
 	// Function to refresh monitoring logs
 	const refreshMonitoringLogs = async () => {
@@ -146,7 +252,10 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 		(e: any) => e.enabled,
 	).length
 	const recentFailures = logs.logs.filter((l: any) => !l.success).length
-	const openIncidents = incidents.total
+	const openIncidents = incidents.incidents.filter(
+		(incident: any) =>
+			incident.status === 'open' || incident.status === 'investigating',
+	).length
 
 	return (
 		<div>

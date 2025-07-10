@@ -70,12 +70,31 @@ export default function IncidentDetail({
 	loaderData,
 	params,
 }: Route.ComponentProps) {
-	const { incident } = loaderData
+	const incident = loaderData.incident || loaderData
 	const navigate = useNavigate()
 	const [isDeleting, setIsDeleting] = useState(false)
 	const [isUpdating, setIsUpdating] = useState(false)
 	const [updateNote, setUpdateNote] = useState('')
-	const [newStatus, setNewStatus] = useState(incident.status)
+	const [newStatus, setNewStatus] = useState(incident?.status || 'open')
+
+	// Safety check
+	if (!incident) {
+		return (
+			<div className='flex items-center justify-center h-64'>
+				<div className='text-center'>
+					<h2 className='text-xl font-semibold mb-2'>
+						Incident not found
+					</h2>
+					<p className='text-muted-foreground mb-4'>
+						The incident you're looking for doesn't exist.
+					</p>
+					<Link to='/admin/incidents'>
+						<Button>Back to Incidents</Button>
+					</Link>
+				</div>
+			</div>
+		)
+	}
 
 	const handleDelete = async () => {
 		setIsDeleting(true)

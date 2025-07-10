@@ -120,7 +120,10 @@ function StatusBadge({ status }: { status: string }) {
 function UptimeGraph({
 	serviceId,
 	serviceName,
-}: { serviceId: string; serviceName: string }) {
+}: {
+	serviceId: string
+	serviceName: string
+}) {
 	const [uptimeData, setUptimeData] = useState<UptimeDataPoint[]>([])
 	const [loading, setLoading] = useState(false)
 	const [selectedDay, setSelectedDay] = useState<UptimeDataPoint | null>(null)
@@ -195,7 +198,9 @@ function UptimeGraph({
 								}
 							}}
 							title={`${day.date}: ${day.uptime.toFixed(1)}% uptime`}
-							aria-label={`${day.date}: ${day.uptime.toFixed(1)}% uptime, ${day.status} status`}
+							aria-label={`${day.date}: ${day.uptime.toFixed(1)}% uptime, ${
+								day.status
+							} status`}
 						/>
 					)
 				})}
@@ -291,21 +296,43 @@ export function StatusPage({
 		}
 	}, [initialData?.status])
 
-	// Auto-refresh every 30 seconds
+	// Auto-refresh every 5 minutes (since SSE provides real-time updates)
 	useEffect(() => {
-		const interval = setInterval(fetchStatus, 30000)
+		const interval = setInterval(fetchStatus, 300000) // 5 minutes
 		return () => clearInterval(interval)
 	}, [])
 
 	// Server-Sent Events for real-time updates
 	useSSE(
 		{
-			status_update: () => {
+			status_update: (event) => {
 				try {
-					// Refresh status when we get real-time updates
-					fetchStatus()
+					// Update status directly from SSE data
+					const statusUpdate = JSON.parse(event.data)
+					setStatus((prev) => {
+						if (!prev) return prev
+
+						// Update the specific service in the status
+						return {
+							...prev,
+							services: prev.services.map((service) =>
+								service.id === statusUpdate.endpoint_id
+									? {
+											...service,
+											status: statusUpdate.status,
+											response_time_ms:
+												statusUpdate.response_time_ms,
+											last_check: statusUpdate.timestamp,
+										}
+									: service,
+							),
+						}
+					})
+					setLastRefresh(new Date())
 				} catch (error) {
 					console.error('SSE message parsing error:', error)
+					// Fallback to full refresh on error
+					fetchStatus()
 				}
 			},
 			endpoint_created: () => {
@@ -345,10 +372,152 @@ export function StatusPage({
 				// Keep-alive ping from server
 				console.debug('SSE ping received')
 			},
+			incident_created: (event) => {
+				try {
+					// Parse the incident data and update local state
+					const newIncident = JSON.parse(event.data)
+
+					// Only add incident if it should be visible on status page (open or investigating)
+					if (
+						newIncident.status === 'open' ||
+						newIncident.status === 'investigating'
+					) {
+						setIncidents((prev) => {
+							if (!prev) return prev
+							return {
+								...prev,
+								incidents: [
+									...prev.incidents,
+									{
+										id: newIncident.id,
+										title: newIncident.title,
+										description: newIncident.description,
+										status: newIncident.status,
+										severity: newIncident.severity,
+										start_time: newIncident.start_time,
+										end_time: newIncident.end_time,
+										affected_services: [],
+									},
+								],
+							}
+						})
+					}
+				} catch (error) {
+					console.error(
+						'Error handling incident_created event:',
+						error,
+					)
+					// Fallback to full refresh
+					fetchStatus()
+				}
+			},
+			incident_updated: (event) => {
+				try {
+					// Parse the incident data and update local state
+					const updatedIncident = JSON.parse(event.data)
+					setIncidents((prev) => {
+						if (!prev) return prev
+
+						// If incident is now resolved, remove it from the list
+						if (updatedIncident.status === 'resolved') {
+							return {
+								...prev,
+								incidents: prev.incidents.filter(
+									(incident) =>
+										incident.id !== updatedIncident.id,
+								),
+							}
+						}
+
+						// If incident exists, update it
+						const existingIncidentIndex = prev.incidents.findIndex(
+							(incident) => incident.id === updatedIncident.id,
+						)
+
+						if (existingIncidentIndex !== -1) {
+							// Update existing incident
+							return {
+								...prev,
+								incidents: prev.incidents.map((incident) =>
+									incident.id === updatedIncident.id
+										? {
+												...incident,
+												title: updatedIncident.title,
+												description:
+													updatedIncident.description,
+												status: updatedIncident.status,
+												severity:
+													updatedIncident.severity,
+												end_time:
+													updatedIncident.end_time,
+											}
+										: incident,
+								),
+							}
+						} else {
+							// Add new incident if it should be visible (open or investigating)
+							if (
+								updatedIncident.status === 'open' ||
+								updatedIncident.status === 'investigating'
+							) {
+								return {
+									...prev,
+									incidents: [
+										...prev.incidents,
+										{
+											id: updatedIncident.id,
+											title: updatedIncident.title,
+											description:
+												updatedIncident.description,
+											status: updatedIncident.status,
+											severity: updatedIncident.severity,
+											start_time:
+												updatedIncident.start_time,
+											end_time: updatedIncident.end_time,
+											affected_services: [],
+										},
+									],
+								}
+							}
+							return prev
+						}
+					})
+				} catch (error) {
+					console.error(
+						'Error handling incident_updated event:',
+						error,
+					)
+					// Fallback to full refresh
+					fetchStatus()
+				}
+			},
+			incident_deleted: (event) => {
+				try {
+					// Parse the incident data and remove from local state
+					const deletedIncident = JSON.parse(event.data)
+					setIncidents((prev) => {
+						if (!prev) return prev
+						return {
+							...prev,
+							incidents: prev.incidents.filter(
+								(incident) =>
+									incident.id !== deletedIncident.id,
+							),
+						}
+					})
+				} catch (error) {
+					console.error(
+						'Error handling incident_deleted event:',
+						error,
+					)
+					// Fallback to full refresh
+					fetchStatus()
+				}
+			},
 		},
 		{
 			url: `${import.meta.env.VITE_API_BASE_URL}/api/v1/events`,
-			withCredentials: false,
+			withCredentials: true,
 		},
 	)
 
@@ -619,9 +788,7 @@ export function StatusPage({
 					className='text-center py-8 text-sm text-muted-foreground'
 					role='contentinfo'
 				>
-					<p>
-						Powered by Watchtower • Status updates every 30 seconds
-					</p>
+					<p>Powered by Watchtower • Real-time status updates</p>
 				</footer>
 			</main>
 		</div>

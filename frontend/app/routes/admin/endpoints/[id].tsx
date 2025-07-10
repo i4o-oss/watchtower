@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Button } from '~/components/ui/button'
 import {
@@ -21,6 +21,7 @@ import {
 	AlertDialogTrigger,
 } from '~/components/ui/alert-dialog'
 import { requireAuth } from '~/lib/auth'
+import { useSSE } from '~/hooks/useSSE'
 import type { Route } from './+types/[id]'
 
 export function meta({ params }: Route.MetaArgs) {
@@ -73,9 +74,66 @@ export default function EndpointDetail({
 	loaderData,
 	params,
 }: Route.ComponentProps) {
-	const { endpoint, logs } = loaderData
+	const { endpoint, logs: initialLogs } = loaderData
 	const navigate = useNavigate()
 	const [isDeleting, setIsDeleting] = useState(false)
+	const [logs, setLogs] = useState(initialLogs)
+
+	// Throttle refresh calls to prevent rate limiting
+	const refreshThrottleRef = useRef<NodeJS.Timeout | null>(null)
+
+	const refreshLogs = async () => {
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+		try {
+			const response = await fetch(
+				`${API_BASE_URL}/api/v1/admin/endpoints/${params.id}/logs?limit=50`,
+				{
+					method: 'GET',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+				},
+			)
+
+			if (response.ok) {
+				const newLogs = await response.json()
+				setLogs(newLogs)
+			}
+		} catch (error) {
+			console.error('Error refreshing logs:', error)
+		}
+	}
+
+	// Real-time updates via Server-Sent Events
+	useSSE({
+		status_update: (event: MessageEvent) => {
+			try {
+				const data = JSON.parse(event.data)
+				// Only refresh if this status update is for our specific endpoint
+				if (data.endpoint_id === params.id) {
+					// Throttle refresh calls to prevent rate limiting
+					if (refreshThrottleRef.current) {
+						clearTimeout(refreshThrottleRef.current)
+					}
+
+					refreshThrottleRef.current = setTimeout(() => {
+						refreshLogs()
+					}, 1000) // Wait 1 second before refreshing
+				}
+			} catch (error) {
+				console.error('Error parsing status_update event:', error)
+			}
+		},
+	})
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (refreshThrottleRef.current) {
+				clearTimeout(refreshThrottleRef.current)
+			}
+		}
+	}, [])
 
 	const handleDelete = async () => {
 		setIsDeleting(true)
@@ -305,10 +363,24 @@ export default function EndpointDetail({
 					{/* Recent Monitoring Logs */}
 					<Card>
 						<CardHeader>
-							<CardTitle>Recent Monitoring Logs</CardTitle>
-							<CardDescription>
-								Latest monitoring results for this endpoint
-							</CardDescription>
+							<div className='flex items-center justify-between'>
+								<div>
+									<CardTitle>
+										Recent Monitoring Logs
+									</CardTitle>
+									<CardDescription>
+										Latest monitoring results for this
+										endpoint
+									</CardDescription>
+								</div>
+								<Button
+									variant='outline'
+									size='sm'
+									onClick={refreshLogs}
+								>
+									Refresh
+								</Button>
+							</div>
 						</CardHeader>
 						<CardContent>
 							{logs.logs.length === 0 ? (
