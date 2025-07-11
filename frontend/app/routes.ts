@@ -14,4 +14,9 @@ export default [
 	route('admin/incidents', 'routes/admin/incidents.tsx'),
 	route('admin/incidents/new', 'routes/admin/incidents/new.tsx'),
 	route('admin/incidents/:id', 'routes/admin/incidents/[id].tsx'),
+	route('admin/notifications', 'routes/admin/notifications.tsx'),
+	route(
+		'admin/notifications/channels',
+		'routes/admin/notifications/channels.tsx',
+	),
 ] satisfies RouteConfig

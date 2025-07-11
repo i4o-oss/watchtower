@@ -8,6 +8,7 @@ import {
 	Activity,
 	AlertTriangle,
 	BarChart3,
+	Bell,
 	Globe,
 	Home,
 	Menu,
@@ -44,6 +45,12 @@ const navigation = [
 		href: '/admin/incidents',
 		icon: AlertTriangle,
 		description: 'Track and manage incidents',
+	},
+	{
+		name: 'Notifications',
+		href: '/admin/notifications',
+		icon: Bell,
+		description: 'Configure alert channels',
 	},
 ]
 

@@ -8,6 +8,7 @@ import {
 	Link,
 	useNavigate,
 } from 'react-router'
+import { useForm, useField } from '@tanstack/react-form'
 import type { Route } from './+types/login'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -21,6 +22,7 @@ import {
 } from '~/components/ui/card'
 import { Alert, AlertDescription } from '~/components/ui/alert'
 import { requireGuest, useAuth } from '~/lib/auth'
+import { validators, combineValidators, FieldError } from '~/lib/form-utils'
 
 export function meta() {
 	return [
@@ -39,6 +41,11 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 	return null
 }
 
+interface LoginFormData {
+	email: string
+	password: string
+}
+
 export default function Login() {
 	const navigation = useNavigation()
 	const actionData = useActionData<typeof clientAction>()
@@ -49,29 +56,29 @@ export default function Login() {
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
-	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault()
-		setIsSubmitting(true)
-		setError(null)
+	const form = useForm({
+		defaultValues: {
+			email: '',
+			password: '',
+		} as LoginFormData,
+		onSubmit: async ({ value }) => {
+			setIsSubmitting(true)
+			setError(null)
 
-		const formData = new FormData(event.currentTarget)
-		const email = formData.get('email') as string
-		const password = formData.get('password') as string
-
-		try {
-			const result = await login(email, password)
-			if (result.success) {
-				// Navigate to home after successful login
-				navigate('/', { replace: true })
-			} else {
-				setError(result.error || 'Login failed')
+			try {
+				const result = await login(value.email, value.password)
+				if (result.success) {
+					navigate('/', { replace: true })
+				} else {
+					setError(result.error || 'Login failed')
+				}
+			} catch (err) {
+				setError('Network error occurred')
+			} finally {
+				setIsSubmitting(false)
 			}
-		} catch (err) {
-			setError('Network error occurred')
-		} finally {
-			setIsSubmitting(false)
-		}
-	}
+		},
+	})
 
 	return (
 		<div className='min-h-screen flex items-center justify-center bg-background px-4'>
@@ -85,36 +92,78 @@ export default function Login() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form onSubmit={handleSubmit} className='space-y-4'>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault()
+							form.handleSubmit()
+						}}
+						className='space-y-4'
+					>
 						{error && (
 							<Alert variant='destructive'>
 								<AlertDescription>{error}</AlertDescription>
 							</Alert>
 						)}
 
-						<div className='space-y-2'>
-							<Label htmlFor='email'>Email</Label>
-							<Input
-								id='email'
-								name='email'
-								type='email'
-								placeholder='your@email.com'
-								required
-								disabled={isSubmitting}
-							/>
-						</div>
+						<form.Field
+							name='email'
+							validators={{
+								onChange: combineValidators(
+									validators.required,
+									validators.email,
+								),
+							}}
+							children={(field) => (
+								<div className='space-y-2'>
+									<Label htmlFor='email'>Email</Label>
+									<Input
+										id='email'
+										name='email'
+										type='email'
+										placeholder='your@email.com'
+										value={field.state.value}
+										onChange={(e) =>
+											field.handleChange(e.target.value)
+										}
+										onBlur={field.handleBlur}
+										disabled={isSubmitting}
+									/>
+									<FieldError
+										errors={field.state.meta.errors}
+									/>
+								</div>
+							)}
+						/>
 
-						<div className='space-y-2'>
-							<Label htmlFor='password'>Password</Label>
-							<Input
-								id='password'
-								name='password'
-								type='password'
-								placeholder='Enter your password'
-								required
-								disabled={isSubmitting}
-							/>
-						</div>
+						<form.Field
+							name='password'
+							validators={{
+								onChange: combineValidators(
+									validators.required,
+									validators.minLength(6),
+								),
+							}}
+							children={(field) => (
+								<div className='space-y-2'>
+									<Label htmlFor='password'>Password</Label>
+									<Input
+										id='password'
+										name='password'
+										type='password'
+										placeholder='Enter your password'
+										value={field.state.value}
+										onChange={(e) =>
+											field.handleChange(e.target.value)
+										}
+										onBlur={field.handleBlur}
+										disabled={isSubmitting}
+									/>
+									<FieldError
+										errors={field.state.meta.errors}
+									/>
+								</div>
+							)}
+						/>
 
 						<Button
 							type='submit'

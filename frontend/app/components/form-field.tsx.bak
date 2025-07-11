@@ -1,0 +1,219 @@
+/**
+ * Reusable form field components for TanStack Form + React Router v7
+ */
+import React from "react";
+import { useField, type FieldApi } from "@tanstack/react-form";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Switch } from "./ui/switch";
+import { FieldError } from "~/lib/form-utils";
+import { cn } from "~/lib/utils";
+
+interface BaseFieldProps {
+  label?: string;
+  description?: string;
+  className?: string;
+  required?: boolean;
+}
+
+interface TextFieldProps extends BaseFieldProps {
+  name: string;
+  type?: "text" | "email" | "password" | "url" | "number";
+  placeholder?: string;
+  form: any;
+  validate?: (value: string) => string | undefined;
+}
+
+export function TextField({
+  name,
+  type = "text",
+  label,
+  description,
+  placeholder,
+  className,
+  required,
+  form,
+  validate,
+}: TextFieldProps) {
+  const field = useField({
+    form,
+    name,
+    validators: {
+      onChange: validate,
+    },
+  });
+
+  return (
+    <div className={cn("space-y-2", className)}>
+      {label && (
+        <Label htmlFor={name} className="flex items-center gap-1">
+          {label}
+          {required && <span className="text-red-500">*</span>}
+        </Label>
+      )}
+      {description && (
+        <p className="text-sm text-gray-600">{description}</p>
+      )}
+      <Input
+        id={name}
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        value={field.state.value || ""}
+        onChange={(e) => field.handleChange(e.target.value)}
+        onBlur={field.handleBlur}
+        className={cn(
+          field.state.meta.errors.length > 0 && "border-red-500"
+        )}
+      />
+      <FieldError field={field} />
+    </div>
+  );
+}
+
+interface TextAreaFieldProps extends BaseFieldProps {
+  name: string;
+  placeholder?: string;
+  rows?: number;
+  form: any;
+  validate?: (value: string) => string | undefined;
+}
+
+export function TextAreaField({
+  name,
+  label,
+  description,
+  placeholder,
+  rows = 3,
+  className,
+  required,
+  form,
+  validate,
+}: TextAreaFieldProps) {
+  const field = useField({
+    form,
+    name,
+    validators: {
+      onChange: validate,
+    },
+  });
+
+  return (
+    <div className={cn("space-y-2", className)}>
+      {label && (
+        <Label htmlFor={name} className="flex items-center gap-1">
+          {label}
+          {required && <span className="text-red-500">*</span>}
+        </Label>
+      )}
+      {description && (
+        <p className="text-sm text-gray-600">{description}</p>
+      )}
+      <Textarea
+        id={name}
+        name={name}
+        placeholder={placeholder}
+        rows={rows}
+        value={field.state.value || ""}
+        onChange={(e) => field.handleChange(e.target.value)}
+        onBlur={field.handleBlur}
+        className={cn(
+          field.state.meta.errors.length > 0 && "border-red-500"
+        )}
+      />
+      <FieldError field={field} />
+    </div>
+  );
+}
+
+interface SwitchFieldProps extends BaseFieldProps {
+  name: string;
+  form: any;
+  validate?: (value: boolean) => string | undefined;
+}
+
+export function SwitchField({
+  name,
+  label,
+  description,
+  className,
+  form,
+  validate,
+}: SwitchFieldProps) {
+  const field = useField({
+    form,
+    name,
+    validators: {
+      onChange: validate,
+    },
+  });
+
+  return (
+    <div className={cn("space-y-2", className)}>
+      <div className="flex items-center space-x-2">
+        <Switch
+          id={name}
+          name={name}
+          checked={field.state.value || false}
+          onCheckedChange={(checked) => field.handleChange(checked)}
+        />
+        {label && (
+          <Label htmlFor={name} className="cursor-pointer">
+            {label}
+          </Label>
+        )}
+      </div>
+      {description && (
+        <p className="text-sm text-gray-600">{description}</p>
+      )}
+      <FieldError field={field} />
+    </div>
+  );
+}
+
+interface HiddenFieldProps {
+  name: string;
+  form: any;
+  value?: string;
+}
+
+export function HiddenField({ name, form, value }: HiddenFieldProps) {
+  const field = useField({
+    form,
+    name,
+  });
+
+  return (
+    <input
+      type="hidden"
+      name={name}
+      value={value || field.state.value || ""}
+      onChange={(e) => field.handleChange(e.target.value)}
+    />
+  );
+}
+
+/**
+ * Helper component to render all form fields as hidden inputs for React Router submission
+ */
+export function FormHiddenFields({ form }: { form: any }) {
+  const formState = form.state;
+  
+  return (
+    <>
+      {Object.entries(formState.values).map(([key, value]) => (
+        <input
+          key={key}
+          type="hidden"
+          name={key}
+          value={
+            typeof value === 'object' && value !== null
+              ? JSON.stringify(value)
+              : String(value || '')
+          }
+        />
+      ))}
+    </>
+  );
+}
