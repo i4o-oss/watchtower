@@ -82,10 +82,11 @@ Watchtower is a comprehensive status monitoring application that allows users to
 - Responsive UI components
 - Real-time status updates via WebSocket
 - Interactive charts and graphs
-- Form validation and error handling
+- Form validation and error handling using TanStack Forms
 - Admin authentication flow
 - JSON editor for request body configuration
 - Progressive web app features
+- Type-safe form validation with TanStack Forms integration
 
 #### 3.3 Database Schema
 - Endpoints table (id, name, description, url, method, headers, body, interval, enabled, created_at, updated_at)
@@ -208,11 +209,86 @@ Watchtower is a comprehensive status monitoring application that allows users to
 - Backup and recovery procedures
 - Update and deployment procedures
 
-### 10. Future Enhancements
+### 10. Notification System
 
-#### 10.1 Advanced Features
+#### 10.1 Notification Channels
+- **Email Notifications**: SMTP-based email alerts for downtime and incidents
+- **Slack Integration**: Webhook-based notifications to Slack channels
+- **Discord Integration**: Webhook-based notifications to Discord servers
+- **Webhook Notifications**: Generic HTTP POST callbacks for custom integrations
+- **Multiple Destinations**: Admins can configure multiple notification channels per rule
+
+#### 10.2 Notification Rules and Triggers
+- **Downtime Alerts**: Notifications when endpoints go down or become unreachable
+- **Incident Notifications**: Alerts when incidents are created, updated, or resolved
+- **Recovery Notifications**: Alerts when services return to normal operation
+- **Threshold-Based Alerts**: Notifications based on response time thresholds
+- **Maintenance Window Notifications**: Alerts for scheduled maintenance periods
+- **Escalation Rules**: Progressive notification escalation based on duration
+
+#### 10.3 Notification Configuration
+- **Channel Management**: CRUD operations for notification channels
+- **Rule Configuration**: Mapping of endpoints to notification channels
+- **Notification Preferences**: Per-user and per-endpoint notification settings
+- **Template Customization**: Customizable notification message templates
+- **Delivery Scheduling**: Time-based notification delivery preferences
+- **Notification History**: Logs of all sent notifications with delivery status
+
+#### 10.4 Admin Notification Features
+- **Channel Setup**: Configure email SMTP, Slack webhooks, Discord webhooks
+- **Multi-Channel Support**: Send notifications to multiple channels simultaneously
+- **Channel Testing**: Test notification delivery before activation
+- **Notification Templates**: Pre-defined and custom message templates
+- **Delivery Status**: Track notification delivery success/failure
+- **Notification Logs**: Historical record of all notifications sent
+
+#### 10.5 User Notification Features (Future)
+- **Public Subscriptions**: Allow status page visitors to subscribe to notifications
+- **Email Subscriptions**: Public email subscription for incident updates
+- **Notification Preferences**: User-specific notification preferences
+- **Subscription Management**: Self-service subscription management interface
+- **Unsubscribe Functionality**: Easy unsubscribe from notifications
+
+#### 10.6 Technical Implementation
+- **Notification Service**: Pluggable notification provider architecture
+- **Queue System**: Asynchronous notification processing with retry logic
+- **Rate Limiting**: Prevent notification spam with configurable limits
+- **Template Engine**: Dynamic message generation with variable substitution
+- **Delivery Tracking**: Comprehensive delivery status monitoring
+- **Provider Abstraction**: Easy addition of new notification providers
+
+#### 10.7 Database Schema Extensions
+- **notification_channels**: Store notification channel configurations
+- **notification_rules**: Define notification rules and endpoint mappings
+- **notification_logs**: Track notification delivery history and status
+- **notification_templates**: Store customizable notification templates
+- **user_notification_preferences**: Per-user notification settings
+
+#### 10.8 API Endpoints for Notifications
+- **Admin API**: Full CRUD for notification channels and rules
+- **Test API**: Endpoints for testing notification delivery
+- **Logs API**: Access to notification delivery history
+- **Templates API**: Manage notification message templates
+- **Preferences API**: User notification preference management
+
+#### 10.9 Security and Privacy
+- **Secure Credentials**: Encrypted storage of notification provider credentials
+- **Access Control**: Role-based access to notification configuration
+- **Data Privacy**: Compliance with privacy regulations for user data
+- **Audit Logging**: Comprehensive logging of notification configuration changes
+- **Webhook Security**: Secure webhook endpoint verification
+
+#### 10.10 Performance and Reliability
+- **Async Processing**: Non-blocking notification delivery
+- **Retry Logic**: Automatic retry for failed notifications
+- **Fallback Mechanisms**: Alternative notification methods on provider failure
+- **Batch Processing**: Efficient processing of multiple notifications
+- **Monitoring**: Health monitoring of notification delivery systems
+
+### 11. Future Enhancements
+
+#### 11.1 Advanced Features
 - Multi-region monitoring
-- Custom alert channels (email, Slack, webhook)
 - API monitoring with response validation
 - Certificate expiration monitoring
 - Maintenance window scheduling
@@ -261,5 +337,37 @@ Watchtower is a comprehensive status monitoring application that allows users to
 - UI remains responsive during data loading
 - Error handling prevents system crashes
 - Data integrity maintained across all operations
+
+### 13. Form Management System
+
+#### 13.1 TanStack Forms Integration
+- **Form Library**: TanStack Forms v1.14.1 for type-safe form management
+- **React Router Integration**: Seamless integration with React Router v7 clientLoader/clientAction
+- **Form Validation**: Real-time client-side validation with comprehensive error handling
+- **Form State Management**: Centralized form state with proper loading states and error handling
+- **Type Safety**: Full TypeScript support with type-safe form data and validation
+
+#### 13.2 Form Components
+- **Login Form**: Email/password authentication with validation
+- **Registration Form**: User registration with email validation and password requirements
+- **Endpoint Forms**: Complex forms for creating and editing monitoring endpoints
+- **Incident Forms**: Forms for creating and managing system incidents
+- **Notification Channel Forms**: Multi-tab forms for configuring email, Slack, Discord, and webhook notifications
+- **Form Utilities**: Reusable validation functions and form field components
+
+#### 13.3 Form Validation
+- **Built-in Validators**: Email, URL, number, length, and required field validation
+- **Custom Validators**: Domain-specific validation for endpoints and notification settings
+- **Real-time Validation**: Immediate feedback on form field changes
+- **Server-side Integration**: Proper handling of server validation errors
+- **Error Display**: Consistent error message display across all forms
+
+#### 13.4 Form Features
+- **Auto-save**: Automatic form state preservation during navigation
+- **Loading States**: Visual feedback during form submission
+- **Success Notifications**: Toast notifications for successful form submissions
+- **Error Recovery**: Graceful handling of network and validation errors
+- **JSON Editing**: Specialized JSON editors for headers and request bodies
+- **Conditional Fields**: Dynamic form fields based on user selections
 
 This PRD provides a comprehensive foundation for developing the Watchtower status monitoring application, covering all requested features and technical requirements while maintaining scalability and security standards.

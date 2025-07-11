@@ -790,11 +790,254 @@
 						"testStrategy": "End-to-end test scenarios covering all three fixes. Load testing with multiple endpoints being added simultaneously. Chaos testing to ensure system recovery from failures."
 					}
 				]
+			},
+			{
+				"id": 16,
+				"title": "Setup Backend Project Structure and Dependencies",
+				"description": "Initialize Go project structure with necessary dependencies for HTTP server, database, WebSocket, and authentication",
+				"details": "Create main.go, initialize Go modules, add dependencies: gin-gonic/gin for HTTP routing, gorilla/websocket for WebSocket support, golang-migrate/migrate for database migrations, crypto/bcrypt for password hashing, dgrijalva/jwt-go for JWT tokens, and database driver (sqlite/postgres). Set up basic project structure with /cmd, /internal, /pkg, /migrations directories following Go best practices.",
+				"testStrategy": "Unit tests for project initialization, dependency resolution verification, and basic server startup tests",
+				"priority": "high",
+				"dependencies": [],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 17,
+				"title": "Design and Implement Database Schema",
+				"description": "Create database schema with all required tables for endpoints, monitoring logs, incidents, and users",
+				"details": "Implement migration files for: endpoints table (id, name, description, url, method, headers, body, interval, enabled, created_at, updated_at), monitoring_logs table (id, endpoint_id, timestamp, status_code, response_time, error_message, success), incidents table (id, title, description, severity, status, start_time, end_time, created_at, updated_at), endpoint_incidents table (endpoint_id, incident_id, affected_start, affected_end), users table (id, username, password_hash, role, created_at, updated_at), notification_channels, notification_rules, notification_logs, notification_templates, user_notification_preferences tables",
+				"testStrategy": "Database migration tests, schema validation, foreign key constraint verification, and data integrity tests",
+				"priority": "high",
+				"dependencies": [16],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 18,
+				"title": "Implement Authentication System",
+				"description": "Build secure admin authentication with JWT tokens, password hashing, and session management",
+				"details": "Create authentication middleware using JWT tokens, implement bcrypt password hashing, build login/logout endpoints (/api/auth/login, /api/auth/logout), add session management with secure token storage, implement rate limiting for login attempts, add password validation and secure password reset functionality. Include CSRF protection and secure cookie handling.",
+				"testStrategy": "Authentication flow tests, password hashing verification, JWT token validation, rate limiting tests, and security vulnerability assessments",
+				"priority": "high",
+				"dependencies": [17],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 19,
+				"title": "Build Core Monitoring Engine",
+				"description": "Implement background monitoring system with configurable intervals and HTTP request execution",
+				"details": "Create monitoring service with goroutines for concurrent endpoint monitoring, implement HTTP client with custom headers/body support, add configurable intervals (1min-24hr), implement retry logic for failed requests, add response time tracking with millisecond precision, implement status code validation, create monitoring scheduler with cron-like functionality, add circuit breaker pattern for failed endpoints, implement efficient logging of monitoring results to database.",
+				"testStrategy": "Monitoring accuracy tests, concurrent monitoring performance tests, HTTP client configuration validation, retry logic verification, and monitoring interval precision tests",
+				"priority": "high",
+				"dependencies": [17],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 20,
+				"title": "Develop Admin API Endpoints",
+				"description": "Create RESTful API endpoints for endpoint management, incident management, and monitoring data access",
+				"details": "Implement CRUD endpoints for endpoints management (/api/admin/endpoints), incident management (/api/admin/incidents), monitoring logs access (/api/admin/monitoring-logs), add input validation and sanitization, implement proper error handling and status codes, add pagination for large datasets, implement sorting and filtering capabilities, add request/response logging, ensure proper authentication middleware on all admin endpoints.",
+				"testStrategy": "API endpoint functionality tests, input validation tests, authentication middleware tests, pagination and filtering tests, and API performance benchmarks",
+				"priority": "medium",
+				"dependencies": [18, 19],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 21,
+				"title": "Build Public Status API",
+				"description": "Create public-facing API endpoints for status page data without authentication requirements",
+				"details": "Implement public API endpoints: GET /api/status for current status of all endpoints, GET /api/uptime/:endpoint_id for uptime data, GET /api/incidents for published incident reports, GET /api/incidents/:date for date-specific incidents, add response caching for improved performance, implement rate limiting for public endpoints, add CORS support for cross-origin requests, ensure no sensitive data exposure in public endpoints.",
+				"testStrategy": "Public API functionality tests, data privacy verification, caching effectiveness tests, rate limiting validation, and CORS configuration tests",
+				"priority": "medium",
+				"dependencies": [19],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 22,
+				"title": "Implement WebSocket Real-time Updates",
+				"description": "Build WebSocket connection for real-time status updates and live monitoring data",
+				"details": "Create WebSocket endpoint /ws/status using gorilla/websocket, implement connection management with proper cleanup, add real-time status broadcasting when monitoring results change, implement message queuing for offline clients, add connection authentication for admin features, implement heartbeat mechanism for connection health, add proper error handling and reconnection logic, optimize message payload size for performance.",
+				"testStrategy": "WebSocket connection tests, real-time update delivery verification, connection management tests, message broadcasting accuracy tests, and performance tests under load",
+				"priority": "medium",
+				"dependencies": [20, 21],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 23,
+				"title": "Setup React Frontend Project Structure",
+				"description": "Initialize React Router v7 project with SPA mode and required dependencies",
+				"details": "Create React Router v7 project in SPA mode, install dependencies: react-router-dom, axios for API calls, recharts for graphs, react-hook-form for form handling, tailwindcss for styling, socket.io-client for WebSocket, react-query for data fetching, monaco-editor for JSON editing. Set up project structure with /src/components, /src/pages, /src/hooks, /src/services, /src/utils directories. Configure build tools and development server.",
+				"testStrategy": "Project initialization tests, dependency resolution verification, build process validation, and development server startup tests",
+				"priority": "high",
+				"dependencies": [],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 24,
+				"title": "Build Status Page and Admin Dashboard UI",
+				"description": "Create responsive React components for public status page and admin dashboard with real-time updates",
+				"details": "Build status page components: service status cards with color-coded indicators, uptime graphs using recharts with 90-day data, incident display modals, auto-refresh functionality. Create admin dashboard: login form with validation, endpoint management interface with CRUD operations, JSON editor for request body configuration using monaco-editor, incident management interface, monitoring logs viewer with pagination and filtering, responsive design for mobile and desktop.",
+				"testStrategy": "Component rendering tests, responsive design validation, form validation tests, real-time update functionality tests, and accessibility compliance tests",
+				"priority": "medium",
+				"dependencies": [23],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 25,
+				"title": "Implement Notification System",
+				"description": "Build simple notification system for endpoint monitoring alerts with email, Slack, Discord, and webhook support",
+				"status": "done",
+				"dependencies": [20],
+				"priority": "medium",
+				"details": "Create basic notification service to send alerts when endpoints go down/up and when incidents are created/updated. Implement email notifications using SMTP, add Slack webhook integration, implement Discord webhook support, create generic webhook notifications. Focus on direct notification sending with simple retry logic - no complex queuing or rule engines needed.",
+				"testStrategy": "Notification delivery tests for all providers, endpoint status change notification tests, incident notification tests, and basic retry logic validation",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Design and implement basic notification service",
+						"description": "Create simple notification service with provider support for direct alert sending",
+						"status": "done",
+						"dependencies": [],
+						"details": "Define INotificationProvider interface, create NotificationService class with provider registration, implement basic provider factory, set up configuration for notification providers, focus on simple direct sending",
+						"testStrategy": "Unit tests for service initialization, provider registration, and basic notification sending"
+					},
+					{
+						"id": 2,
+						"title": "Implement email notification provider",
+						"description": "Build email notification provider using SMTP for endpoint and incident alerts",
+						"status": "done",
+						"dependencies": [1],
+						"details": "Create EmailNotificationProvider class implementing INotificationProvider, integrate SMTP client library, implement simple HTML/text templates for endpoint down/up and incident alerts, add basic delivery tracking",
+						"testStrategy": "Unit tests for email formatting and sending, integration tests with mock SMTP server"
+					},
+					{
+						"id": 3,
+						"title": "Implement webhook notification providers",
+						"description": "Create Slack, Discord, and generic webhook notification providers for monitoring alerts",
+						"status": "done",
+						"dependencies": [1],
+						"details": "Implement SlackNotificationProvider with webhook API integration, create DiscordNotificationProvider with Discord webhook format, build GenericWebhookProvider for custom endpoints, format messages for endpoint status and incident alerts",
+						"testStrategy": "Unit tests for webhook payload formatting, integration tests with webhook testing endpoints"
+					},
+					{
+						"id": 4,
+						"title": "Implement notification triggers and simple retry logic",
+						"description": "Create notification triggers for endpoint status changes and incident events with basic retry mechanism",
+						"status": "done",
+						"dependencies": [2, 3],
+						"details": "Implement endpoint status change notifications (down/up alerts), create incident creation/update notifications, add simple retry logic with exponential backoff for failed notifications, integrate with endpoint monitoring system",
+						"testStrategy": "Unit tests for notification triggering, integration tests for endpoint status notifications and incident alerts, retry logic validation"
+					}
+				]
+			},
+			{
+				"id": 26,
+				"title": "Build Notification System Frontend",
+				"description": "Create React components and admin interface for configuring email, Slack, Discord, and webhook notifications with channel setup, testing, logs, and configuration management.",
+				"details": "Develop comprehensive notification management UI components: NotificationSettings component for global notification preferences, NotificationChannels component for managing email/Slack/Discord/webhook configurations with form validation, NotificationTestPanel for testing notification delivery with real-time feedback, NotificationLogs component displaying delivery history with filtering and pagination, NotificationTemplates component for customizing alert messages per channel type. Implement forms using react-hook-form with proper validation for SMTP settings, webhook URLs, Slack/Discord tokens. Add real-time notification testing with WebSocket feedback for delivery status. Create notification rule configuration interface for endpoint-specific alert preferences. Integrate with existing admin dashboard layout and follow established component patterns, routing structure, and styling conventions. Use Monaco editor for JSON webhook payload configuration and implement proper error handling with user-friendly feedback messages.",
+				"testStrategy": "Component rendering tests for all notification UI components, form validation tests for all notification channel configurations, integration tests for notification testing functionality, WebSocket integration tests for real-time delivery feedback, notification logs display and filtering tests, template customization functionality tests, and end-to-end tests for complete notification configuration workflow",
+				"status": "in-progress",
+				"dependencies": [23, 25],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Create Base Notification Components Structure",
+						"description": "Set up the foundational React components for notification management including NotificationSettings, NotificationChannels, NotificationTestPanel, NotificationLogs, and NotificationTemplates with proper routing and layout integration.",
+						"dependencies": [],
+						"details": "Create component files with basic structure, implement routing in admin dashboard, establish component hierarchy and props interfaces, integrate with existing admin layout patterns, set up proper TypeScript interfaces for notification data structures, and implement basic component shells with placeholder content.",
+						"status": "done",
+						"testStrategy": "Unit tests for component rendering, routing tests for navigation, integration tests with admin dashboard layout"
+					},
+					{
+						"id": 2,
+						"title": "Implement NotificationChannels Configuration Forms",
+						"description": "Build comprehensive forms for configuring email (SMTP), Slack, Discord, and webhook notification channels with validation, testing capabilities, and secure credential management.",
+						"dependencies": [1],
+						"details": "Implement react-hook-form integration with validation schemas for SMTP settings (host, port, auth), Slack/Discord bot tokens and channel configurations, webhook URL validation and authentication headers. Add form state management, error handling, credential encryption/masking in UI, and channel-specific configuration options. Include connection testing buttons with real-time feedback.",
+						"status": "pending",
+						"testStrategy": "Form validation tests, integration tests for API calls, security tests for credential handling, user interaction tests for form submission"
+					},
+					{
+						"id": 3,
+						"title": "Build Notification Testing Panel with Real-time Feedback",
+						"description": "Create interactive testing interface for sending test notifications across all configured channels with WebSocket-based real-time delivery status updates and comprehensive error reporting.",
+						"dependencies": [2],
+						"details": "Implement NotificationTestPanel component with channel selection, test message customization, real-time WebSocket connection for delivery status updates, progress indicators, success/failure feedback with detailed error messages, test history tracking, and retry mechanisms for failed deliveries. Include preview functionality for different notification formats.",
+						"status": "pending",
+						"testStrategy": "WebSocket connection tests, real-time update tests, error handling tests, user interaction tests for test sending"
+					},
+					{
+						"id": 4,
+						"title": "Develop Notification Logs and History Management",
+						"description": "Create comprehensive logging interface displaying notification delivery history with advanced filtering, pagination, search capabilities, and detailed delivery status tracking.",
+						"dependencies": [1],
+						"details": "Implement NotificationLogs component with table/list view for notification history, advanced filtering by channel type, status, date range, and endpoint, pagination with configurable page sizes, search functionality, export capabilities for logs, detailed delivery status information including timestamps and error details, and log retention management interface.",
+						"status": "pending",
+						"testStrategy": "Pagination tests, filtering functionality tests, search performance tests, data export tests, UI responsiveness tests"
+					},
+					{
+						"id": 5,
+						"title": "Implement Notification Templates and Rule Configuration",
+						"description": "Build template management system for customizing notification messages per channel type and create rule configuration interface for endpoint-specific alert preferences with Monaco editor integration.",
+						"dependencies": [2, 4],
+						"details": "Implement NotificationTemplates component with template editor using Monaco editor for JSON webhook payloads, HTML email templates, and plain text formats. Create template variables system for dynamic content insertion, template preview functionality, version control for templates, and rule configuration interface for endpoint-specific notification preferences including severity levels, notification schedules, and channel routing logic.",
+						"status": "pending",
+						"testStrategy": "Template editor tests, JSON validation tests, template preview tests, rule configuration tests, integration tests with notification delivery system"
+					}
+				]
+			},
+			{
+				"id": 27,
+				"title": "Build Notifications Frontend Interface",
+				"description": "Create a simplified frontend interface for managing notification providers and configuring notification settings that integrates with the existing backend notification system.",
+				"status": "pending",
+				"dependencies": [25, 26],
+				"priority": "medium",
+				"details": "Build notification management UI components: NotificationDashboard component as the main interface with basic navigation for provider management and settings sections, NotificationProviders component for managing email/Slack/Discord/webhook configurations with form validation, and NotificationSettings component for global notification preferences. Implement form validation for all notification configurations, add error handling and loading states throughout the interface, integrate with existing admin dashboard navigation structure, and ensure proper API integration with backend notification endpoints.",
+				"testStrategy": "Component rendering tests for all notification UI components, form validation tests for notification provider configurations, notification settings management tests, error handling tests for failed API calls and network issues, and end-to-end tests for notification management workflows.",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Create Core Notification Dashboard Component",
+						"description": "Build the main NotificationDashboard component with basic navigation structure and layout that serves as the container for notification management sections.",
+						"status": "pending",
+						"dependencies": [],
+						"details": "Create NotificationDashboard component with simple navigation for provider management and settings sections. Implement basic layout with proper spacing and navigation. Add routing integration for deep linking to specific sections. Include header with dashboard title. Set up component state management for active section switching and basic notification context.",
+						"testStrategy": "Unit tests for navigation, layout testing, routing integration tests, and accessibility compliance testing for keyboard navigation."
+					},
+					{
+						"id": 2,
+						"title": "Build Notification Providers Management Interface",
+						"description": "Create NotificationProviders component for managing email, Slack, Discord, and webhook configurations with form validation and connection testing capabilities.",
+						"status": "pending",
+						"dependencies": [1],
+						"details": "Implement provider configuration forms for each notification type (email SMTP, Slack webhooks, Discord webhooks, generic webhooks). Add form validation using React Hook Form or similar with real-time validation feedback. Create connection testing functionality that calls backend test endpoints. Implement provider enable/disable toggles and deletion confirmations. Add provider status indicators and last connection test results display.",
+						"testStrategy": "Form validation testing, connection test simulation, provider CRUD operation tests, and error handling validation for network failures."
+					},
+					{
+						"id": 3,
+						"title": "Create Notification Settings Management and Dashboard Integration",
+						"description": "Build NotificationSettings component for global preferences and integrate all notification components with existing admin dashboard navigation structure.",
+						"status": "pending",
+						"dependencies": [2],
+						"details": "Implement NotificationSettings with global notification preferences (default providers, retry settings, rate limiting) and basic alert rule configuration. Integrate notification dashboard into existing admin layout navigation structure. Implement comprehensive error handling with user-friendly error messages and loading states throughout the interface.",
+						"testStrategy": "Settings persistence tests, navigation integration tests, and error boundary testing."
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-07-08T12:19:08.163Z",
+			"updated": "2025-07-11T03:38:21.333Z",
 			"description": "Tasks for master context"
 		}
 	}
