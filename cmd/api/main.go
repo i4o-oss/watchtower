@@ -15,6 +15,7 @@ import (
 	"github.com/i4o-oss/watchtower/internal/cache"
 	"github.com/i4o-oss/watchtower/internal/data"
 	"github.com/i4o-oss/watchtower/internal/monitoring"
+	"github.com/i4o-oss/watchtower/internal/notification"
 	"github.com/i4o-oss/watchtower/internal/security"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -43,14 +44,15 @@ type CacheConfig struct {
 }
 
 type Application struct {
-	config           Config
-	logger           *log.Logger
-	db               *data.CachedDB
-	cache            cache.Cache
-	sseHub           *SSEHub
-	securityHeaders  *security.SecurityHeaders
-	csrfProtection   *security.CSRFProtection
-	monitoringEngine *monitoring.MonitoringEngine
+	config              Config
+	logger              *log.Logger
+	db                  *data.CachedDB
+	cache               cache.Cache
+	sseHub              *SSEHub
+	securityHeaders     *security.SecurityHeaders
+	csrfProtection      *security.CSRFProtection
+	monitoringEngine    *monitoring.MonitoringEngine
+	notificationService *notification.Service
 }
 
 var (
@@ -245,15 +247,19 @@ func main() {
 	monitoringConfig := monitoring.DefaultEngineConfig()
 	monitoringEngine := monitoring.NewMonitoringEngine(monitoringConfig, rawDB, logger)
 
+	// Initialize notification service
+	notificationService := notification.NewService(nil) // Use default slog logger
+
 	app := &Application{
-		config:           config,
-		logger:           logger,
-		db:               db,
-		cache:            cacheClient,
-		sseHub:           sseHub,
-		securityHeaders:  securityHeaders,
-		csrfProtection:   csrfProtection,
-		monitoringEngine: monitoringEngine,
+		config:              config,
+		logger:              logger,
+		db:                  db,
+		cache:               cacheClient,
+		sseHub:              sseHub,
+		securityHeaders:     securityHeaders,
+		csrfProtection:      csrfProtection,
+		monitoringEngine:    monitoringEngine,
+		notificationService: notificationService,
 	}
 
 	// Set monitoring result callback to broadcast via SSE

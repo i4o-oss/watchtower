@@ -116,7 +116,7 @@ func (s *Scheduler) LoadEndpoints() error {
 				Endpoint:     &endpoint,
 				Interval:     time.Duration(endpoint.CheckIntervalSeconds) * time.Second,
 				NextRun:      time.Now().Add(time.Duration(endpoint.CheckIntervalSeconds) * time.Second),
-				IsActive:     true,
+				IsActive:     endpoint.Enabled,
 				FailureCount: 0,
 			}
 			s.endpoints[endpoint.ID] = scheduled
@@ -365,15 +365,10 @@ func (s *Scheduler) OnJobResult(endpointID uuid.UUID, success bool) {
 		// Reset failure count on success
 		scheduled.FailureCount = 0
 	} else {
-		// Increment failure count
+		// Increment failure count for tracking purposes
 		scheduled.FailureCount++
-
-		// Deactivate endpoint if too many failures (configurable threshold)
-		if scheduled.FailureCount >= 5 { // TODO: Make this configurable
-			scheduled.IsActive = false
-			s.logger.Warn("deactivating endpoint due to repeated failures",
-				"endpoint_id", endpointID,
-				"failure_count", scheduled.FailureCount)
-		}
+		s.logger.Debug("endpoint monitoring failed",
+			"endpoint_id", endpointID,
+			"failure_count", scheduled.FailureCount)
 	}
 }

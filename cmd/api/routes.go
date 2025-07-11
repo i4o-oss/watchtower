@@ -104,6 +104,15 @@ func (app *Application) routes() http.Handler {
 				r.Get("/{id}/timeline", app.getIncidentTimeline)
 				r.Post("/{id}/comments", app.addIncidentComment)
 			})
+
+			// Notification management
+			r.Route("/notifications", func(r chi.Router) {
+				r.Get("/channels", app.listNotificationChannels)
+				r.Post("/channels", app.createNotificationChannel)
+				r.Put("/channels/{id}", app.updateNotificationChannel)
+				r.Delete("/channels/{id}", app.deleteNotificationChannel)
+				r.Post("/test", app.testNotificationChannel)
+			})
 		})
 	})
 
