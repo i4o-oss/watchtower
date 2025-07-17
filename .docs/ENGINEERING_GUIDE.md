@@ -2802,6 +2802,1066 @@ df -h
 
 ---
 
+## API Reference
+
+### Overview
+
+The Watchtower API provides endpoints for managing endpoint monitoring, incident tracking, and real-time status updates. The API is divided into public endpoints (no authentication required) and admin endpoints (authentication required).
+
+### Base URL
+
+```
+http://localhost:8080/api/v1
+```
+
+### Authentication
+
+Admin endpoints require session-based authentication. Login via `/api/v1/auth/login` to obtain a session cookie.
+
+#### Authentication Headers
+```http
+Cookie: session_token=<token>
+X-CSRF-Token: <csrf_token>  # Required for state-changing operations
+```
+
+### Public API Endpoints
+
+#### Get System Status
+```http
+GET /api/v1/status
+```
+
+Returns current status of all monitored endpoints.
+
+**Response:**
+```json
+{
+  "endpoints": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "API Server",
+      "status": "operational",
+      "last_check": "2024-01-15T10:30:00Z",
+      "response_time_ms": 245,
+      "uptime_percentage": 99.9
+    }
+  ],
+  "overall_status": "operational",
+  "incident_count": 0
+}
+```
+
+#### Get Endpoint Uptime
+```http
+GET /api/v1/uptime/{endpoint_id}?days=90
+```
+
+Returns historical uptime data for a specific endpoint.
+
+**Parameters:**
+- `endpoint_id` (path): UUID of the endpoint
+- `days` (query): Number of days of history (default: 90, max: 365)
+
+**Response:**
+```json
+{
+  "endpoint_id": "550e8400-e29b-41d4-a716-446655440000",
+  "endpoint_name": "API Server",
+  "uptime_percentage": 99.9,
+  "daily_stats": [
+    {
+      "date": "2024-01-15",
+      "uptime_percentage": 100.0,
+      "total_checks": 1440,
+      "successful_checks": 1440,
+      "avg_response_time_ms": 245
+    }
+  ]
+}
+```
+
+#### Get Public Incidents
+```http
+GET /api/v1/incidents?status=published&limit=50&offset=0
+```
+
+Returns published incidents visible to the public.
+
+**Parameters:**
+- `status` (query): Filter by status (published, resolved)
+- `limit` (query): Number of incidents to return (default: 50, max: 100)
+- `offset` (query): Pagination offset
+
+**Response:**
+```json
+{
+  "incidents": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "title": "API Response Delays",
+      "description": "Experiencing elevated response times",
+      "severity": "minor",
+      "status": "investigating",
+      "start_time": "2024-01-15T09:00:00Z",
+      "affected_endpoints": ["550e8400-e29b-41d4-a716-446655440000"],
+      "timeline": [
+        {
+          "timestamp": "2024-01-15T09:00:00Z",
+          "status": "investigating",
+          "message": "We are investigating reports of slow API responses"
+        }
+      ]
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+#### Server-Sent Events
+```http
+GET /api/v1/events
+```
+
+Establishes SSE connection for real-time updates.
+
+**Event Types:**
+- `connected`: Initial connection confirmation
+- `status_update`: Endpoint status changes
+- `incident_created`: New incident created
+- `incident_updated`: Incident status updated
+- `endpoint_created`: New endpoint added
+- `endpoint_updated`: Endpoint configuration changed
+- `ping`: Keep-alive heartbeat (every 30 seconds)
+
+**Example Events:**
+```javascript
+// Status update event
+data: {
+  "endpoint_id": "550e8400-e29b-41d4-a716-446655440000",
+  "endpoint_name": "API Server",
+  "status": "operational",
+  "response_time_ms": 245,
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+
+// Incident update event  
+data: {
+  "id": "550e8400-e29b-41d4-a716-446655440001",
+  "title": "API Response Delays",
+  "status": "resolved",
+  "severity": "minor"
+}
+```
+
+### Admin API Endpoints
+
+#### Authentication
+
+##### Login
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440002",
+    "username": "admin",
+    "role": "admin"
+  },
+  "csrf_token": "csrf_token_here"
+}
+```
+
+##### Logout
+```http
+POST /api/v1/auth/logout
+X-CSRF-Token: <csrf_token>
+```
+
+##### Get Current User
+```http
+GET /api/v1/auth/me
+```
+
+#### Endpoint Management
+
+##### List Endpoints
+```http
+GET /api/v1/admin/endpoints?limit=20&offset=0&search=api
+```
+
+**Parameters:**
+- `limit` (query): Number of endpoints (default: 20, max: 100)
+- `offset` (query): Pagination offset
+- `search` (query): Search in endpoint names and URLs
+- `enabled` (query): Filter by enabled status (true/false)
+
+**Response:**
+```json
+{
+  "endpoints": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "API Server",
+      "description": "Main API endpoint",
+      "url": "https://api.example.com/health",
+      "method": "GET",
+      "headers": {
+        "Authorization": "Bearer token"
+      },
+      "body": null,
+      "check_interval_seconds": 60,
+      "timeout_seconds": 30,
+      "expected_status_codes": [200, 201],
+      "enabled": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "total": 1,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+##### Get Endpoint
+```http
+GET /api/v1/admin/endpoints/{endpoint_id}
+```
+
+##### Create Endpoint
+```http
+POST /api/v1/admin/endpoints
+Content-Type: application/json
+X-CSRF-Token: <csrf_token>
+
+{
+  "name": "API Server",
+  "description": "Main API endpoint",
+  "url": "https://api.example.com/health",
+  "method": "GET",
+  "headers": {
+    "Authorization": "Bearer token"
+  },
+  "body": null,
+  "check_interval_seconds": 60,
+  "timeout_seconds": 30,
+  "expected_status_codes": [200],
+  "enabled": true
+}
+```
+
+##### Update Endpoint
+```http
+PUT /api/v1/admin/endpoints/{endpoint_id}
+Content-Type: application/json
+X-CSRF-Token: <csrf_token>
+
+{
+  "name": "Updated API Server",
+  "check_interval_seconds": 120
+}
+```
+
+##### Delete Endpoint
+```http
+DELETE /api/v1/admin/endpoints/{endpoint_id}
+X-CSRF-Token: <csrf_token>
+```
+
+#### Monitoring Logs
+
+##### Get Monitoring Logs
+```http
+GET /api/v1/admin/monitoring-logs?endpoint_id={id}&limit=100&offset=0&start_date=2024-01-01&end_date=2024-01-15
+```
+
+**Parameters:**
+- `endpoint_id` (query): Filter by endpoint UUID
+- `limit` (query): Number of logs (default: 100, max: 1000)
+- `offset` (query): Pagination offset
+- `start_date` (query): Start date (YYYY-MM-DD)
+- `end_date` (query): End date (YYYY-MM-DD)
+- `success` (query): Filter by success status (true/false)
+
+**Response:**
+```json
+{
+  "logs": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440003",
+      "endpoint_id": "550e8400-e29b-41d4-a716-446655440000",
+      "timestamp": "2024-01-15T10:30:00Z",
+      "status_code": 200,
+      "response_time_ms": 245,
+      "success": true,
+      "error_message": null,
+      "response_body_sample": "{\"status\":\"ok\"}"
+    }
+  ],
+  "total": 1,
+  "limit": 100,
+  "offset": 0
+}
+```
+
+#### Incident Management
+
+##### List Incidents
+```http
+GET /api/v1/admin/incidents?status=open&severity=major&limit=50&offset=0
+```
+
+**Parameters:**
+- `status` (query): Filter by status (open, investigating, identified, monitoring, resolved)
+- `severity` (query): Filter by severity (minor, major, critical)
+- `limit` (query): Number of incidents (default: 50, max: 100)
+- `offset` (query): Pagination offset
+
+##### Create Incident
+```http
+POST /api/v1/admin/incidents
+Content-Type: application/json
+X-CSRF-Token: <csrf_token>
+
+{
+  "title": "API Response Delays",
+  "description": "Users experiencing slow API responses",
+  "severity": "major",
+  "status": "investigating",
+  "affected_endpoints": ["550e8400-e29b-41d4-a716-446655440000"],
+  "public": true
+}
+```
+
+##### Update Incident
+```http
+PUT /api/v1/admin/incidents/{incident_id}
+Content-Type: application/json
+X-CSRF-Token: <csrf_token>
+
+{
+  "status": "resolved",
+  "update_message": "Issue has been resolved. All systems operational."
+}
+```
+
+#### Notification Channels
+
+##### List Notification Channels
+```http
+GET /api/v1/admin/notification-channels
+```
+
+**Response:**
+```json
+{
+  "channels": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440004",
+      "name": "Email Alerts",
+      "type": "email",
+      "enabled": true,
+      "configuration": {
+        "smtp_host": "smtp.gmail.com",
+        "smtp_port": 587,
+        "username": "alerts@example.com",
+        "from_email": "alerts@example.com",
+        "to_emails": ["admin@example.com"]
+      },
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+##### Create Notification Channel
+```http
+POST /api/v1/admin/notification-channels
+Content-Type: application/json
+X-CSRF-Token: <csrf_token>
+
+{
+  "name": "Slack Alerts",
+  "type": "slack",
+  "enabled": true,
+  "configuration": {
+    "webhook_url": "https://hooks.slack.com/services/...",
+    "channel": "#alerts",
+    "username": "Watchtower"
+  }
+}
+```
+
+##### Test Notification Channel
+```http
+POST /api/v1/admin/notification-channels/{channel_id}/test
+Content-Type: application/json
+X-CSRF-Token: <csrf_token>
+
+{
+  "message": "Test notification from Watchtower"
+}
+```
+
+### Error Responses
+
+All endpoints return consistent error responses:
+
+```json
+{
+  "error": "Validation failed",
+  "details": {
+    "field": "url",
+    "message": "Invalid URL format"
+  },
+  "code": "VALIDATION_ERROR"
+}
+```
+
+#### HTTP Status Codes
+- `200` - Success
+- `201` - Created
+- `204` - No Content (successful deletion)
+- `400` - Bad Request (validation error)
+- `401` - Unauthorized (authentication required)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not Found
+- `409` - Conflict (duplicate resource)
+- `429` - Too Many Requests (rate limited)
+- `500` - Internal Server Error
+
+### Rate Limiting
+
+Rate limits are applied per IP address:
+- **Anonymous requests**: 60 requests per minute
+- **Authenticated requests**: 300 requests per minute
+
+Rate limit headers are included in responses:
+```http
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 299
+X-RateLimit-Reset: 1642248000
+```
+
+### Pagination
+
+List endpoints support pagination with `limit` and `offset` parameters:
+
+```http
+GET /api/v1/admin/endpoints?limit=20&offset=40
+```
+
+Response includes pagination metadata:
+```json
+{
+  "data": [...],
+  "total": 150,
+  "limit": 20,
+  "offset": 40,
+  "has_next": true,
+  "has_prev": true
+}
+```
+
+---
+
+## Deployment Guide
+
+### Overview
+
+This guide covers deploying Watchtower in various environments including local development, Docker containers, and cloud platforms like Railway.
+
+### Prerequisites
+
+- **Go**: 1.21 or later
+- **Node.js**: 18 or later  
+- **PostgreSQL**: 13 or later
+- **Docker**: 20.10 or later (for containerized deployment)
+
+### Environment Configuration
+
+#### Required Environment Variables
+
+```bash
+# Database Configuration
+DATABASE_URL=postgres://user:password@host:5432/dbname
+# OR individual database variables:
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=watchtower
+DB_USER=watchtower
+DB_PASSWORD=your_secure_password
+DB_SSL_MODE=require
+
+# Server Configuration
+PORT=8080
+ENVIRONMENT=production
+JWT_SECRET=your-jwt-secret-key-at-least-32-chars
+SESSION_SECRET=your-session-secret-key-at-least-32-chars
+CSRF_SECRET=your-csrf-secret-key-at-least-32-chars
+
+# Optional: Notification Providers
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=alerts@yourdomain.com
+SMTP_PASSWORD=your_smtp_password
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+```
+
+#### Security Configuration
+
+```bash
+# Generate secure secrets (Linux/macOS)
+openssl rand -hex 32  # Use for JWT_SECRET
+openssl rand -hex 32  # Use for SESSION_SECRET  
+openssl rand -hex 32  # Use for CSRF_SECRET
+
+# Windows PowerShell
+[System.Web.Security.Membership]::GeneratePassword(64, 0)
+```
+
+### Local Development
+
+#### 1. Database Setup
+
+##### Using Docker
+```bash
+# Start PostgreSQL container
+docker run -d \
+  --name watchtower-postgres \
+  -e POSTGRES_DB=watchtower \
+  -e POSTGRES_USER=watchtower \
+  -e POSTGRES_PASSWORD=password \
+  -p 5432:5432 \
+  postgres:15
+```
+
+##### Using docker-compose
+```bash
+# Use the provided docker-compose.yml
+docker-compose up postgres -d
+```
+
+#### 2. Backend Development
+
+```bash
+# Install dependencies
+go mod tidy
+
+# Set environment variables
+export DATABASE_URL="postgres://watchtower:password@localhost:5432/watchtower?sslmode=disable"
+export JWT_SECRET="your-jwt-secret-here"
+export SESSION_SECRET="your-session-secret-here"
+export CSRF_SECRET="your-csrf-secret-here"
+
+# Run migrations and start server
+cd cmd/api
+go run main.go
+```
+
+The backend will be available at `http://localhost:8080`
+
+#### 3. Frontend Development
+
+```bash
+# Install dependencies
+cd frontend
+npm install
+
+# Start development server
+npm run dev
+```
+
+The frontend will be available at `http://localhost:5173` with proxy to backend.
+
+### Production Deployment
+
+#### Docker Deployment
+
+##### 1. Using docker-compose (Recommended)
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/watchtower.git
+cd watchtower
+
+# Create environment file
+cp .env.example .env
+# Edit .env with your configuration
+
+# Build and start services
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+##### 2. Using Docker directly
+
+```bash
+# Build the application image
+docker build -t watchtower:latest .
+
+# Run with PostgreSQL
+docker run -d \
+  --name watchtower-postgres \
+  -e POSTGRES_DB=watchtower \
+  -e POSTGRES_USER=watchtower \
+  -e POSTGRES_PASSWORD=your_password \
+  -v postgres_data:/var/lib/postgresql/data \
+  postgres:15
+
+# Run the application
+docker run -d \
+  --name watchtower-app \
+  --link watchtower-postgres:postgres \
+  -p 8080:8080 \
+  -e DATABASE_URL="postgres://watchtower:your_password@postgres:5432/watchtower" \
+  -e JWT_SECRET="your-jwt-secret" \
+  -e SESSION_SECRET="your-session-secret" \
+  -e CSRF_SECRET="your-csrf-secret" \
+  -e ENVIRONMENT="production" \
+  watchtower:latest
+```
+
+#### Railway Deployment
+
+Railway provides the simplest cloud deployment option.
+
+##### 1. One-Click Deployment
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/watchtower)
+
+Click the button above to deploy Watchtower to Railway in under 5 minutes.
+
+##### 2. Manual Railway Deployment
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login to Railway
+railway login
+
+# Initialize project
+railway init
+
+# Add PostgreSQL database
+railway add postgresql
+
+# Set environment variables
+railway variables set JWT_SECRET=$(openssl rand -hex 32)
+railway variables set SESSION_SECRET=$(openssl rand -hex 32)
+railway variables set CSRF_SECRET=$(openssl rand -hex 32)
+railway variables set ENVIRONMENT=production
+
+# Deploy
+railway up
+```
+
+##### 3. GitHub Integration
+
+1. Fork the Watchtower repository
+2. Connect your Railway account to GitHub
+3. Create new Railway project from GitHub repo
+4. Add PostgreSQL database service
+5. Configure environment variables
+6. Deploy automatically on push to main branch
+
+#### Manual Server Deployment
+
+##### 1. Server Preparation
+
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install required packages
+sudo apt install -y postgresql postgresql-contrib nginx certbot python3-certbot-nginx
+
+# Create application user
+sudo useradd -m -s /bin/bash watchtower
+sudo mkdir -p /opt/watchtower
+sudo chown watchtower:watchtower /opt/watchtower
+```
+
+##### 2. Database Setup
+
+```bash
+# Configure PostgreSQL
+sudo -u postgres createuser watchtower
+sudo -u postgres createdb watchtower -O watchtower
+sudo -u postgres psql -c "ALTER USER watchtower PASSWORD 'your_secure_password';"
+
+# Configure PostgreSQL for production
+sudo nano /etc/postgresql/13/main/postgresql.conf
+# Set: shared_preload_libraries = 'pg_stat_statements'
+# Set: max_connections = 100
+
+sudo systemctl restart postgresql
+```
+
+##### 3. Application Deployment
+
+```bash
+# Build application
+git clone https://github.com/yourusername/watchtower.git
+cd watchtower
+
+# Build backend
+cd cmd/api
+go build -o watchtower
+sudo cp watchtower /opt/watchtower/
+
+# Build frontend
+cd ../../frontend
+npm install
+npm run build
+sudo cp -r build/* /var/www/html/
+
+# Create systemd service
+sudo nano /etc/systemd/system/watchtower.service
+```
+
+**systemd service file:**
+```ini
+[Unit]
+Description=Watchtower Status Monitor
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=watchtower
+WorkingDirectory=/opt/watchtower
+ExecStart=/opt/watchtower/watchtower
+Restart=always
+RestartSec=5
+Environment=DATABASE_URL=postgres://watchtower:your_password@localhost:5432/watchtower
+Environment=JWT_SECRET=your-jwt-secret
+Environment=SESSION_SECRET=your-session-secret
+Environment=CSRF_SECRET=your-csrf-secret
+Environment=ENVIRONMENT=production
+Environment=PORT=8080
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# Start and enable service
+sudo systemctl daemon-reload
+sudo systemctl enable watchtower
+sudo systemctl start watchtower
+```
+
+##### 4. Nginx Configuration
+
+```bash
+# Create Nginx configuration
+sudo nano /etc/nginx/sites-available/watchtower
+```
+
+**Nginx configuration:**
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+    
+    # SSL Configuration
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+    
+    # Security headers
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+    
+    # Frontend static files
+    location / {
+        root /var/www/html;
+        try_files $uri $uri/ /index.html;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # API proxy
+    location /api/ {
+        proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # SSE support
+        proxy_buffering off;
+        proxy_read_timeout 24h;
+    }
+}
+```
+
+```bash
+# Enable site and restart Nginx
+sudo ln -s /etc/nginx/sites-available/watchtower /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+
+# Obtain SSL certificate
+sudo certbot --nginx -d your-domain.com
+```
+
+### Health Checks and Monitoring
+
+#### Application Health Check
+
+```bash
+# Check application status
+curl http://localhost:8080/api/v1/health
+
+# Expected response:
+{
+  "status": "healthy",
+  "database": "connected",
+  "monitoring_engine": "running",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+#### System Monitoring
+
+```bash
+# Check service status
+sudo systemctl status watchtower
+
+# View logs
+sudo journalctl -u watchtower -f
+
+# Monitor resource usage
+htop
+```
+
+#### Database Monitoring
+
+```bash
+# Check database connections
+sudo -u postgres psql -c "SELECT count(*) FROM pg_stat_activity WHERE datname='watchtower';"
+
+# Monitor database performance
+sudo -u postgres psql watchtower -c "SELECT * FROM pg_stat_user_tables WHERE relname IN ('endpoints', 'monitoring_logs');"
+```
+
+### Backup and Recovery
+
+#### Database Backup
+
+```bash
+# Create backup script
+sudo nano /opt/watchtower/backup.sh
+```
+
+**Backup script:**
+```bash
+#!/bin/bash
+BACKUP_DIR="/opt/watchtower/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+FILENAME="watchtower_backup_$DATE.sql"
+
+mkdir -p $BACKUP_DIR
+
+# Create database backup
+pg_dump watchtower > $BACKUP_DIR/$FILENAME
+
+# Compress backup
+gzip $BACKUP_DIR/$FILENAME
+
+# Remove backups older than 30 days
+find $BACKUP_DIR -name "*.sql.gz" -mtime +30 -delete
+
+echo "Backup completed: $FILENAME.gz"
+```
+
+```bash
+# Make executable and set up cron
+sudo chmod +x /opt/watchtower/backup.sh
+
+# Add to crontab (daily backups at 2 AM)
+sudo crontab -e
+# Add: 0 2 * * * /opt/watchtower/backup.sh
+```
+
+#### Recovery Process
+
+```bash
+# Stop application
+sudo systemctl stop watchtower
+
+# Restore database
+gunzip /opt/watchtower/backups/watchtower_backup_YYYYMMDD_HHMMSS.sql.gz
+sudo -u postgres psql watchtower < /opt/watchtower/backups/watchtower_backup_YYYYMMDD_HHMMSS.sql
+
+# Start application
+sudo systemctl start watchtower
+```
+
+### Troubleshooting
+
+#### Common Issues
+
+##### 1. Database Connection Errors
+```bash
+# Check database status
+sudo systemctl status postgresql
+
+# Check connection string
+sudo -u postgres psql -c "\l"
+
+# Test connection
+pg_isready -h localhost -p 5432 -U watchtower
+```
+
+##### 2. Migration Errors
+```bash
+# Check migration status
+cd cmd/api
+go run main.go -check-migrations
+
+# Reset database (CAUTION: Data loss)
+sudo -u postgres dropdb watchtower
+sudo -u postgres createdb watchtower -O watchtower
+```
+
+##### 3. SSE Connection Issues
+```bash
+# Check nginx configuration for proxy_buffering
+grep proxy_buffering /etc/nginx/sites-available/watchtower
+
+# Test SSE endpoint directly
+curl -N -H "Accept: text/event-stream" http://localhost:8080/api/v1/events
+```
+
+##### 4. Performance Issues
+```bash
+# Check database performance
+sudo -u postgres psql watchtower -c "
+SELECT query, calls, total_time, mean_time 
+FROM pg_stat_statements 
+ORDER BY total_time DESC 
+LIMIT 10;
+"
+
+# Monitor system resources
+iostat -x 1
+free -h
+```
+
+#### Log Analysis
+
+```bash
+# Application logs
+sudo journalctl -u watchtower --since "1 hour ago"
+
+# Nginx access logs
+sudo tail -f /var/log/nginx/access.log
+
+# Nginx error logs
+sudo tail -f /var/log/nginx/error.log
+
+# PostgreSQL logs
+sudo tail -f /var/log/postgresql/postgresql-13-main.log
+```
+
+### Security Considerations
+
+#### Production Security Checklist
+
+- [ ] Use strong, unique secrets for JWT, session, and CSRF tokens
+- [ ] Enable SSL/TLS with valid certificates
+- [ ] Configure firewall to only allow necessary ports (80, 443, 22)
+- [ ] Regularly update system packages and dependencies
+- [ ] Use non-root user for application process
+- [ ] Enable database SSL connections in production
+- [ ] Implement proper backup and monitoring procedures
+- [ ] Configure rate limiting and DDoS protection
+- [ ] Regular security audits and vulnerability scanning
+
+#### Environment-Specific Security
+
+##### Development
+- Use self-signed certificates or HTTP for local development
+- Disable CSRF protection for API testing if needed
+- Use relaxed CORS settings
+
+##### Production
+- Enforce HTTPS with HSTS headers
+- Strict CSRF protection
+- Restrictive CORS configuration
+- Database connections over SSL
+- Regular security updates
+
+### Performance Optimization
+
+#### Database Optimization
+
+```sql
+-- Create additional indexes for performance
+CREATE INDEX CONCURRENTLY idx_monitoring_logs_timestamp_endpoint 
+ON monitoring_logs (timestamp DESC, endpoint_id) 
+WHERE timestamp > NOW() - INTERVAL '90 days';
+
+-- Analyze table statistics
+ANALYZE endpoints;
+ANALYZE monitoring_logs;
+ANALYZE incidents;
+```
+
+#### Application Optimization
+
+```bash
+# Increase worker pool size for high-load deployments
+export MONITORING_WORKERS=10
+
+# Tune database connection pool
+export DB_MAX_OPEN_CONNS=25
+export DB_MAX_IDLE_CONNS=5
+```
+
+#### Frontend Optimization
+
+```bash
+# Build with production optimizations
+cd frontend
+npm run build -- --mode production
+
+# Serve with compression
+# (Already configured in Nginx example above)
+```
+
+This deployment guide provides comprehensive coverage for deploying Watchtower in various environments while maintaining security and performance best practices.
+
+---
+
 ## Conclusion
 
 This guide provides a comprehensive overview of the Watchtower codebase. As you work with the code, you'll develop a deeper understanding of the patterns and practices used throughout the application.
