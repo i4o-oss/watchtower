@@ -99,11 +99,9 @@ export default function AdminNotifications({
 						Configure and manage alert notifications
 					</p>
 				</div>
-				{/* Temporarily disabled during migration */}
-				{/* <Link to='/admin/notifications/channels'>
+				<Link to='/admin/notifications/channels'>
 					<Button>Configure Channels</Button>
-				</Link> */}
-				<Button disabled>Configure Channels (Under Migration)</Button>
+				</Link>
 			</div>
 
 			{/* Channel Status */}

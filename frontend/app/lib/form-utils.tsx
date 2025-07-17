@@ -139,6 +139,103 @@ export const validators = {
 		}
 		return undefined
 	},
+
+	// Enhanced validation for notification channels
+	smtpPort: ({ value }: { value: number }) => {
+		if (!value) return undefined
+		if (value < 1 || value > 65535) {
+			return 'SMTP port must be between 1 and 65535'
+		}
+		// Common SMTP ports for validation
+		const commonPorts = [25, 465, 587, 993, 995]
+		if (!commonPorts.includes(value)) {
+			return 'Consider using standard SMTP ports: 25, 465, 587, 993, or 995'
+		}
+		return undefined
+	},
+
+	slackWebhookUrl: ({ value }: { value: string }) => {
+		if (!value) return undefined
+		try {
+			const url = new URL(value)
+			if (!url.hostname.includes('slack.com')) {
+				return 'Must be a valid Slack webhook URL (should contain slack.com)'
+			}
+			if (!url.pathname.includes('/services/')) {
+				return 'Must be a valid Slack webhook URL format'
+			}
+			return undefined
+		} catch {
+			return 'Please enter a valid Slack webhook URL'
+		}
+	},
+
+	discordWebhookUrl: ({ value }: { value: string }) => {
+		if (!value) return undefined
+		try {
+			const url = new URL(value)
+			if (
+				!url.hostname.includes('discord.com') &&
+				!url.hostname.includes('discordapp.com')
+			) {
+				return 'Must be a valid Discord webhook URL (should contain discord.com or discordapp.com)'
+			}
+			if (!url.pathname.includes('/api/webhooks/')) {
+				return 'Must be a valid Discord webhook URL format'
+			}
+			return undefined
+		} catch {
+			return 'Please enter a valid Discord webhook URL'
+		}
+	},
+
+	json: ({ value }: { value: string }) => {
+		if (!value || value.trim() === '') return undefined
+		try {
+			JSON.parse(value)
+			return undefined
+		} catch {
+			return 'Please enter valid JSON'
+		}
+	},
+
+	emailList: ({ value }: { value: string }) => {
+		if (!value) return undefined
+		const emails = value.split(',').map((email) => email.trim())
+		for (const email of emails) {
+			if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+				return `Invalid email address: ${email}`
+			}
+		}
+		return undefined
+	},
+
+	slackChannel: ({ value }: { value: string }) => {
+		if (!value) return undefined
+		if (!value.startsWith('#') && !value.startsWith('@')) {
+			return 'Slack channel should start with # for channels or @ for users'
+		}
+		return undefined
+	},
+
+	webhookHeaders: ({ value }: { value: string }) => {
+		if (!value || value.trim() === '') return undefined
+		try {
+			const headers = JSON.parse(value)
+			if (typeof headers !== 'object' || Array.isArray(headers)) {
+				return 'Headers must be a JSON object'
+			}
+			// Validate common header formats
+			for (const [key, val] of Object.entries(headers)) {
+				if (typeof key !== 'string' || typeof val !== 'string') {
+					return 'All header keys and values must be strings'
+				}
+			}
+			return undefined
+		} catch {
+			return 'Please enter valid JSON for headers'
+		}
+	},
 }
 
 /**

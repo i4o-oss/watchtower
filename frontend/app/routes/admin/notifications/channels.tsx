@@ -15,7 +15,15 @@ import { Switch } from '~/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Badge } from '~/components/ui/badge'
 import { Textarea } from '~/components/ui/textarea'
-import { ArrowLeft, Mail, MessageSquare, TestTube, Webhook } from 'lucide-react'
+import {
+	ArrowLeft,
+	Mail,
+	MessageSquare,
+	TestTube,
+	Webhook,
+	Eye,
+	EyeOff,
+} from 'lucide-react'
 import { ButtonLoadingSkeleton } from '~/lib/lazy'
 import { useSuccessToast, useErrorToast } from '~/components/toast'
 import { requireAuth } from '~/lib/auth'
@@ -93,6 +101,10 @@ export default function NotificationChannels({
 	const [activeTab, setActiveTab] = useState('email')
 	const [testStatus, setTestStatus] = useState<
 		Record<string, 'idle' | 'testing'>
+	>({})
+	const [showPassword, setShowPassword] = useState(false)
+	const [showWebhookUrl, setShowWebhookUrl] = useState<
+		Record<string, boolean>
 	>({})
 	const successToast = useSuccessToast()
 	const errorToast = useErrorToast()
@@ -389,8 +401,7 @@ export default function NotificationChannels({
 										validators={{
 											onChange: combineValidators(
 												validators.required,
-												validators.number,
-												validators.positive,
+												validators.smtpPort,
 											),
 										}}
 										children={(field) => (
@@ -463,18 +474,51 @@ export default function NotificationChannels({
 												<Label htmlFor='smtp-password'>
 													Password *
 												</Label>
-												<Input
-													id='smtp-password'
-													type='password'
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='your-app-password'
-												/>
+												<div className='relative'>
+													<Input
+														id='smtp-password'
+														type={
+															showPassword
+																? 'text'
+																: 'password'
+														}
+														value={
+															field.state.value
+														}
+														onChange={(e) =>
+															field.handleChange(
+																e.target.value,
+															)
+														}
+														onBlur={
+															field.handleBlur
+														}
+														placeholder='your-app-password'
+														className='pr-10'
+													/>
+													<Button
+														type='button'
+														variant='ghost'
+														size='sm'
+														className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+														onClick={() =>
+															setShowPassword(
+																!showPassword,
+															)
+														}
+													>
+														{showPassword ? (
+															<EyeOff className='h-4 w-4' />
+														) : (
+															<Eye className='h-4 w-4' />
+														)}
+													</Button>
+												</div>
+												<p className='text-xs text-muted-foreground'>
+													For Gmail, use an App
+													Password instead of your
+													regular password
+												</p>
 												<FieldError
 													errors={
 														field.state.meta.errors
@@ -551,7 +595,10 @@ export default function NotificationChannels({
 								<emailForm.Field
 									name='to_emails'
 									validators={{
-										onChange: validators.required,
+										onChange: combineValidators(
+											validators.required,
+											validators.emailList,
+										),
 									}}
 									children={(field) => (
 										<div className='space-y-2'>
@@ -571,7 +618,8 @@ export default function NotificationChannels({
 											/>
 											<p className='text-xs text-muted-foreground'>
 												Separate multiple emails with
-												commas
+												commas. These emails will
+												receive all notifications.
 											</p>
 											<FieldError
 												errors={field.state.meta.errors}
@@ -656,7 +704,7 @@ export default function NotificationChannels({
 									validators={{
 										onChange: combineValidators(
 											validators.required,
-											validators.url,
+											validators.slackWebhookUrl,
 										),
 									}}
 									children={(field) => (
@@ -664,18 +712,46 @@ export default function NotificationChannels({
 											<Label htmlFor='slack-webhook'>
 												Webhook URL *
 											</Label>
-											<Input
-												id='slack-webhook'
-												type='url'
-												value={field.state.value}
-												onChange={(e) =>
-													field.handleChange(
-														e.target.value,
-													)
-												}
-												onBlur={field.handleBlur}
-												placeholder='https://hooks.slack.com/services/...'
-											/>
+											<div className='relative'>
+												<Input
+													id='slack-webhook'
+													type={
+														showWebhookUrl.slack
+															? 'text'
+															: 'password'
+													}
+													value={field.state.value}
+													onChange={(e) =>
+														field.handleChange(
+															e.target.value,
+														)
+													}
+													onBlur={field.handleBlur}
+													placeholder='https://hooks.slack.com/services/...'
+													className='pr-10'
+												/>
+												<Button
+													type='button'
+													variant='ghost'
+													size='sm'
+													className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+													onClick={() =>
+														setShowWebhookUrl(
+															(prev) => ({
+																...prev,
+																slack:
+																	!prev.slack,
+															}),
+														)
+													}
+												>
+													{showWebhookUrl.slack ? (
+														<EyeOff className='h-4 w-4' />
+													) : (
+														<Eye className='h-4 w-4' />
+													)}
+												</Button>
+											</div>
 											<FieldError
 												errors={field.state.meta.errors}
 											/>
@@ -686,6 +762,9 @@ export default function NotificationChannels({
 								<div className='grid grid-cols-2 gap-4'>
 									<slackForm.Field
 										name='channel'
+										validators={{
+											onChange: validators.slackChannel,
+										}}
 										children={(field) => (
 											<div className='space-y-2'>
 												<Label htmlFor='slack-channel'>
@@ -702,6 +781,10 @@ export default function NotificationChannels({
 													onBlur={field.handleBlur}
 													placeholder='#alerts'
 												/>
+												<p className='text-xs text-muted-foreground'>
+													Optional: #channel or @user
+													to override webhook default
+												</p>
 												<FieldError
 													errors={
 														field.state.meta.errors
@@ -815,7 +898,7 @@ export default function NotificationChannels({
 									validators={{
 										onChange: combineValidators(
 											validators.required,
-											validators.url,
+											validators.discordWebhookUrl,
 										),
 									}}
 									children={(field) => (
@@ -823,18 +906,46 @@ export default function NotificationChannels({
 											<Label htmlFor='discord-webhook'>
 												Webhook URL *
 											</Label>
-											<Input
-												id='discord-webhook'
-												type='url'
-												value={field.state.value}
-												onChange={(e) =>
-													field.handleChange(
-														e.target.value,
-													)
-												}
-												onBlur={field.handleBlur}
-												placeholder='https://discord.com/api/webhooks/...'
-											/>
+											<div className='relative'>
+												<Input
+													id='discord-webhook'
+													type={
+														showWebhookUrl.discord
+															? 'text'
+															: 'password'
+													}
+													value={field.state.value}
+													onChange={(e) =>
+														field.handleChange(
+															e.target.value,
+														)
+													}
+													onBlur={field.handleBlur}
+													placeholder='https://discord.com/api/webhooks/...'
+													className='pr-10'
+												/>
+												<Button
+													type='button'
+													variant='ghost'
+													size='sm'
+													className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+													onClick={() =>
+														setShowWebhookUrl(
+															(prev) => ({
+																...prev,
+																discord:
+																	!prev.discord,
+															}),
+														)
+													}
+												>
+													{showWebhookUrl.discord ? (
+														<EyeOff className='h-4 w-4' />
+													) : (
+														<Eye className='h-4 w-4' />
+													)}
+												</Button>
+											</div>
 											<FieldError
 												errors={field.state.meta.errors}
 											/>
@@ -951,18 +1062,46 @@ export default function NotificationChannels({
 											<Label htmlFor='webhook-url'>
 												Webhook URL *
 											</Label>
-											<Input
-												id='webhook-url'
-												type='url'
-												value={field.state.value}
-												onChange={(e) =>
-													field.handleChange(
-														e.target.value,
-													)
-												}
-												onBlur={field.handleBlur}
-												placeholder='https://your-webhook-endpoint.com/webhook'
-											/>
+											<div className='relative'>
+												<Input
+													id='webhook-url'
+													type={
+														showWebhookUrl.webhook
+															? 'text'
+															: 'password'
+													}
+													value={field.state.value}
+													onChange={(e) =>
+														field.handleChange(
+															e.target.value,
+														)
+													}
+													onBlur={field.handleBlur}
+													placeholder='https://your-webhook-endpoint.com/webhook'
+													className='pr-10'
+												/>
+												<Button
+													type='button'
+													variant='ghost'
+													size='sm'
+													className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+													onClick={() =>
+														setShowWebhookUrl(
+															(prev) => ({
+																...prev,
+																webhook:
+																	!prev.webhook,
+															}),
+														)
+													}
+												>
+													{showWebhookUrl.webhook ? (
+														<EyeOff className='h-4 w-4' />
+													) : (
+														<Eye className='h-4 w-4' />
+													)}
+												</Button>
+											</div>
 											<FieldError
 												errors={field.state.meta.errors}
 											/>
@@ -972,6 +1111,9 @@ export default function NotificationChannels({
 
 								<webhookForm.Field
 									name='headers'
+									validators={{
+										onChange: validators.webhookHeaders,
+									}}
 									children={(field) => (
 										<div className='space-y-2'>
 											<Label htmlFor='webhook-headers'>
@@ -991,7 +1133,8 @@ export default function NotificationChannels({
 											/>
 											<p className='text-xs text-muted-foreground'>
 												Optional HTTP headers as JSON
-												object
+												object (e.g., for Authorization,
+												API keys)
 											</p>
 											<FieldError
 												errors={field.state.meta.errors}
