@@ -1001,7 +1001,6 @@ GET    /api/admin/stats          # Get system statistics
 #### Real-time Endpoints
 ```
 GET /api/admin/sse               # Server-Sent Events stream
-GET /api/admin/performance       # Performance metrics
 ```
 
 ### Request/Response Formats
@@ -1552,6 +1551,59 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 ```
+
+#### Admin-Only Registration Flow
+
+The frontend implements automatic routing logic for the admin-only registration system:
+
+```typescript
+// routes/home.tsx - Automatic redirect to registration if no users exist
+export async function clientLoader() {
+  // Check if registration is allowed (no users exist)
+  const registrationAllowed = await checkRegistrationStatus()
+  
+  // If registration is allowed, it means no users exist yet
+  // Redirect to registration page for initial setup
+  if (registrationAllowed) {
+    throw redirect('/register')
+  }
+  
+  // Continue with normal status page loading...
+}
+
+// routes/register.tsx - Registration blocking logic
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  // Check if registration is allowed
+  const registrationAllowed = await checkRegistrationStatus()
+  
+  // If registration is not allowed, show blocked message
+  if (!registrationAllowed) {
+    return { registrationBlocked: true }
+  }
+  
+  // If registration is allowed, check if user is already authenticated
+  await requireGuest('/')
+  return { registrationBlocked: false }
+}
+
+export default function Register() {
+  const { registrationBlocked } = useLoaderData<typeof clientLoader>()
+  
+  // Show different UI based on registration status
+  if (registrationBlocked) {
+    return <RegistrationBlockedMessage />
+  }
+  
+  return <RegistrationForm />
+}
+```
+
+**Key Frontend Features:**
+- **Automatic Redirects**: Home route (`/`) redirects to registration when no users exist
+- **Registration Blocking**: Registration page shows blocked message when registration is disabled
+- **State Management**: Registration status is checked via API calls during route loading
+- **User Experience**: Clear messaging and appropriate redirects for different states
+- **Security**: No client-side bypasses - all checks validated server-side
 
 ### API Integration
 
@@ -2993,6 +3045,62 @@ X-CSRF-Token: <csrf_token>
 ```http
 GET /api/v1/auth/me
 ```
+
+##### Admin-Only Registration
+
+Watchtower implements a secure admin-only registration system where only the first user can register. After the initial admin account is created, registration is automatically disabled to prevent unauthorized access.
+
+###### Check Registration Status
+```http
+GET /api/v1/auth/registration-status
+```
+
+Returns whether registration is currently allowed.
+
+**Response:**
+```json
+{
+  "registration_allowed": false
+}
+```
+
+###### Register First Admin User
+```http
+POST /api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "secure_password",
+  "name": "Administrator"
+}
+```
+
+**Response (Success):**
+```json
+{
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440002",
+    "email": "admin@example.com",
+    "name": "Administrator"
+  }
+}
+```
+
+**Response (Registration Blocked):**
+```json
+{
+  "message": "Registration is disabled. Only the first user can register"
+}
+```
+*HTTP Status: 403 Forbidden*
+
+**Security Features:**
+- Registration is only allowed when no users exist in the system
+- After the first successful registration, all subsequent registration attempts return 403 Forbidden
+- Frontend automatically redirects to registration page when no users exist
+- Registration UI is hidden/blocked after the first user signs up
+- No complex configuration required - works automatically based on user count
 
 #### Endpoint Management
 

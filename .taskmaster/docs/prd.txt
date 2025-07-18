@@ -185,6 +185,7 @@ Watchtower is a comprehensive status monitoring application that allows users to
 - Automatic session expiration
 - Protection against brute force attacks
 - Secure password reset functionality
+- **Admin-Only Registration**: Single admin user registration with automatic lockdown after first user signup
 
 #### 8.2 Data Protection
 - Input validation and sanitization
@@ -369,5 +370,49 @@ Watchtower is a comprehensive status monitoring application that allows users to
 - **Error Recovery**: Graceful handling of network and validation errors
 - **JSON Editing**: Specialized JSON editors for headers and request bodies
 - **Conditional Fields**: Dynamic form fields based on user selections
+
+### 14. Admin-Only Registration System
+
+#### 14.1 First-Time Setup Flow
+- **Empty Database Detection**: Check if any users exist in the database on application startup
+- **Home Route Redirect**: When no users exist, redirect visitors from home route (`/`) to registration page
+- **Initial Admin Registration**: Allow first user to register as the primary administrator
+- **Automatic Lockdown**: After first successful registration, disable all registration functionality
+
+#### 14.2 Registration Protection
+- **Post-Registration Blocking**: Block all registration attempts after initial admin is created
+- **UI Registration Block**: Hide/disable registration forms and links after first user signup
+- **API Registration Block**: Return appropriate error responses (403 Forbidden) for registration API calls
+- **Route Protection**: Prevent access to registration routes and redirect to login page
+- **Error Messaging**: Provide clear error messages explaining registration is disabled
+
+#### 14.3 Security Features
+- **Registration Status Tracking**: Track registration status in application state/database
+- **Anti-Takeover Protection**: Prevent unauthorized users from gaining admin access
+- **Session Validation**: Ensure only legitimate admin sessions can access admin features
+- **Audit Logging**: Log all registration attempts for security monitoring
+
+#### 14.4 Technical Implementation
+- **Database Check**: Query users table on application startup to determine registration status
+- **Middleware Protection**: Server-side middleware to block registration endpoints
+- **Frontend State**: Frontend state management to control registration UI visibility
+- **Route Guards**: Client-side route guards to redirect unauthorized registration attempts
+- **Error Handling**: Graceful error handling for blocked registration attempts
+
+#### 14.5 User Stories
+- **As a first-time deployer**, I want to be automatically directed to registration when no admin exists, so I can quickly set up the application
+- **As an admin**, I want registration to be automatically disabled after I sign up, so unauthorized users cannot create admin accounts
+- **As a potential attacker**, I should receive clear error messages when attempting to register after the first admin is created, preventing confusion while maintaining security
+- **As an admin**, I want to see that registration is permanently disabled in the UI, so I know the system is secure
+
+#### 14.6 API Endpoints
+- **GET /api/auth/registration-status** - Check if registration is currently allowed
+- **POST /api/auth/register** - Register new user (blocked after first user)
+- **Middleware**: Authentication middleware to check registration status on relevant routes
+
+#### 14.7 Database Schema Updates
+- **Registration tracking**: Add system configuration table or use user count to track registration status
+- **Admin role tracking**: Ensure first registered user receives admin privileges
+- **Audit trail**: Optional logging table for registration attempts and security events
 
 This PRD provides a comprehensive foundation for developing the Watchtower status monitoring application, covering all requested features and technical requirements while maintaining scalability and security standards.

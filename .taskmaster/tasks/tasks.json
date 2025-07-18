@@ -1033,11 +1033,167 @@
 						"testStrategy": "Settings persistence tests, navigation integration tests, and error boundary testing."
 					}
 				]
+			},
+			{
+				"id": 28,
+				"title": "Setup Backend Database Schema",
+				"description": "Create comprehensive database schema for monitoring system including endpoints, logs, incidents, users, and notifications",
+				"details": "Create SQL migration files for: endpoints table (id, name, description, url, method, headers, body, interval, enabled, created_at, updated_at), monitoring_logs table (id, endpoint_id, timestamp, status_code, response_time, error_message, success), incidents table (id, title, description, severity, status, start_time, end_time, created_at, updated_at), endpoint_incidents table (endpoint_id, incident_id, affected_start, affected_end), users table (id, username, password_hash, role, created_at, updated_at), notification_channels table, notification_rules table, notification_logs table, and notification_templates table. Use appropriate indexes for performance and foreign key constraints for data integrity.",
+				"testStrategy": "Validate schema creation with test database setup, verify all foreign key relationships, test data insertion and retrieval for each table, validate index performance with sample data",
+				"priority": "high",
+				"dependencies": [],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 29,
+				"title": "Implement Backend Authentication System",
+				"description": "Create secure authentication system with admin-only registration and session management",
+				"details": "Implement JWT-based authentication with bcrypt password hashing. Create registration endpoint that only allows first user signup then automatically locks down. Include middleware for route protection, session validation, and registration status checking. Add endpoints: POST /api/auth/register (with lockdown logic), POST /api/auth/login, POST /api/auth/logout, GET /api/auth/registration-status. Store registration status in database and implement anti-takeover protection.",
+				"testStrategy": "Unit tests for password hashing and JWT generation, integration tests for registration lockdown logic, test authentication middleware with valid/invalid tokens, verify registration blocking after first user",
+				"priority": "high",
+				"dependencies": [28],
+				"status": "pending",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Set up JWT authentication middleware and utilities",
+						"description": "Create JWT token generation, verification, and middleware functions for protecting routes",
+						"dependencies": [],
+						"details": "Implement JWT signing and verification using a secure secret key. Create middleware to extract and validate tokens from request headers. Include token expiration handling and error responses for invalid/expired tokens.",
+						"status": "pending",
+						"testStrategy": "Unit tests for JWT generation/verification functions and middleware behavior with valid/invalid tokens"
+					},
+					{
+						"id": 2,
+						"title": "Implement password hashing with bcrypt",
+						"description": "Create secure password hashing and comparison utilities using bcrypt",
+						"dependencies": [],
+						"details": "Set up bcrypt with appropriate salt rounds (12+) for password hashing. Create utility functions for hashing passwords during registration and comparing passwords during login. Handle bcrypt errors gracefully.",
+						"status": "pending",
+						"testStrategy": "Unit tests for password hashing and comparison functions with various password inputs"
+					},
+					{
+						"id": 3,
+						"title": "Create registration status tracking system",
+						"description": "Implement database schema and logic to track whether first user has registered",
+						"dependencies": [],
+						"details": "Add registration_locked field to settings/config table. Create functions to check and update registration status. Implement anti-takeover protection by ensuring only the first successful registration can occur.",
+						"status": "pending",
+						"testStrategy": "Database tests for registration status persistence and race condition handling"
+					},
+					{
+						"id": 4,
+						"title": "Build authentication endpoints",
+						"description": "Create POST /api/auth/register, POST /api/auth/login, POST /api/auth/logout, and GET /api/auth/registration-status endpoints",
+						"dependencies": [1, 2, 3],
+						"details": "Implement registration endpoint with first-user-only logic, login endpoint with password verification and JWT issuance, logout endpoint for token invalidation, and status endpoint to check if registration is available. Include proper error handling and validation.",
+						"status": "pending",
+						"testStrategy": "Integration tests for all endpoints covering success cases, error cases, and registration lockdown behavior"
+					},
+					{
+						"id": 5,
+						"title": "Implement route protection middleware",
+						"description": "Create middleware to protect routes requiring authentication and integrate with existing endpoints",
+						"dependencies": [1, 4],
+						"details": "Build authentication middleware that validates JWT tokens and attaches user information to requests. Create role-based protection if needed. Apply middleware to protected routes and ensure proper error responses for unauthorized access.",
+						"status": "pending",
+						"testStrategy": "End-to-end tests for protected routes with authenticated and unauthenticated requests"
+					}
+				]
+			},
+			{
+				"id": 30,
+				"title": "Create Monitoring Engine Core",
+				"description": "Develop the background monitoring system with goroutines for continuous endpoint checking",
+				"details": "Build monitoring engine using Go goroutines with configurable intervals (1min-24hr). Implement HTTP client with custom headers, request bodies, timeout handling, and retry logic. Track response times with millisecond precision, validate status codes, and handle errors gracefully. Create monitoring scheduler that manages multiple endpoints concurrently and stores results in monitoring_logs table. Include circuit breaker pattern for failed endpoints.",
+				"testStrategy": "Unit tests for HTTP client functionality, integration tests with mock HTTP servers, load testing with 100+ concurrent monitors, verify retry logic and timeout handling, test data logging accuracy",
+				"priority": "high",
+				"dependencies": [28],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 31,
+				"title": "Implement Backend API Endpoints",
+				"description": "Create comprehensive REST API for both public status access and admin management",
+				"details": "Implement public API: GET /api/status (current status), GET /api/uptime/:endpoint_id (uptime data), GET /api/incidents (published incidents), GET /api/incidents/:date (date-specific incidents). Implement admin API: GET/POST/PUT/DELETE /api/admin/endpoints (CRUD operations), GET /api/admin/monitoring-logs (history), POST/PUT/DELETE /api/admin/incidents (incident management). Add proper error handling, validation, and JSON responses. Include rate limiting and CORS configuration.",
+				"testStrategy": "API integration tests for all endpoints, test authentication middleware on admin routes, validate JSON responses and error codes, test pagination and filtering for large datasets, verify CORS and rate limiting",
+				"priority": "high",
+				"dependencies": [29, 30],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 32,
+				"title": "Setup React Router v7 Frontend Application",
+				"description": "Initialize React Router v7 SPA with TypeScript, TanStack Forms, and basic routing structure",
+				"details": "Create React Router v7 application in SPA mode with TypeScript configuration. Setup TanStack Forms v1.14.1 for type-safe form management. Create basic routing structure: / (public status page), /login, /register (conditional), /admin/* (protected routes). Configure clientLoader and clientAction functions for data fetching. Setup CSS framework, component structure, and development environment with hot reloading.",
+				"testStrategy": "Test routing functionality and navigation, verify TypeScript compilation, test TanStack Forms integration, validate responsive design setup, ensure hot reloading works correctly",
+				"priority": "high",
+				"dependencies": [],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 33,
+				"title": "Create Public Status Page Frontend",
+				"description": "Build responsive public status page with real-time updates and interactive uptime graphs",
+				"details": "Create public status page showing all monitored endpoints with color-coded status indicators (green/red/yellow). Implement 90-day uptime graphs using Chart.js or similar library with interactive daily breakdown on click. Add incident display with popup modals for detailed information. Include auto-refresh functionality with WebSocket support for real-time updates. Ensure responsive design for mobile and desktop with loading states and error handling.",
+				"testStrategy": "Test responsive design across devices, verify real-time updates functionality, test graph interactivity and data accuracy, validate auto-refresh behavior, test with large numbers of endpoints",
+				"priority": "high",
+				"dependencies": [32],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 34,
+				"title": "Implement Admin Dashboard Frontend",
+				"description": "Create comprehensive admin interface for endpoint management, monitoring configuration, and incident handling",
+				"details": "Build admin dashboard with tabbed interface for different functions. Create endpoint management forms using TanStack Forms with validation for URL, method, headers (key-value pairs), JSON request body editor, and monitoring intervals. Implement incident management interface with CRUD operations. Add monitoring history visualization with charts and data tables. Include confirmation dialogs for destructive actions and proper error handling throughout.",
+				"testStrategy": "Test all CRUD operations for endpoints and incidents, validate form validation and error handling, test JSON editor functionality, verify chart rendering with real data, test responsive design for mobile administration",
+				"priority": "medium",
+				"dependencies": [32, 33],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 35,
+				"title": "Implement WebSocket Real-time Updates",
+				"description": "Add WebSocket functionality for real-time status updates on both frontend and backend",
+				"details": "Implement WebSocket server in Go at /ws/status endpoint for broadcasting real-time status updates. Create WebSocket client in React for receiving updates and updating UI without page refresh. Handle connection management, reconnection logic, and error handling. Broadcast status changes, incident updates, and monitoring results to connected clients. Include proper authentication for admin-specific updates.",
+				"testStrategy": "Test WebSocket connection establishment and maintenance, verify real-time update delivery, test reconnection logic on network issues, validate message broadcasting to multiple clients, test authentication for admin updates",
+				"priority": "medium",
+				"dependencies": [31, 33],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 36,
+				"title": "Create Notification System Backend",
+				"description": "Implement comprehensive notification system with multiple channels (email, Slack, Discord, webhooks)",
+				"details": "Build notification service with pluggable provider architecture supporting email (SMTP), Slack webhooks, Discord webhooks, and generic HTTP webhooks. Implement notification rules engine for mapping endpoints to channels with trigger conditions (downtime, recovery, incidents). Add asynchronous notification processing with queue system and retry logic. Create notification templates with variable substitution and delivery tracking. Include rate limiting and notification history logging.",
+				"testStrategy": "Unit tests for each notification provider, integration tests with real services (using test accounts), test notification rule processing, verify queue system and retry logic, test template rendering and variable substitution",
+				"priority": "medium",
+				"dependencies": [31],
+				"status": "pending",
+				"subtasks": []
+			},
+			{
+				"id": 37,
+				"title": "Complete Frontend Forms Integration",
+				"description": "Finalize all forms using TanStack Forms with comprehensive validation and error handling",
+				"details": "Complete implementation of all forms using TanStack Forms: login/registration forms with email validation, endpoint configuration forms with URL/header validation, incident management forms, and notification channel setup forms. Add real-time validation, loading states, success notifications, and proper error recovery. Implement auto-save functionality and conditional field display. Ensure type safety throughout with TypeScript integration.",
+				"testStrategy": "Test all form validations and error scenarios, verify auto-save functionality, test form submission with network errors, validate type safety compilation, test user experience across all forms with accessibility compliance",
+				"priority": "medium",
+				"dependencies": [34, 36],
+				"status": "pending",
+				"subtasks": []
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-07-17T14:43:05.564Z",
+			"updated": "2025-07-18T04:29:12.054Z",
 			"description": "Tasks for master context"
 		}
 	}
