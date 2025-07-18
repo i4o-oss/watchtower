@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -32,6 +33,12 @@ func (app *Application) RequestLogger(next http.Handler) http.Handler {
 			uri    = r.URL.RequestURI()
 		)
 
+		// Skip logging for frontend file requests
+		if app.isFrontendFileRequest(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		t := time.Now()
 
 		wrapped := &responseWriter{
@@ -56,6 +63,41 @@ func (app *Application) RequestLogger(next http.Handler) http.Handler {
 
 		next.ServeHTTP(wrapped, r)
 	})
+}
+
+// isFrontendFileRequest checks if the request is for a frontend static file
+func (app *Application) isFrontendFileRequest(path string) bool {
+	// Common frontend file extensions to skip logging
+	frontendExtensions := []string{
+		".js", ".css", ".html", ".htm", ".json", ".xml",
+		".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp",
+		".woff", ".woff2", ".ttf", ".eot", ".otf",
+		".mp4", ".mp3", ".wav", ".ogg", ".webm",
+		".pdf", ".txt", ".md",
+		".map", // source maps
+	}
+
+	ext := strings.ToLower(filepath.Ext(path))
+	for _, frontendExt := range frontendExtensions {
+		if ext == frontendExt {
+			return true
+		}
+	}
+
+	// Also skip common frontend paths
+	frontendPaths := []string{
+		"/assets/", "/static/", "/public/", "/dist/", "/build/",
+		"/favicon.ico", "/robots.txt", "/manifest.json", "/sitemap.xml",
+	}
+
+	lowerPath := strings.ToLower(path)
+	for _, frontendPath := range frontendPaths {
+		if strings.HasPrefix(lowerPath, frontendPath) || lowerPath == strings.TrimSuffix(frontendPath, "/") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // SecurityHeaders middleware adds comprehensive security headers

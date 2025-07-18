@@ -21,12 +21,6 @@ func (app *Application) routes() http.Handler {
 	r.Get("/ready", app.readinessCheck)
 	r.Get("/live", app.livenessCheck)
 
-	// Performance metrics collection (no CSRF, public endpoint)
-	r.Group(func(r chi.Router) {
-		r.Use(app.rateLimitMiddleware(PublicAPIRateLimit))
-		r.Post("/api/v1/performance-metrics", app.collectPerformanceMetrics)
-	})
-
 	// API routes with /api/v1 prefix
 	r.Route("/api/v1", func(r chi.Router) {
 		// Note: Rate limiting is applied selectively per route group below
@@ -40,6 +34,7 @@ func (app *Application) routes() http.Handler {
 			r.Get("/status", app.getPublicStatus)
 			r.Get("/uptime/{endpoint_id}", app.getUptimeData)
 			r.Get("/incidents", app.getPublicIncidents)
+			r.Get("/auth/registration-status", app.registrationStatus)
 		})
 
 		// Real-time updates via Server-Sent Events (no additional rate limiting - handled by SSE)

@@ -294,3 +294,26 @@ export async function getAuthUser(): Promise<User | null> {
 	const authResult = await checkAuthStatus()
 	return authResult.user || null
 }
+
+/**
+ * Check if registration is currently allowed
+ */
+export async function checkRegistrationStatus(): Promise<boolean> {
+	try {
+		const response = await fetch(
+			`${API_BASE_URL}/api/v1/auth/registration-status`,
+			{
+				method: 'GET',
+				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			},
+		)
+		const data = await response.json()
+		return data.registration_allowed || false
+	} catch (error) {
+		console.error('Failed to check registration status:', error)
+		return false
+	}
+}

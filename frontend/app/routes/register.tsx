@@ -21,7 +21,7 @@ import {
 	CardTitle,
 } from '~/components/ui/card'
 import { Alert, AlertDescription } from '~/components/ui/alert'
-import { requireGuest, useAuth } from '~/lib/auth'
+import { requireGuest, useAuth, checkRegistrationStatus } from '~/lib/auth'
 import { validators, combineValidators, FieldError } from '~/lib/form-utils'
 
 export function meta() {
@@ -32,7 +32,18 @@ export function meta() {
 }
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-	return await requireGuest('/')
+	// Check if registration is allowed
+	const registrationAllowed = await checkRegistrationStatus()
+
+	// If registration is not allowed, still show the page but with blocked message
+	// We'll handle the blocking in the component
+	if (!registrationAllowed) {
+		return { registrationBlocked: true }
+	}
+
+	// If registration is allowed, check if user is already authenticated
+	await requireGuest('/')
+	return { registrationBlocked: false }
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -56,6 +67,9 @@ export default function Register() {
 
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+
+	// Check if registration is blocked
+	const isRegistrationBlocked = loaderData?.registrationBlocked || false
 
 	const form = useForm({
 		defaultValues: {
@@ -85,6 +99,44 @@ export default function Register() {
 			}
 		},
 	})
+
+	// If registration is blocked, show a different UI
+	if (isRegistrationBlocked) {
+		return (
+			<div className='min-h-screen flex items-center justify-center bg-background px-4'>
+				<Card className='w-full max-w-md'>
+					<CardHeader className='space-y-1'>
+						<CardTitle className='text-2xl font-bold text-center'>
+							Registration Disabled
+						</CardTitle>
+						<CardDescription className='text-center'>
+							Registration is disabled. Only the first user can
+							register.
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<Alert>
+							<AlertDescription>
+								Registration has been disabled after the first
+								user signed up. If you're the administrator,
+								please use the login page to access your
+								account.
+							</AlertDescription>
+						</Alert>
+
+						<div className='mt-4 text-center'>
+							<Link
+								to='/login'
+								className='text-primary hover:underline'
+							>
+								Go to Login
+							</Link>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		)
+	}
 
 	return (
 		<div className='min-h-screen flex items-center justify-center bg-background px-4'>

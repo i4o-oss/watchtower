@@ -57,6 +57,12 @@ func initSessionStore() {
 
 // Register handles user registration
 func (app *Application) register(w http.ResponseWriter, r *http.Request) {
+	// Check if registration is locked (after first user)
+	if app.registrationLocked {
+		app.errorResponse(w, http.StatusForbidden, "Registration is disabled. Only the first user can register")
+		return
+	}
+
 	var req AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		app.errorResponse(w, http.StatusBadRequest, "Invalid JSON")
@@ -137,6 +143,10 @@ func (app *Application) register(w http.ResponseWriter, r *http.Request) {
 		app.errorResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
+
+	// Lock registration after first user
+	app.registrationLocked = true
+	app.logger.Info("Registration locked after first user signup", "user_email", user.Email)
 
 	// Create session
 	session, _ := store.Get(r, sessionName)
@@ -232,6 +242,13 @@ func (app *Application) me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.writeJSON(w, http.StatusOK, user)
+}
+
+// RegistrationStatus returns whether registration is currently allowed
+func (app *Application) registrationStatus(w http.ResponseWriter, r *http.Request) {
+	app.writeJSON(w, http.StatusOK, map[string]bool{
+		"registration_allowed": !app.registrationLocked,
+	})
 }
 
 // Authentication middleware

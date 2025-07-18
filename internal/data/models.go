@@ -74,6 +74,13 @@ func (db *DB) UserExists(email string) (bool, error) {
 	return count > 0, nil
 }
 
+// GetUserCount returns the total number of users in the system
+func (db *DB) GetUserCount() (int64, error) {
+	var count int64
+	err := db.DB.Model(&User{}).Count(&count).Error
+	return count, err
+}
+
 // HTTPHeaders represents JSON headers for HTTP requests
 type HTTPHeaders map[string]string
 

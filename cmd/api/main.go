@@ -53,6 +53,7 @@ type Application struct {
 	csrfProtection      *security.CSRFProtection
 	monitoringEngine    *monitoring.MonitoringEngine
 	notificationService *notification.Service
+	registrationLocked  bool
 }
 
 var (
@@ -204,6 +205,15 @@ func main() {
 	// Initialize cached database wrapper
 	db = data.NewCachedDB(rawDB, cacheClient)
 
+	// Check registration status on startup
+	userCount, err := db.GetUserCount()
+	if err != nil {
+		logger.Error("failed to check user count", "err", err.Error())
+		os.Exit(1)
+	}
+	registrationLocked := userCount > 0
+	logger.Info("registration status", "locked", registrationLocked, "user_count", userCount)
+
 	// Warm cache with frequently accessed data
 	if config.Cache.Enabled {
 		go func() {
@@ -260,6 +270,7 @@ func main() {
 		csrfProtection:      csrfProtection,
 		monitoringEngine:    monitoringEngine,
 		notificationService: notificationService,
+		registrationLocked:  registrationLocked,
 	}
 
 	// Set monitoring result callback to broadcast via SSE
