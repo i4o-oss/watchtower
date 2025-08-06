@@ -327,7 +327,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 							<Badge
 								variant={
 									openIncidents === 0
-										? 'default'
+										? 'operational'
 										: 'destructive'
 								}
 							>
