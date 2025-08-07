@@ -67,6 +67,127 @@ export function FieldError({ errors }: { errors?: any[] }) {
 }
 
 /**
+ * Password strength indicator component
+ */
+export function PasswordStrengthIndicator({ password }: { password: string }) {
+	if (!password) return null
+
+	const minLength = 8
+	const hasUpperCase = /[A-Z]/.test(password)
+	const hasLowerCase = /[a-z]/.test(password)
+	const hasNumber = /\d/.test(password)
+	const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/.test(password)
+
+	const requirements = [
+		{
+			label: `At least ${minLength} characters`,
+			met: password.length >= minLength,
+		},
+		{ label: 'One uppercase letter', met: hasUpperCase },
+		{ label: 'One lowercase letter', met: hasLowerCase },
+		{ label: 'One number', met: hasNumber },
+		{ label: 'One special character', met: hasSpecialChar },
+	]
+
+	const metCount = requirements.filter((req) => req.met).length
+	const strength =
+		metCount <= 2 ? 'weak' : metCount <= 4 ? 'medium' : 'strong'
+
+	const strengthConfig = {
+		weak: {
+			color: 'var(--error-red)',
+			bg: 'var(--error-red)/10',
+			text: 'Weak',
+		},
+		medium: {
+			color: 'var(--warning-amber)',
+			bg: 'var(--warning-amber)/10',
+			text: 'Medium',
+		},
+		strong: {
+			color: 'var(--success-green)',
+			bg: 'var(--success-green)/10',
+			text: 'Strong',
+		},
+	}
+
+	return (
+		<div className='space-y-2 mt-2'>
+			{/* Strength bar */}
+			<div className='flex items-center gap-2'>
+				<div className='flex-1 h-2 bg-gray-200 rounded-full overflow-hidden'>
+					<div
+						className='h-full transition-all duration-300 rounded-full'
+						style={{
+							width: `${(metCount / requirements.length) * 100}%`,
+							backgroundColor: strengthConfig[strength].color,
+						}}
+					/>
+				</div>
+				<span
+					className='text-xs font-medium px-2 py-1 rounded-full'
+					style={{
+						color: strengthConfig[strength].color,
+						backgroundColor: strengthConfig[strength].bg,
+					}}
+				>
+					{strengthConfig[strength].text}
+				</span>
+			</div>
+
+			{/* Requirements checklist */}
+			<div className='space-y-1'>
+				{requirements.map((req, index) => (
+					<div
+						key={index}
+						className='flex items-center gap-2 text-xs'
+					>
+						<div
+							className='w-3 h-3 rounded-full flex items-center justify-center'
+							style={{
+								backgroundColor: req.met
+									? 'var(--success-green)'
+									: 'transparent',
+								border: req.met
+									? 'none'
+									: '1px solid var(--neutral-gray)',
+							}}
+						>
+							{req.met && (
+								<svg
+									width='8'
+									height='8'
+									viewBox='0 0 8 8'
+									fill='none'
+									xmlns='http://www.w3.org/2000/svg'
+								>
+									<path
+										d='M1 4L3 6L7 2'
+										stroke='white'
+										strokeWidth='1'
+										strokeLinecap='round'
+										strokeLinejoin='round'
+									/>
+								</svg>
+							)}
+						</div>
+						<span
+							className={
+								req.met
+									? 'text-success-green'
+									: 'text-neutral-gray'
+							}
+						>
+							{req.label}
+						</span>
+					</div>
+				))}
+			</div>
+		</div>
+	)
+}
+
+/**
  * Validation helper for common form fields
  */
 export const validators = {
@@ -139,6 +260,57 @@ export const validators = {
 		}
 		return undefined
 	},
+
+	passwordStrength: ({ value }: { value: string }) => {
+		if (!value) return undefined
+
+		// Password requirements
+		const minLength = 8
+		const hasUpperCase = /[A-Z]/.test(value)
+		const hasLowerCase = /[a-z]/.test(value)
+		const hasNumber = /\d/.test(value)
+		const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/.test(value)
+
+		const requirements = []
+
+		if (value.length < minLength) {
+			requirements.push(`at least ${minLength} characters`)
+		}
+		if (!hasUpperCase) {
+			requirements.push('one uppercase letter')
+		}
+		if (!hasLowerCase) {
+			requirements.push('one lowercase letter')
+		}
+		if (!hasNumber) {
+			requirements.push('one number')
+		}
+		if (!hasSpecialChar) {
+			requirements.push('one special character')
+		}
+
+		if (requirements.length > 0) {
+			return `Password must contain ${requirements.join(', ')}`
+		}
+
+		return undefined
+	},
+
+	confirmPassword:
+		(passwordFieldName: string) =>
+		({ value, fieldApi }: { value: string; fieldApi: any }) => {
+			if (!value) return undefined
+
+			// Get the password value from the form
+			const form = fieldApi.form
+			const passwordValue = form.getFieldValue(passwordFieldName)
+
+			if (value !== passwordValue) {
+				return 'Passwords do not match'
+			}
+
+			return undefined
+		},
 
 	// Enhanced validation for notification channels
 	smtpPort: ({ value }: { value: number }) => {

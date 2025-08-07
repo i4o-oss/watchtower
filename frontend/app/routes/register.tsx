@@ -21,8 +21,14 @@ import {
 	CardTitle,
 } from '~/components/ui/card'
 import { Alert, AlertDescription } from '~/components/ui/alert'
+import { Eye, EyeOff } from 'lucide-react'
 import { requireGuest, useAuth, checkRegistrationStatus } from '~/lib/auth'
-import { validators, combineValidators, FieldError } from '~/lib/form-utils'
+import {
+	validators,
+	combineValidators,
+	FieldError,
+	PasswordStrengthIndicator,
+} from '~/lib/form-utils'
 
 export function meta() {
 	return [
@@ -53,9 +59,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 interface RegisterFormData {
-	name: string
 	email: string
 	password: string
+	confirmPassword: string
 }
 
 export default function Register() {
@@ -67,26 +73,24 @@ export default function Register() {
 
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [showPassword, setShowPassword] = useState(false)
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
 	// Check if registration is blocked
 	const isRegistrationBlocked = loaderData?.registrationBlocked || false
 
 	const form = useForm({
 		defaultValues: {
-			name: '',
 			email: '',
 			password: '',
+			confirmPassword: '',
 		} as RegisterFormData,
 		onSubmit: async ({ value }) => {
 			setIsSubmitting(true)
 			setError(null)
 
 			try {
-				const result = await register(
-					value.email,
-					value.password,
-					value.name,
-				)
+				const result = await register(value.email, value.password)
 				if (result.success) {
 					navigate('/', { replace: true })
 				} else {
@@ -103,33 +107,34 @@ export default function Register() {
 	// If registration is blocked, show a different UI
 	if (isRegistrationBlocked) {
 		return (
-			<div className='min-h-screen flex items-center justify-center bg-background px-4'>
-				<Card className='w-full max-w-md'>
-					<CardHeader className='space-y-1'>
-						<CardTitle className='text-2xl font-bold text-center'>
-							Registration Disabled
+			<div
+				className='min-h-screen flex items-center justify-center px-4'
+				style={{ backgroundColor: 'var(--background-off-white)' }}
+			>
+				<Card className='w-full max-w-[400px]'>
+					<CardHeader className='space-y-1 text-center'>
+						<CardTitle className='text-h2'>
+							Registration Closed
 						</CardTitle>
-						<CardDescription className='text-center'>
-							Registration is disabled. Only the first user can
-							register.
+						<CardDescription className='text-body'>
+							Registration is closed. Please contact your
+							administrator for access.
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<Alert>
-							<AlertDescription>
-								Registration has been disabled after the first
-								user signed up. If you're the administrator,
-								please use the login page to access your
-								account.
+						<Alert className='bg-neutral-light-gray border-neutral-gray/20'>
+							<AlertDescription className='text-body text-neutral-dark-gray'>
+								Registration is closed. Please contact your
+								administrator for access.
 							</AlertDescription>
 						</Alert>
 
-						<div className='mt-4 text-center'>
+						<div className='mt-6 text-center'>
 							<Link
 								to='/login'
-								className='text-primary hover:underline'
+								className='text-link hover:text-primary/80 transition-colors duration-200'
 							>
-								Go to Login
+								Already have an account? Sign in
 							</Link>
 						</div>
 					</CardContent>
@@ -139,15 +144,21 @@ export default function Register() {
 	}
 
 	return (
-		<div className='min-h-screen flex items-center justify-center bg-background px-4'>
-			<Card className='w-full max-w-md'>
-				<CardHeader className='space-y-1'>
-					<CardTitle className='text-2xl font-bold text-center'>
-						Create Account
+		<div
+			className='min-h-screen flex items-center justify-center px-4'
+			style={{ backgroundColor: 'var(--background-off-white)' }}
+		>
+			<Card className='w-full max-w-[400px]'>
+				<CardHeader className='space-y-1 text-center'>
+					<CardTitle className='text-h2'>
+						Set up your Watchtower
 					</CardTitle>
-					<CardDescription className='text-center'>
-						Enter your information to create your account
+					<CardDescription className='text-body'>
+						Create your admin account to get started monitoring
 					</CardDescription>
+					<div className='text-body-small text-muted-foreground mt-2'>
+						Step 1 of 3
+					</div>
 				</CardHeader>
 				<CardContent>
 					<form
@@ -158,36 +169,15 @@ export default function Register() {
 						className='space-y-4'
 					>
 						{error && (
-							<Alert variant='destructive'>
-								<AlertDescription>{error}</AlertDescription>
+							<Alert
+								variant='destructive'
+								className='bg-error-red/5 border-error-red/20'
+							>
+								<AlertDescription className='text-body'>
+									{error}
+								</AlertDescription>
 							</Alert>
 						)}
-
-						<form.Field
-							name='name'
-							children={(field) => (
-								<div className='space-y-2'>
-									<Label htmlFor='name'>
-										Name (Optional)
-									</Label>
-									<Input
-										id='name'
-										name='name'
-										type='text'
-										placeholder='Your full name'
-										value={field.state.value}
-										onChange={(e) =>
-											field.handleChange(e.target.value)
-										}
-										onBlur={field.handleBlur}
-										disabled={isSubmitting}
-									/>
-									<FieldError
-										errors={field.state.meta.errors}
-									/>
-								</div>
-							)}
-						/>
 
 						<form.Field
 							name='email'
@@ -199,18 +189,29 @@ export default function Register() {
 							}}
 							children={(field) => (
 								<div className='space-y-2'>
-									<Label htmlFor='email'>Email</Label>
+									<Label
+										htmlFor='email'
+										className='text-body font-medium'
+									>
+										Email
+									</Label>
 									<Input
 										id='email'
 										name='email'
 										type='email'
-										placeholder='your@email.com'
+										placeholder='admin@company.com'
 										value={field.state.value}
 										onChange={(e) =>
 											field.handleChange(e.target.value)
 										}
 										onBlur={field.handleBlur}
 										disabled={isSubmitting}
+										autoComplete='email'
+										className={`h-10 transition-colors duration-200 ${
+											field.state.meta.errors.length > 0
+												? 'border-error-red focus-visible:ring-error-red'
+												: 'focus-visible:ring-primary'
+										}`}
 									/>
 									<FieldError
 										errors={field.state.meta.errors}
@@ -224,24 +225,148 @@ export default function Register() {
 							validators={{
 								onChange: combineValidators(
 									validators.required,
-									validators.minLength(6),
+									validators.passwordStrength,
 								),
 							}}
 							children={(field) => (
 								<div className='space-y-2'>
-									<Label htmlFor='password'>Password</Label>
-									<Input
-										id='password'
-										name='password'
-										type='password'
-										placeholder='Enter your password'
-										value={field.state.value}
-										onChange={(e) =>
-											field.handleChange(e.target.value)
-										}
-										onBlur={field.handleBlur}
-										disabled={isSubmitting}
+									<Label
+										htmlFor='password'
+										className='text-body font-medium'
+									>
+										Password
+									</Label>
+									<div className='relative'>
+										<Input
+											id='password'
+											name='password'
+											type={
+												showPassword
+													? 'text'
+													: 'password'
+											}
+											placeholder='Create a strong password'
+											value={field.state.value}
+											onChange={(e) =>
+												field.handleChange(
+													e.target.value,
+												)
+											}
+											onBlur={field.handleBlur}
+											disabled={isSubmitting}
+											autoComplete='new-password'
+											className={`h-10 pr-10 transition-colors duration-200 ${
+												field.state.meta.errors.length >
+												0
+													? 'border-error-red focus-visible:ring-error-red'
+													: field.state.value
+														? 'border-primary focus-visible:ring-primary'
+														: 'focus-visible:ring-primary'
+											}`}
+										/>
+										<Button
+											type='button'
+											variant='ghost'
+											size='icon'
+											className='absolute right-0 top-0 h-10 w-10 px-3 hover:bg-transparent'
+											onClick={() =>
+												setShowPassword(!showPassword)
+											}
+											tabIndex={-1}
+										>
+											{showPassword ? (
+												<EyeOff className='h-4 w-4 text-muted-foreground' />
+											) : (
+												<Eye className='h-4 w-4 text-muted-foreground' />
+											)}
+										</Button>
+									</div>
+
+									<PasswordStrengthIndicator
+										password={field.state.value}
 									/>
+
+									<FieldError
+										errors={field.state.meta.errors}
+									/>
+								</div>
+							)}
+						/>
+
+						<form.Field
+							name='confirmPassword'
+							validators={{
+								onChange: (info) => {
+									if (!info.value)
+										return 'Please confirm your password'
+									const passwordValue =
+										form.getFieldValue('password')
+									if (info.value !== passwordValue) {
+										return 'Passwords do not match'
+									}
+									return undefined
+								},
+							}}
+							children={(field) => (
+								<div className='space-y-2'>
+									<Label
+										htmlFor='confirmPassword'
+										className='text-body font-medium'
+									>
+										Confirm Password
+									</Label>
+									<div className='relative'>
+										<Input
+											id='confirmPassword'
+											name='confirmPassword'
+											type={
+												showConfirmPassword
+													? 'text'
+													: 'password'
+											}
+											placeholder='Confirm your password'
+											value={field.state.value}
+											onChange={(e) =>
+												field.handleChange(
+													e.target.value,
+												)
+											}
+											onBlur={field.handleBlur}
+											disabled={isSubmitting}
+											autoComplete='new-password'
+											className={`h-10 pr-10 transition-colors duration-200 ${
+												field.state.meta.errors.length >
+												0
+													? 'border-error-red focus-visible:ring-error-red'
+													: field.state.value &&
+															field.state
+																.value ===
+																form.getFieldValue(
+																	'password',
+																)
+														? 'border-success-green focus-visible:ring-success-green'
+														: 'focus-visible:ring-primary'
+											}`}
+										/>
+										<Button
+											type='button'
+											variant='ghost'
+											size='icon'
+											className='absolute right-0 top-0 h-10 w-10 px-3 hover:bg-transparent'
+											onClick={() =>
+												setShowConfirmPassword(
+													!showConfirmPassword,
+												)
+											}
+											tabIndex={-1}
+										>
+											{showConfirmPassword ? (
+												<EyeOff className='h-4 w-4 text-muted-foreground' />
+											) : (
+												<Eye className='h-4 w-4 text-muted-foreground' />
+											)}
+										</Button>
+									</div>
 									<FieldError
 										errors={field.state.meta.errors}
 									/>
@@ -251,20 +376,25 @@ export default function Register() {
 
 						<Button
 							type='submit'
-							className='w-full'
+							className='w-full h-10 text-button bg-primary hover:bg-primary/90 transition-colors duration-200'
 							disabled={isSubmitting}
 						>
-							{isSubmitting
-								? 'Creating Account...'
-								: 'Create Account'}
+							{isSubmitting ? (
+								<>
+									<div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2' />
+									Creating Admin Account...
+								</>
+							) : (
+								'Create Admin Account'
+							)}
 						</Button>
 					</form>
 
-					<div className='mt-4 text-center text-sm'>
+					<div className='mt-6 text-center text-body-small text-muted-foreground'>
 						Already have an account?{' '}
 						<Link
 							to='/login'
-							className='text-primary hover:underline'
+							className='text-link hover:text-primary/80 transition-colors duration-200'
 						>
 							Sign in
 						</Link>
