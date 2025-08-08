@@ -1279,7 +1279,7 @@ export default function IncidentAnalytics({
 									variant='outline'
 									className='bg-white/50'
 								>
-									<AlertTriangle className='h-4 w-4 mr-2' />
+									<AlertTriangle className='h-4 w-4' />
 									View All Incidents
 								</Button>
 							</Link>
@@ -1288,7 +1288,7 @@ export default function IncidentAnalytics({
 									variant='outline'
 									className='bg-white/50'
 								>
-									<Activity className='h-4 w-4 mr-2' />
+									<Activity className='h-4 w-4' />
 									Error Log Analysis
 								</Button>
 							</Link>
@@ -1297,13 +1297,13 @@ export default function IncidentAnalytics({
 									variant='outline'
 									className='bg-white/50'
 								>
-									<BarChart3 className='h-4 w-4 mr-2' />
+									<BarChart3 className='h-4 w-4' />
 									System Overview
 								</Button>
 							</Link>
 							<Link to='/admin/incidents/new'>
 								<Button className='bg-slate-900 text-white hover:bg-slate-800'>
-									<AlertTriangle className='h-4 w-4 mr-2' />
+									<AlertTriangle className='h-4 w-4' />
 									Create New Incident
 								</Button>
 							</Link>

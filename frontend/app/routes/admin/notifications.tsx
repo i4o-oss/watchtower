@@ -173,7 +173,7 @@ export default function AdminNotifications({
 									key={channel.type}
 									className='relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border-0 shadow-md'
 								>
-									<CardHeader className='pb-3'>
+									<CardHeader>
 										<div className='flex items-center gap-3 mb-2'>
 											<div
 												className={`p-2 rounded-lg bg-${channel.color}-100`}
@@ -211,7 +211,7 @@ export default function AdminNotifications({
 							size='lg'
 							className='px-6 py-2 text-base font-medium'
 						>
-							<Plus className='h-5 w-5 mr-2' />
+							<Plus className='h-5 w-5' />
 							Add Your First Channel
 						</Button>
 					</Link>
@@ -247,7 +247,7 @@ export default function AdminNotifications({
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button variant='outline'>
-								<Plus className='h-4 w-4 mr-2' />
+								<Plus className='h-4 w-4' />
 								Add Channel
 								<ChevronDown className='h-4 w-4 ml-2' />
 							</Button>
@@ -261,7 +261,7 @@ export default function AdminNotifications({
 										asChild
 									>
 										<Link to='/admin/notifications/channels'>
-											<Icon className='h-4 w-4 mr-2' />
+											<Icon className='h-4 w-4' />
 											{channel.name}
 										</Link>
 									</DropdownMenuItem>

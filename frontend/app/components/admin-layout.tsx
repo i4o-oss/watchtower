@@ -131,7 +131,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 								size='sm'
 								className='hidden sm:flex'
 							>
-								<Settings className='h-4 w-4 mr-2' />
+								<Settings className='h-4 w-4' />
 								Settings
 							</Button>
 							<Link to='/dashboard'>

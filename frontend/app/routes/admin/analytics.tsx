@@ -883,7 +883,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
 									variant='outline'
 									className='bg-white/50'
 								>
-									<Activity className='h-4 w-4 mr-2' />
+									<Activity className='h-4 w-4' />
 									Log Analysis
 								</Button>
 							</Link>
@@ -892,7 +892,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
 									variant='outline'
 									className='bg-white/50'
 								>
-									<AlertTriangle className='h-4 w-4 mr-2' />
+									<AlertTriangle className='h-4 w-4' />
 									Incident Analytics
 								</Button>
 							</Link>
@@ -901,7 +901,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
 									variant='outline'
 									className='bg-white/50'
 								>
-									<Clock className='h-4 w-4 mr-2' />
+									<Clock className='h-4 w-4' />
 									Real-time Monitoring
 								</Button>
 							</Link>
@@ -910,7 +910,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
 									variant='outline'
 									className='bg-white/50'
 								>
-									<Globe className='h-4 w-4 mr-2' />
+									<Globe className='h-4 w-4' />
 									Manage Endpoints
 								</Button>
 							</Link>

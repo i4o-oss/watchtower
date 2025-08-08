@@ -270,19 +270,19 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 				<div className='flex flex-wrap items-center gap-2'>
 					<Link to='/admin/endpoints/new'>
 						<Button>
-							<Plus className='h-4 w-4 mr-2' />
+							<Plus className='h-4 w-4' />
 							Add Endpoint
 						</Button>
 					</Link>
 					<Link to='/admin/incidents/new'>
 						<Button variant='outline'>
-							<AlertTriangle className='h-4 w-4 mr-2' />
+							<AlertTriangle className='h-4 w-4' />
 							Create Incident
 						</Button>
 					</Link>
 					<Link to='/admin/monitoring'>
 						<Button variant='outline'>
-							<BarChart3 className='h-4 w-4 mr-2' />
+							<BarChart3 className='h-4 w-4' />
 							View Monitoring
 						</Button>
 					</Link>
@@ -292,7 +292,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 			{/* Quick Stats */}
 			<div className='grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'>
 				<Card>
-					<CardHeader className='pb-3'>
+					<CardHeader>
 						<CardTitle className='text-sm font-medium'>
 							Total Endpoints
 						</CardTitle>
@@ -308,7 +308,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 				</Card>
 
 				<Card>
-					<CardHeader className='pb-3'>
+					<CardHeader>
 						<CardTitle className='text-sm font-medium'>
 							Recent Failures
 						</CardTitle>
@@ -324,7 +324,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 				</Card>
 
 				<Card>
-					<CardHeader className='pb-3'>
+					<CardHeader>
 						<CardTitle className='text-sm font-medium'>
 							Open Incidents
 						</CardTitle>
@@ -340,7 +340,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 				</Card>
 
 				<Card>
-					<CardHeader className='pb-3'>
+					<CardHeader>
 						<CardTitle className='text-sm font-medium'>
 							System Status
 						</CardTitle>

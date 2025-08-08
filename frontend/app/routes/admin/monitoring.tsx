@@ -394,7 +394,7 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 			{filteredLogs.length > 0 && (
 				<div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-6'>
 					<Card>
-						<CardHeader className='pb-3'>
+						<CardHeader>
 							<CardTitle className='text-sm font-medium'>
 								Success Rate
 							</CardTitle>
@@ -420,7 +420,7 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 					</Card>
 
 					<Card>
-						<CardHeader className='pb-3'>
+						<CardHeader>
 							<CardTitle className='text-sm font-medium'>
 								Avg Response Time
 							</CardTitle>
@@ -448,7 +448,7 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 					</Card>
 
 					<Card>
-						<CardHeader className='pb-3'>
+						<CardHeader>
 							<CardTitle className='text-sm font-medium'>
 								Total Failures
 							</CardTitle>

@@ -423,7 +423,7 @@ export default function NotificationChannels({
 											</>
 										) : (
 											<>
-												<TestTube className='h-4 w-4 mr-2' />
+												<TestTube className='h-4 w-4' />
 												Test Delivery
 											</>
 										)}
@@ -945,7 +945,7 @@ export default function NotificationChannels({
 											</>
 										) : (
 											<>
-												<TestTube className='h-4 w-4 mr-2' />
+												<TestTube className='h-4 w-4' />
 												Test Message
 											</>
 										)}
@@ -1316,7 +1316,7 @@ export default function NotificationChannels({
 											</>
 										) : (
 											<>
-												<TestTube className='h-4 w-4 mr-2' />
+												<TestTube className='h-4 w-4' />
 												Test Payload
 											</>
 										)}

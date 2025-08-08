@@ -409,7 +409,7 @@ export default function LogViewer({ loaderData }: Route.ComponentProps) {
 								variant='outline'
 								size='sm'
 							>
-								<Download className='h-4 w-4 mr-2' />
+								<Download className='h-4 w-4' />
 								Export
 							</Button>
 							<Button onClick={refreshLogs} variant='outline'>
@@ -920,7 +920,7 @@ export default function LogViewer({ loaderData }: Route.ComponentProps) {
 													}
 													className='w-full'
 												>
-													<AlertTriangle className='h-4 w-4 mr-2' />
+													<AlertTriangle className='h-4 w-4' />
 													Create Incident
 												</Button>
 											)}
@@ -935,7 +935,7 @@ export default function LogViewer({ loaderData }: Route.ComponentProps) {
 														variant='outline'
 														className='w-full'
 													>
-														<ExternalLink className='h-4 w-4 mr-2' />
+														<ExternalLink className='h-4 w-4' />
 														View Endpoint
 													</Button>
 												</Link>

@@ -658,7 +658,7 @@ export default function IncidentDetail({
 												step.name !== 'resolved'
 											}
 										>
-											<span className='mr-2'>
+											<span>
 												{step.completed ? '✅' : '⭕'}
 											</span>
 											<span className='capitalize'>

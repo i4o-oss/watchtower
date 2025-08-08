@@ -94,7 +94,7 @@ export default function ForgotPassword() {
 								onClick={() => navigate('/login')}
 								className='w-full'
 							>
-								<ArrowLeft className='w-4 h-4 mr-2' />
+								<ArrowLeft className='w-4 h-4' />
 								Back to Sign In
 							</Button>
 						</div>

@@ -642,7 +642,7 @@ export function StatusPage({
 					<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
 						<div className='flex h-16 justify-between items-center'>
 							<div className='flex items-center'>
-								<Shield className='h-8 w-8 text-foreground mr-2' />
+								<Shield className='h-8 w-8 text-foreground' />
 								<span className='text-xl font-semibold text-foreground'>
 									Watchtower
 								</span>
@@ -659,7 +659,7 @@ export function StatusPage({
 									size='sm'
 									className='text-muted-foreground hover:text-accent-foreground'
 								>
-									<Bell className='h-4 w-4 mr-2' />
+									<Bell className='h-4 w-4' />
 									Subscribe to Updates
 								</Button>
 							</div>
@@ -754,7 +754,7 @@ export function StatusPage({
 				<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
 					<div className='flex h-16 justify-between items-center'>
 						<div className='flex items-center'>
-							<Shield className='h-8 w-8 text-foreground mr-2' />
+							<Shield className='h-8 w-8 text-foreground' />
 							<span className='text-xl font-semibold text-foreground'>
 								Watchtower
 							</span>
@@ -771,7 +771,7 @@ export function StatusPage({
 								size='sm'
 								className='text-muted-foreground hover:text-accent-foreground'
 							>
-								<Bell className='h-4 w-4 mr-2' />
+								<Bell className='h-4 w-4' />
 								Subscribe to Updates
 							</Button>
 						</div>
@@ -903,7 +903,7 @@ export function StatusPage({
 				{incidents && incidents.incidents.length > 0 && (
 					<div className='mb-8 bg-red-50 border border-red-200 rounded-lg p-6'>
 						<div className='flex items-center mb-4'>
-							<AlertTriangle className='h-5 w-5 text-red-600 mr-2' />
+							<AlertTriangle className='h-5 w-5 text-red-600' />
 							<h3 className='text-lg font-semibold text-red-800'>
 								Active Incidents
 							</h3>

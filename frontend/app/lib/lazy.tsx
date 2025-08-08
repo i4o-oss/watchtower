@@ -165,7 +165,7 @@ export function FormSkeleton() {
  * Button loading skeleton for form submissions
  */
 export function ButtonLoadingSkeleton() {
-	return <Skeleton className='w-4 h-4 mr-2 rounded-full animate-pulse' />
+	return <Skeleton className='w-4 h-4 rounded-full animate-pulse' />
 }
 
 /**
