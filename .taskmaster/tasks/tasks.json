@@ -1272,11 +1272,136 @@
 						"testStrategy": "Test all API integrations work correctly with proper error handling. Verify React Query caching reduces unnecessary API calls. Test WebSocket real-time updates reflect immediately in the UI. Validate optimistic updates provide smooth user experience during form submissions. Test offline/online state handling and retry mechanisms."
 					}
 				]
+			},
+			{
+				"id": 33,
+				"title": "Implement Monitoring Analytics Dashboard",
+				"description": "Build comprehensive analytics dashboard with three main screens: Analytics Overview for system health KPIs, Log Viewer Interface for structured logs, and Incident Analytics for MTTR metrics and pattern recognition using React Router v7, Shadcn UI, and Tailwind CSS.",
+				"details": "Create React Router v7 routes for /dashboard, /dashboard/logs, and /dashboard/analytics with proper lazy loading and nested routing. Implement Analytics Overview screen with real-time KPI cards showing uptime percentage, average response time, active incidents, and endpoint count using Shadcn UI Card components. Add interactive charts using Recharts for response time trends, status code distributions, and uptime heatmaps with 7/30/90-day time range selectors. Build Log Viewer Interface with virtualized table using @tanstack/react-table for performance, implement real-time log streaming via WebSocket connection, add filtering by endpoint, status code, date range, and error messages with debounced search. Create structured log details modal with JSON syntax highlighting using react-json-view. Implement Incident Analytics screen with MTTR calculations, incident frequency charts, severity distribution pie charts, and pattern recognition widgets showing most affected endpoints and common failure patterns. Use Tailwind CSS with techy white (#FFFFFF) and dark green (#1B4D3E, #2D7A5F) color palette maintaining bold simplicity aesthetic. Add responsive design with mobile-first approach, implement data refresh intervals with manual refresh buttons, add loading states and error boundaries. Integrate with existing WebSocket real-time updates for live data streaming and admin API endpoints for data fetching. Include proper TypeScript types for all dashboard data structures and implement React Query for efficient data caching and synchronization.",
+				"testStrategy": "Test all dashboard routes load correctly with React Router v7 navigation, verify real-time data updates through WebSocket connections work on all screens, test responsive design across desktop/tablet/mobile breakpoints, validate KPI calculations accuracy against database queries, test log filtering and search functionality with various combinations, verify virtualized table performance with large datasets (1000+ logs), test incident analytics calculations including MTTR accuracy, validate chart interactions and time range selections, test error boundaries handle API failures gracefully, verify accessibility compliance with keyboard navigation and screen readers, test dashboard performance under high data load scenarios, validate proper loading states during data fetching, test WebSocket reconnection handling when connection drops.",
+				"status": "done",
+				"dependencies": [20, 22, 30],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Setup React Router v7 Dashboard Routes",
+						"description": "Configure React Router v7 with nested routes for /dashboard, /dashboard/logs, and /dashboard/analytics with proper lazy loading and route-based code splitting",
+						"dependencies": [],
+						"details": "Create router configuration with nested dashboard routes using React Router v7. Implement lazy loading for each dashboard component to optimize bundle size. Setup proper route hierarchy with dashboard as parent route and logs/analytics as child routes. Configure error boundaries for route-level error handling and add loading states during route transitions.",
+						"status": "done",
+						"testStrategy": "Test all dashboard routes load correctly, verify lazy loading works properly, test navigation between routes, validate error boundaries catch routing errors, and test loading states display during route transitions"
+					},
+					{
+						"id": 2,
+						"title": "Build Analytics Overview Screen with KPI Cards",
+						"description": "Implement Analytics Overview screen with real-time KPI cards showing uptime percentage, average response time, active incidents, and endpoint count using Shadcn UI Card components",
+						"dependencies": ["33.1"],
+						"details": "Create Analytics Overview component with responsive grid layout using Shadcn UI Card components. Implement KPI cards for uptime percentage (with color-coded status), average response time (with trend indicators), active incidents count (with severity breakdown), and monitored endpoints count. Add real-time WebSocket integration for live data updates. Use Tailwind CSS with techy white and dark green color palette. Include loading skeletons and error states for each KPI card.",
+						"status": "done",
+						"testStrategy": "Test KPI calculations accuracy against database queries, verify real-time updates through WebSocket connections, test responsive design across different screen sizes, validate loading states and error handling, and test color-coded status indicators"
+					},
+					{
+						"id": 3,
+						"title": "Implement Interactive Charts with Time Range Selectors",
+						"description": "Add interactive charts using Recharts for response time trends, status code distributions, and uptime heatmaps with 7/30/90-day time range selectors",
+						"dependencies": ["33.2"],
+						"details": "Integrate Recharts library and create interactive charts: line chart for response time trends over time, bar/pie chart for HTTP status code distributions, and heatmap for uptime visualization. Implement time range selector buttons (7, 30, 90 days) with smooth data transitions. Add chart tooltips, legends, and responsive behavior. Use consistent color scheme with dark green theme. Include chart loading states and empty data states.",
+						"status": "done",
+						"testStrategy": "Test chart data accuracy and real-time updates, verify time range selector functionality, test responsive chart behavior across devices, validate chart interactions and tooltips, and test performance with large datasets"
+					},
+					{
+						"id": 4,
+						"title": "Build Log Viewer Interface with Virtualized Table",
+						"description": "Create Log Viewer Interface with virtualized table using @tanstack/react-table, real-time log streaming via WebSocket, and filtering capabilities with debounced search",
+						"dependencies": ["33.1"],
+						"details": "Implement virtualized table using @tanstack/react-table for performance with large log datasets. Add real-time log streaming through WebSocket connection with auto-scrolling for new logs. Create filtering system with debounced search by endpoint, status code, date range, and error messages. Implement column sorting, resizing, and visibility controls. Add structured log details modal with JSON syntax highlighting using react-json-view. Include pagination controls and log export functionality.",
+						"status": "done",
+						"testStrategy": "Test virtualized table performance with large datasets, verify real-time log streaming and auto-scroll behavior, test filtering and search functionality with debouncing, validate log details modal and JSON highlighting, and test responsive table behavior"
+					},
+					{
+						"id": 5,
+						"title": "Create Incident Analytics Screen with MTTR Metrics",
+						"description": "Implement Incident Analytics screen with MTTR calculations, incident frequency charts, severity distribution, and pattern recognition widgets for common failure patterns",
+						"dependencies": ["33.1", "33.3"],
+						"details": "Build Incident Analytics screen with MTTR (Mean Time To Recovery) calculation widgets showing average, median, and trend over time. Create incident frequency charts by time period and severity distribution pie charts. Implement pattern recognition widgets showing most affected endpoints, common failure patterns, and incident timeline visualization. Add filtering by date range, severity, and endpoint. Use React Query for efficient data caching and synchronization. Include detailed incident drill-down views and export capabilities.",
+						"status": "done",
+						"testStrategy": "Test MTTR calculations accuracy and performance, verify incident pattern recognition algorithms, test filtering and date range selection, validate chart interactions and drill-down functionality, and test data caching with React Query"
+					}
+				]
+			},
+			{
+				"id": 34,
+				"title": "Implement Incident Management System UI with React Router v7",
+				"description": "Create comprehensive incident management interface with lifecycle management, timeline tracking, and public communication features using React Router v7, Shadcn UI, and Tailwind CSS.",
+				"details": "Build React Router v7 routes for incident management: /admin/incidents (dashboard), /admin/incidents/new (creation), /admin/incidents/:id (detail view), and /admin/incidents/:id/edit (editing). Implement Incidents Dashboard with Active and History tabs using Shadcn UI Tabs component, displaying incidents in card/table format with severity indicators (critical-red, high-orange, medium-yellow, low-green). Create incident creation form with title, description, severity selection, affected endpoints multi-select, and communication template fields using react-hook-form and zod validation. Build comprehensive incident detail view with status timeline, affected endpoints list, communication history, and public status preview panel. Implement incident editing capabilities with status updates (investigating, identified, monitoring, resolved), communication posting, and endpoint impact modification. Add real-time updates through WebSocket integration for live incident status changes. Use Shadcn UI components (Card, Badge, Select, Textarea, Button, Dialog) with Tailwind CSS for responsive design. Implement bold simplicity aesthetic with clean typography, ample whitespace, and clear visual hierarchy. Add incident filtering (by status, severity, date range) and search functionality. Include public communication preview with markdown support for status page integration.",
+				"testStrategy": "Test all React Router v7 routes navigate correctly with proper lazy loading, verify incident CRUD operations through forms work with API integration, test real-time updates display correctly when incidents change status, validate form validations and error handling for all input fields, test responsive design across desktop/tablet/mobile breakpoints, verify WebSocket connection updates incident dashboard in real-time, test incident filtering and search functionality accuracy, validate public communication preview renders markdown correctly, test accessibility features with screen readers and keyboard navigation, verify incident timeline displays chronologically with proper timestamps.",
+				"status": "done",
+				"dependencies": [20, 22, 30],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Setup React Router v7 Routes and Route Configuration",
+						"description": "Create React Router v7 routes for incident management with proper lazy loading and nested routing structure",
+						"dependencies": [],
+						"details": "Implement React Router v7 routes for /admin/incidents (dashboard), /admin/incidents/new (creation), /admin/incidents/:id (detail view), and /admin/incidents/:id/edit (editing). Configure proper lazy loading for components, implement nested routing structure, add route guards for authentication, and ensure proper navigation between routes with breadcrumb support.",
+						"status": "done",
+						"testStrategy": "Test all routes navigate correctly with proper lazy loading, verify nested routing works as expected, test route guards prevent unauthorized access, validate breadcrumb navigation, and test browser back/forward functionality."
+					},
+					{
+						"id": 2,
+						"title": "Build Incidents Dashboard with Active and History Tabs",
+						"description": "Create comprehensive incident dashboard with tabbed interface showing active and historical incidents",
+						"dependencies": ["34.1"],
+						"details": "Implement Incidents Dashboard using Shadcn UI Tabs component with Active and History tabs. Display incidents in responsive card/table format with severity indicators (critical-red, high-orange, medium-yellow, low-green). Add filtering by status, severity, and date range with search functionality. Include pagination for large incident lists and real-time updates for incident status changes.",
+						"status": "done",
+						"testStrategy": "Test tab switching functionality, verify incident display with proper severity indicators, test filtering and search capabilities, validate pagination works correctly, and test real-time updates display properly."
+					},
+					{
+						"id": 3,
+						"title": "Create Incident Creation and Editing Forms",
+						"description": "Build comprehensive forms for creating new incidents and editing existing ones with validation",
+						"dependencies": ["34.1"],
+						"details": "Create incident creation form with title, description, severity selection, affected endpoints multi-select, and communication template fields using react-hook-form and zod validation. Implement incident editing form with status updates (investigating, identified, monitoring, resolved), communication posting, and endpoint impact modification. Use Shadcn UI components (Select, Textarea, Button) with proper error handling and loading states.",
+						"status": "done",
+						"testStrategy": "Test form validations work correctly for all fields, verify API integration for form submissions, test error handling and loading states, validate multi-select functionality for endpoints, and test form pre-population for editing."
+					},
+					{
+						"id": 4,
+						"title": "Implement Incident Detail View with Timeline and Communication",
+						"description": "Build comprehensive incident detail view with status timeline, communication history, and public preview",
+						"dependencies": ["34.1", "34.2"],
+						"details": "Create detailed incident view with status timeline showing all incident lifecycle changes, affected endpoints list with current status, communication history with timestamps and authors, and public status preview panel with markdown support. Implement real-time updates through WebSocket integration for live status changes. Use Shadcn UI components (Card, Badge, Dialog) with clean visual hierarchy and responsive design.",
+						"status": "done",
+						"testStrategy": "Test incident detail view displays all information correctly, verify timeline shows proper chronological order, test real-time updates work properly, validate public preview matches actual public display, and test responsive design across devices."
+					},
+					{
+						"id": 5,
+						"title": "Integrate Real-time Updates and Public Communication Features",
+						"description": "Implement WebSocket integration for live updates and public communication preview with markdown support",
+						"dependencies": ["34.2", "34.3", "34.4"],
+						"details": "Add real-time updates through WebSocket integration for live incident status changes across all incident management screens. Implement public communication preview with markdown support for status page integration. Add notification badges for new incidents and status changes. Implement optimistic updates with proper error handling and rollback functionality. Ensure all real-time features work consistently across dashboard, detail, and editing views.",
+						"status": "done",
+						"testStrategy": "Test WebSocket connections maintain proper state across all screens, verify real-time updates display correctly for all users, test markdown preview matches public display, validate notification badges update properly, and test error handling for connection failures."
+					}
+				]
+			},
+			{
+				"id": 35,
+				"title": "Revamp Notification Channel Management UI",
+				"description": "Build a comprehensive notification channel management system with 4 main screens: Channels Overview dashboard, Channel Configuration for Email/Slack/Webhook setup, Notification Rules for routing and templates, and Delivery Management with history and metrics using Shadcn UI and Tailwind CSS.",
+				"details": "Implement a complete notification channel management system using React Router v7 with four interconnected screens. Create the Channels Overview screen as the main dashboard displaying active channels with status indicators, recent delivery statistics, channel health metrics, and empty state with 'Add First Channel' CTA when no channels exist. Build the Channel Configuration screen with multi-step setup forms for Email (SMTP settings, authentication, sender info), Slack (webhook URL, channel mapping, bot token), and Webhook (endpoint URL, headers, authentication, payload templates) using Shadcn UI Form components with comprehensive validation. Implement the Notification Rules screen for configuring routing logic with rule builder interface using drag-and-drop conditions, template editor with markdown support and variable substitution, rule priority management, and A/B testing capabilities. Develop the Delivery Management screen with delivery history table showing timestamps, channels, status, and retry attempts, real-time delivery metrics dashboard with success rates and latency charts, failed delivery investigation tools, and bulk retry functionality. Use the techy white and dark green color palette with Shadcn UI components including DataTable, Form, Dialog, Badge, Chart, and Tabs. Implement proper loading states with skeleton components, error boundaries, and optimistic updates for better UX.",
+				"testStrategy": "Test all four screens render correctly with proper React Router v7 routing and navigation between views. Verify Channels Overview displays all states (populated, empty, loading) with accurate channel metrics and status indicators. Validate Channel Configuration forms handle all validation scenarios for Email, Slack, and Webhook setups with proper error messaging and success feedback. Test Notification Rules builder interface for creating, editing, and prioritizing rules with template preview functionality. Verify Delivery Management displays accurate delivery history with proper filtering, sorting, and pagination. Test real-time updates for delivery metrics and status changes via WebSocket integration. Validate error handling for failed API calls and network issues across all screens. Perform end-to-end testing of complete notification channel lifecycle from creation to delivery monitoring.",
+				"status": "pending",
+				"dependencies": [26, 31, 32, 22],
+				"priority": "medium",
+				"subtasks": []
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-08T06:55:00.663Z",
+			"updated": "2025-08-08T11:50:57.446Z",
 			"description": "Tasks for master context"
 		}
 	}

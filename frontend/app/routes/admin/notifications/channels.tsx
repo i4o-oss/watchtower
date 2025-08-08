@@ -16,6 +16,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { Badge } from '~/components/ui/badge'
 import { Textarea } from '~/components/ui/textarea'
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '~/components/ui/select'
+import {
 	ArrowLeft,
 	Mail,
 	MessageSquare,
@@ -23,6 +30,13 @@ import {
 	Webhook,
 	Eye,
 	EyeOff,
+	Shield,
+	Server,
+	AlertCircle,
+	CheckCircle2,
+	Clock,
+	Zap,
+	Settings,
 } from 'lucide-react'
 import { ButtonLoadingSkeleton } from '~/lib/lazy'
 import { useSuccessToast, useErrorToast } from '~/components/toast'
@@ -82,17 +96,42 @@ interface SlackFormData {
 	username: string
 }
 
-interface DiscordFormData {
-	enabled: boolean
-	webhook_url: string
-	username: string
-}
-
 interface WebhookFormData {
 	enabled: boolean
 	webhook_url: string
 	headers: string
 }
+
+const emailProviders = [
+	{
+		name: 'Gmail',
+		smtp_host: 'smtp.gmail.com',
+		smtp_port: 587,
+		security: 'TLS',
+		note: 'Use App Password instead of regular password',
+	},
+	{
+		name: 'Outlook/Hotmail',
+		smtp_host: 'smtp-mail.outlook.com',
+		smtp_port: 587,
+		security: 'TLS',
+		note: 'Modern authentication supported',
+	},
+	{
+		name: 'Yahoo',
+		smtp_host: 'smtp.mail.yahoo.com',
+		smtp_port: 587,
+		security: 'TLS',
+		note: 'App Password required',
+	},
+	{
+		name: 'Custom SMTP',
+		smtp_host: '',
+		smtp_port: 587,
+		security: 'TLS',
+		note: 'Enter your own SMTP settings',
+	},
+]
 
 export default function NotificationChannels({
 	loaderData,
@@ -100,12 +139,13 @@ export default function NotificationChannels({
 	const { channels } = loaderData
 	const [activeTab, setActiveTab] = useState('email')
 	const [testStatus, setTestStatus] = useState<
-		Record<string, 'idle' | 'testing'>
+		Record<string, 'idle' | 'testing' | 'success' | 'error'>
 	>({})
 	const [showPassword, setShowPassword] = useState(false)
 	const [showWebhookUrl, setShowWebhookUrl] = useState<
 		Record<string, boolean>
 	>({})
+	const [selectedProvider, setSelectedProvider] = useState(emailProviders[0])
 	const successToast = useSuccessToast()
 	const errorToast = useErrorToast()
 
@@ -113,8 +153,8 @@ export default function NotificationChannels({
 	const emailForm = useForm({
 		defaultValues: {
 			enabled: false,
-			smtp_host: '',
-			smtp_port: 587,
+			smtp_host: selectedProvider.smtp_host,
+			smtp_port: selectedProvider.smtp_port,
 			username: '',
 			password: '',
 			from_email: '',
@@ -145,24 +185,19 @@ export default function NotificationChannels({
 		},
 	})
 
-	// Discord Form
-	const discordForm = useForm({
-		defaultValues: {
-			enabled: false,
-			webhook_url: '',
-			username: 'Watchtower',
-		} as DiscordFormData,
-		onSubmit: async ({ value }) => {
-			await saveChannelConfiguration('discord', value)
-		},
-	})
-
 	// Webhook Form
 	const webhookForm = useForm({
 		defaultValues: {
 			enabled: false,
 			webhook_url: '',
-			headers: '{}',
+			headers: JSON.stringify(
+				{
+					'Content-Type': 'application/json',
+					'User-Agent': 'Watchtower/1.0',
+				},
+				null,
+				2,
+			),
 		} as WebhookFormData,
 		onSubmit: async ({ value }) => {
 			let headers = {}
@@ -200,21 +235,29 @@ export default function NotificationChannels({
 			)
 
 			if (response.ok) {
+				setTestStatus((prev) => ({
+					...prev,
+					[providerType]: 'success',
+				}))
 				successToast(
 					'Test Successful',
 					`Test notification sent successfully via ${providerType}`,
 				)
 			} else {
 				const error = await response.json()
+				setTestStatus((prev) => ({ ...prev, [providerType]: 'error' }))
 				errorToast('Test Failed', `Test failed: ${error.error}`)
 			}
 		} catch (error) {
+			setTestStatus((prev) => ({ ...prev, [providerType]: 'error' }))
 			errorToast(
 				'Network Error',
 				`Network error testing ${providerType} channel`,
 			)
 		} finally {
-			setTestStatus((prev) => ({ ...prev, [providerType]: 'idle' }))
+			setTimeout(() => {
+				setTestStatus((prev) => ({ ...prev, [providerType]: 'idle' }))
+			}, 3000)
 		}
 	}
 
@@ -261,96 +304,212 @@ export default function NotificationChannels({
 		}
 	}
 
+	// Update form when provider changes
+	useEffect(() => {
+		emailForm.setFieldValue('smtp_host', selectedProvider.smtp_host)
+		emailForm.setFieldValue('smtp_port', selectedProvider.smtp_port)
+	}, [selectedProvider])
+
 	return (
-		<div>
-			<div className='flex items-center gap-4 mb-8'>
+		<div className='space-y-6'>
+			<div className='flex items-center gap-4'>
 				<Link to='/admin/notifications'>
 					<Button variant='ghost' size='sm'>
 						<ArrowLeft className='h-4 w-4' />
 					</Button>
 				</Link>
 				<div>
-					<h1 className='text-3xl font-bold'>
-						Notification Channels
+					<h1 className='text-3xl font-bold tracking-tight'>
+						Channel Configuration
 					</h1>
 					<p className='text-muted-foreground'>
-						Configure email, Slack, Discord, and webhook
-						notifications
+						Set up and test your notification channels
 					</p>
 				</div>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Channel Configuration</CardTitle>
-					<CardDescription>
-						Configure your notification channels and test them
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
+			<Card className='overflow-hidden'>
+				<CardContent className='p-0'>
 					<Tabs value={activeTab} onValueChange={setActiveTab}>
-						<TabsList className='grid w-full grid-cols-4'>
-							<TabsTrigger value='email'>
-								<Mail className='h-4 w-4 mr-2' />
-								Email
-							</TabsTrigger>
-							<TabsTrigger value='slack'>
-								<MessageSquare className='h-4 w-4 mr-2' />
-								Slack
-							</TabsTrigger>
-							<TabsTrigger value='discord'>
-								<MessageSquare className='h-4 w-4 mr-2' />
-								Discord
-							</TabsTrigger>
-							<TabsTrigger value='webhook'>
-								<Webhook className='h-4 w-4 mr-2' />
-								Webhook
-							</TabsTrigger>
-						</TabsList>
+						<div className='border-b bg-muted/30'>
+							<TabsList className='grid w-full grid-cols-3 h-auto bg-transparent p-0'>
+								<TabsTrigger
+									value='email'
+									className='flex items-center gap-3 py-4 px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500'
+								>
+									<div className='p-2 rounded-lg bg-blue-100'>
+										<Mail className='h-4 w-4 text-blue-600' />
+									</div>
+									<div className='text-left'>
+										<div className='font-medium'>Email</div>
+										<div className='text-xs text-muted-foreground'>
+											SMTP Configuration
+										</div>
+									</div>
+								</TabsTrigger>
+								<TabsTrigger
+									value='slack'
+									className='flex items-center gap-3 py-4 px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-green-500'
+								>
+									<div className='p-2 rounded-lg bg-green-100'>
+										<MessageSquare className='h-4 w-4 text-green-600' />
+									</div>
+									<div className='text-left'>
+										<div className='font-medium'>Slack</div>
+										<div className='text-xs text-muted-foreground'>
+											Webhook Integration
+										</div>
+									</div>
+								</TabsTrigger>
+								<TabsTrigger
+									value='webhook'
+									className='flex items-center gap-3 py-4 px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500'
+								>
+									<div className='p-2 rounded-lg bg-orange-100'>
+										<Webhook className='h-4 w-4 text-orange-600' />
+									</div>
+									<div className='text-left'>
+										<div className='font-medium'>
+											Webhook
+										</div>
+										<div className='text-xs text-muted-foreground'>
+											Generic HTTP
+										</div>
+									</div>
+								</TabsTrigger>
+							</TabsList>
+						</div>
 
 						{/* Email Configuration */}
-						<TabsContent value='email' className='space-y-4'>
+						<TabsContent value='email' className='space-y-6 p-6'>
 							<div className='flex items-center justify-between'>
-								<div>
-									<h3 className='text-lg font-medium'>
-										Email Configuration
+								<div className='space-y-1'>
+									<h3 className='text-xl font-semibold'>
+										Email SMTP Setup
 									</h3>
-									<p className='text-sm text-muted-foreground'>
-										Configure SMTP settings for email
-										notifications
+									<p className='text-muted-foreground'>
+										Configure SMTP settings for reliable
+										email delivery
 									</p>
 								</div>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={() => testChannel('email')}
-									disabled={testStatus.email === 'testing'}
-								>
-									{testStatus.email === 'testing' ? (
-										<>
-											<ButtonLoadingSkeleton />
-											Testing...
-										</>
-									) : (
-										<>
-											<TestTube className='h-4 w-4 mr-2' />
-											Test
-										</>
+								<div className='flex items-center gap-2'>
+									{testStatus.email === 'success' && (
+										<Badge
+											variant='default'
+											className='bg-green-100 text-green-800 border-green-200'
+										>
+											<CheckCircle2 className='h-3 w-3 mr-1' />
+											Test Passed
+										</Badge>
 									)}
-								</Button>
+									{testStatus.email === 'error' && (
+										<Badge variant='destructive'>
+											<AlertCircle className='h-3 w-3 mr-1' />
+											Test Failed
+										</Badge>
+									)}
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => testChannel('email')}
+										disabled={
+											testStatus.email === 'testing'
+										}
+									>
+										{testStatus.email === 'testing' ? (
+											<>
+												<ButtonLoadingSkeleton />
+												Testing...
+											</>
+										) : (
+											<>
+												<TestTube className='h-4 w-4 mr-2' />
+												Test Delivery
+											</>
+										)}
+									</Button>
+								</div>
 							</div>
+
+							{/* Provider Selection */}
+							<Card>
+								<CardHeader className='pb-4'>
+									<CardTitle className='text-lg'>
+										Provider Selection
+									</CardTitle>
+									<CardDescription>
+										Choose your email provider for
+										pre-filled settings
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+										{emailProviders.map((provider) => (
+											<Card
+												key={provider.name}
+												className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+													selectedProvider.name ===
+													provider.name
+														? 'ring-2 ring-blue-500 shadow-md'
+														: 'hover:ring-1 hover:ring-gray-300'
+												}`}
+												onClick={() =>
+													setSelectedProvider(
+														provider,
+													)
+												}
+											>
+												<CardContent className='p-4'>
+													<div className='flex items-center gap-3 mb-2'>
+														<div className='p-1 rounded bg-blue-100'>
+															<Server className='h-4 w-4 text-blue-600' />
+														</div>
+														<span className='font-medium'>
+															{provider.name}
+														</span>
+													</div>
+													<div className='space-y-1 text-sm text-muted-foreground'>
+														{provider.smtp_host && (
+															<p>
+																Port:{' '}
+																{
+																	provider.smtp_port
+																}
+															</p>
+														)}
+														<Badge
+															variant='outline'
+															className='text-xs'
+														>
+															{provider.security}
+														</Badge>
+													</div>
+												</CardContent>
+											</Card>
+										))}
+									</div>
+									{selectedProvider.note && (
+										<div className='mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2'>
+											<AlertCircle className='h-4 w-4 text-blue-600 mt-0.5' />
+											<p className='text-sm text-blue-800'>
+												{selectedProvider.note}
+											</p>
+										</div>
+									)}
+								</CardContent>
+							</Card>
 
 							<form
 								onSubmit={(e) => {
 									e.preventDefault()
 									emailForm.handleSubmit()
 								}}
-								className='space-y-4'
+								className='space-y-6'
 							>
 								<emailForm.Field
 									name='enabled'
 									children={(field) => (
-										<div className='flex items-center space-x-2'>
+										<div className='flex items-center space-x-3'>
 											<Switch
 												id='email-enabled'
 												checked={field.state.value}
@@ -358,130 +517,339 @@ export default function NotificationChannels({
 													field.handleChange(checked)
 												}
 											/>
-											<Label htmlFor='email-enabled'>
+											<Label
+												htmlFor='email-enabled'
+												className='text-base font-medium'
+											>
 												Enable Email Notifications
 											</Label>
 										</div>
 									)}
 								/>
 
-								<div className='grid grid-cols-2 gap-4'>
-									<emailForm.Field
-										name='smtp_host'
-										validators={{
-											onChange: validators.required,
-										}}
-										children={(field) => (
-											<div className='space-y-2'>
-												<Label htmlFor='smtp-host'>
-													SMTP Host *
-												</Label>
-												<Input
-													id='smtp-host'
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='smtp.gmail.com'
-												/>
-												<FieldError
-													errors={
-														field.state.meta.errors
-													}
-												/>
-											</div>
-										)}
-									/>
+								{/* SMTP Configuration */}
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											SMTP Configuration
+										</CardTitle>
+										<CardDescription>
+											Server settings and authentication
+										</CardDescription>
+									</CardHeader>
+									<CardContent className='space-y-4'>
+										<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+											<emailForm.Field
+												name='smtp_host'
+												validators={{
+													onChange:
+														validators.required,
+												}}
+												children={(field) => (
+													<div className='space-y-2'>
+														<Label htmlFor='smtp-host'>
+															SMTP Host *
+														</Label>
+														<Input
+															id='smtp-host'
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	e.target
+																		.value,
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='smtp.gmail.com'
+														/>
+														<FieldError
+															errors={
+																field.state.meta
+																	.errors
+															}
+														/>
+													</div>
+												)}
+											/>
 
-									<emailForm.Field
-										name='smtp_port'
-										validators={{
-											onChange: combineValidators(
-												validators.required,
-												validators.smtpPort,
-											),
-										}}
-										children={(field) => (
-											<div className='space-y-2'>
-												<Label htmlFor='smtp-port'>
-													SMTP Port *
-												</Label>
-												<Input
-													id='smtp-port'
-													type='number'
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															Number(
-																e.target.value,
-															),
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='587'
-												/>
-												<FieldError
-													errors={
-														field.state.meta.errors
-													}
-												/>
-											</div>
-										)}
-									/>
-								</div>
+											<emailForm.Field
+												name='smtp_port'
+												validators={{
+													onChange: combineValidators(
+														validators.required,
+														validators.smtpPort,
+													),
+												}}
+												children={(field) => (
+													<div className='space-y-2'>
+														<Label htmlFor='smtp-port'>
+															SMTP Port *
+														</Label>
+														<Input
+															id='smtp-port'
+															type='number'
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	Number(
+																		e.target
+																			.value,
+																	),
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='587'
+														/>
+														<FieldError
+															errors={
+																field.state.meta
+																	.errors
+															}
+														/>
+													</div>
+												)}
+											/>
+										</div>
 
-								<div className='grid grid-cols-2 gap-4'>
-									<emailForm.Field
-										name='username'
-										validators={{
-											onChange: validators.required,
-										}}
-										children={(field) => (
-											<div className='space-y-2'>
-												<Label htmlFor='smtp-username'>
-													Username *
-												</Label>
-												<Input
-													id='smtp-username'
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='your-email@gmail.com'
-												/>
-												<FieldError
-													errors={
-														field.state.meta.errors
-													}
-												/>
-											</div>
-										)}
-									/>
+										<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+											<emailForm.Field
+												name='username'
+												validators={{
+													onChange:
+														validators.required,
+												}}
+												children={(field) => (
+													<div className='space-y-2'>
+														<Label htmlFor='smtp-username'>
+															Username *
+														</Label>
+														<Input
+															id='smtp-username'
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	e.target
+																		.value,
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='your-email@gmail.com'
+														/>
+														<FieldError
+															errors={
+																field.state.meta
+																	.errors
+															}
+														/>
+													</div>
+												)}
+											/>
 
-									<emailForm.Field
-										name='password'
-										validators={{
-											onChange: validators.required,
-										}}
-										children={(field) => (
-											<div className='space-y-2'>
-												<Label htmlFor='smtp-password'>
-													Password *
-												</Label>
-												<div className='relative'>
-													<Input
-														id='smtp-password'
-														type={
-															showPassword
-																? 'text'
-																: 'password'
-														}
+											<emailForm.Field
+												name='password'
+												validators={{
+													onChange:
+														validators.required,
+												}}
+												children={(field) => (
+													<div className='space-y-2'>
+														<Label htmlFor='smtp-password'>
+															Password *
+														</Label>
+														<div className='relative'>
+															<Input
+																id='smtp-password'
+																type={
+																	showPassword
+																		? 'text'
+																		: 'password'
+																}
+																value={
+																	field.state
+																		.value
+																}
+																onChange={(e) =>
+																	field.handleChange(
+																		e.target
+																			.value,
+																	)
+																}
+																onBlur={
+																	field.handleBlur
+																}
+																placeholder='your-app-password'
+																className='pr-10'
+															/>
+															<Button
+																type='button'
+																variant='ghost'
+																size='sm'
+																className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+																onClick={() =>
+																	setShowPassword(
+																		!showPassword,
+																	)
+																}
+															>
+																{showPassword ? (
+																	<EyeOff className='h-4 w-4' />
+																) : (
+																	<Eye className='h-4 w-4' />
+																)}
+															</Button>
+														</div>
+														<FieldError
+															errors={
+																field.state.meta
+																	.errors
+															}
+														/>
+													</div>
+												)}
+											/>
+										</div>
+
+										{/* Security Options */}
+										<div className='p-4 bg-green-50 border border-green-200 rounded-lg'>
+											<div className='flex items-center gap-2 mb-2'>
+												<Shield className='h-4 w-4 text-green-600' />
+												<span className='font-medium text-green-800'>
+													Security Recommendations
+												</span>
+											</div>
+											<ul className='text-sm text-green-700 space-y-1'>
+												<li>
+													• TLS/SSL encryption is
+													automatically enabled for
+													port 587/465
+												</li>
+												<li>
+													• Use App Passwords instead
+													of regular passwords when
+													available
+												</li>
+												<li>
+													• Verify your SMTP provider
+													supports authenticated SMTP
+												</li>
+											</ul>
+										</div>
+									</CardContent>
+								</Card>
+
+								{/* Sender Configuration */}
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											Sender Information
+										</CardTitle>
+										<CardDescription>
+											Configure how emails appear to
+											recipients
+										</CardDescription>
+									</CardHeader>
+									<CardContent className='space-y-4'>
+										<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+											<emailForm.Field
+												name='from_email'
+												validators={{
+													onChange: combineValidators(
+														validators.required,
+														validators.email,
+													),
+												}}
+												children={(field) => (
+													<div className='space-y-2'>
+														<Label htmlFor='from-email'>
+															From Email *
+														</Label>
+														<Input
+															id='from-email'
+															type='email'
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	e.target
+																		.value,
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='watchtower@yourdomain.com'
+														/>
+														<FieldError
+															errors={
+																field.state.meta
+																	.errors
+															}
+														/>
+													</div>
+												)}
+											/>
+
+											<emailForm.Field
+												name='from_name'
+												children={(field) => (
+													<div className='space-y-2'>
+														<Label htmlFor='from-name'>
+															From Name
+														</Label>
+														<Input
+															id='from-name'
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	e.target
+																		.value,
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='Watchtower'
+														/>
+													</div>
+												)}
+											/>
+										</div>
+
+										<emailForm.Field
+											name='to_emails'
+											validators={{
+												onChange: combineValidators(
+													validators.required,
+													validators.emailList,
+												),
+											}}
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='to-emails'>
+														Recipient Emails *
+													</Label>
+													<Textarea
+														id='to-emails'
 														value={
 															field.state.value
 														}
@@ -493,198 +861,171 @@ export default function NotificationChannels({
 														onBlur={
 															field.handleBlur
 														}
-														placeholder='your-app-password'
-														className='pr-10'
+														placeholder='admin@yourdomain.com, alerts@yourdomain.com'
+														rows={3}
 													/>
-													<Button
-														type='button'
-														variant='ghost'
-														size='sm'
-														className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
-														onClick={() =>
-															setShowPassword(
-																!showPassword,
-															)
+													<p className='text-xs text-muted-foreground'>
+														Separate multiple emails
+														with commas. These
+														emails will receive all
+														notifications.
+													</p>
+													<FieldError
+														errors={
+															field.state.meta
+																.errors
 														}
-													>
-														{showPassword ? (
-															<EyeOff className='h-4 w-4' />
-														) : (
-															<Eye className='h-4 w-4' />
-														)}
-													</Button>
+													/>
 												</div>
-												<p className='text-xs text-muted-foreground'>
-													For Gmail, use an App
-													Password instead of your
-													regular password
-												</p>
-												<FieldError
-													errors={
-														field.state.meta.errors
-													}
-												/>
-											</div>
+											)}
+										/>
+									</CardContent>
+								</Card>
+
+								<div className='flex items-center gap-3 pt-4'>
+									<Button
+										type='submit'
+										disabled={emailForm.state.isSubmitting}
+										className='px-6'
+									>
+										{emailForm.state.isSubmitting && (
+											<ButtonLoadingSkeleton />
 										)}
-									/>
+										{emailForm.state.isSubmitting
+											? 'Saving...'
+											: 'Save Configuration'}
+									</Button>
+									<Button variant='outline' type='button'>
+										Reset to Defaults
+									</Button>
 								</div>
-
-								<div className='grid grid-cols-2 gap-4'>
-									<emailForm.Field
-										name='from_email'
-										validators={{
-											onChange: combineValidators(
-												validators.required,
-												validators.email,
-											),
-										}}
-										children={(field) => (
-											<div className='space-y-2'>
-												<Label htmlFor='from-email'>
-													From Email *
-												</Label>
-												<Input
-													id='from-email'
-													type='email'
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='watchtower@yourdomain.com'
-												/>
-												<FieldError
-													errors={
-														field.state.meta.errors
-													}
-												/>
-											</div>
-										)}
-									/>
-
-									<emailForm.Field
-										name='from_name'
-										children={(field) => (
-											<div className='space-y-2'>
-												<Label htmlFor='from-name'>
-													From Name
-												</Label>
-												<Input
-													id='from-name'
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='Watchtower'
-												/>
-												<FieldError
-													errors={
-														field.state.meta.errors
-													}
-												/>
-											</div>
-										)}
-									/>
-								</div>
-
-								<emailForm.Field
-									name='to_emails'
-									validators={{
-										onChange: combineValidators(
-											validators.required,
-											validators.emailList,
-										),
-									}}
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='to-emails'>
-												To Emails *
-											</Label>
-											<Input
-												id='to-emails'
-												value={field.state.value}
-												onChange={(e) =>
-													field.handleChange(
-														e.target.value,
-													)
-												}
-												onBlur={field.handleBlur}
-												placeholder='admin@yourdomain.com, alerts@yourdomain.com'
-											/>
-											<p className='text-xs text-muted-foreground'>
-												Separate multiple emails with
-												commas. These emails will
-												receive all notifications.
-											</p>
-											<FieldError
-												errors={field.state.meta.errors}
-											/>
-										</div>
-									)}
-								/>
-
-								<Button
-									type='submit'
-									disabled={emailForm.state.isSubmitting}
-								>
-									{emailForm.state.isSubmitting && (
-										<ButtonLoadingSkeleton />
-									)}
-									{emailForm.state.isSubmitting
-										? 'Saving...'
-										: 'Save Email Configuration'}
-								</Button>
 							</form>
 						</TabsContent>
 
 						{/* Slack Configuration */}
-						<TabsContent value='slack' className='space-y-4'>
+						<TabsContent value='slack' className='space-y-6 p-6'>
 							<div className='flex items-center justify-between'>
-								<div>
-									<h3 className='text-lg font-medium'>
-										Slack Configuration
+								<div className='space-y-1'>
+									<h3 className='text-xl font-semibold'>
+										Slack Integration
 									</h3>
-									<p className='text-sm text-muted-foreground'>
-										Configure Slack webhook for
+									<p className='text-muted-foreground'>
+										Connect Slack for instant team
 										notifications
 									</p>
 								</div>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={() => testChannel('slack')}
-									disabled={testStatus.slack === 'testing'}
-								>
-									{testStatus.slack === 'testing' ? (
-										<>
-											<ButtonLoadingSkeleton />
-											Testing...
-										</>
-									) : (
-										<>
-											<TestTube className='h-4 w-4 mr-2' />
-											Test
-										</>
+								<div className='flex items-center gap-2'>
+									{testStatus.slack === 'success' && (
+										<Badge
+											variant='default'
+											className='bg-green-100 text-green-800 border-green-200'
+										>
+											<CheckCircle2 className='h-3 w-3 mr-1' />
+											Test Passed
+										</Badge>
 									)}
-								</Button>
+									{testStatus.slack === 'error' && (
+										<Badge variant='destructive'>
+											<AlertCircle className='h-3 w-3 mr-1' />
+											Test Failed
+										</Badge>
+									)}
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => testChannel('slack')}
+										disabled={
+											testStatus.slack === 'testing'
+										}
+									>
+										{testStatus.slack === 'testing' ? (
+											<>
+												<ButtonLoadingSkeleton />
+												Testing...
+											</>
+										) : (
+											<>
+												<TestTube className='h-4 w-4 mr-2' />
+												Test Message
+											</>
+										)}
+									</Button>
+								</div>
 							</div>
+
+							{/* Setup Instructions */}
+							<Card>
+								<CardHeader>
+									<CardTitle className='text-lg'>
+										Webhook Setup
+									</CardTitle>
+									<CardDescription>
+										Follow these steps to create a Slack
+										webhook
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<div className='space-y-4'>
+										<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+											<div className='flex items-start gap-3'>
+												<div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600'>
+													1
+												</div>
+												<div>
+													<h4 className='font-medium'>
+														Create App
+													</h4>
+													<p className='text-sm text-muted-foreground'>
+														Go to api.slack.com and
+														create a new app
+													</p>
+												</div>
+											</div>
+											<div className='flex items-start gap-3'>
+												<div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600'>
+													2
+												</div>
+												<div>
+													<h4 className='font-medium'>
+														Enable Webhooks
+													</h4>
+													<p className='text-sm text-muted-foreground'>
+														Activate incoming
+														webhooks in your app
+														settings
+													</p>
+												</div>
+											</div>
+											<div className='flex items-start gap-3'>
+												<div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600'>
+													3
+												</div>
+												<div>
+													<h4 className='font-medium'>
+														Copy URL
+													</h4>
+													<p className='text-sm text-muted-foreground'>
+														Copy the webhook URL and
+														paste it below
+													</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
 
 							<form
 								onSubmit={(e) => {
 									e.preventDefault()
 									slackForm.handleSubmit()
 								}}
-								className='space-y-4'
+								className='space-y-6'
 							>
 								<slackForm.Field
 									name='enabled'
 									children={(field) => (
-										<div className='flex items-center space-x-2'>
+										<div className='flex items-center space-x-3'>
 											<Switch
 												id='slack-enabled'
 												checked={field.state.value}
@@ -692,336 +1033,295 @@ export default function NotificationChannels({
 													field.handleChange(checked)
 												}
 											/>
-											<Label htmlFor='slack-enabled'>
+											<Label
+												htmlFor='slack-enabled'
+												className='text-base font-medium'
+											>
 												Enable Slack Notifications
 											</Label>
 										</div>
 									)}
 								/>
 
-								<slackForm.Field
-									name='webhook_url'
-									validators={{
-										onChange: combineValidators(
-											validators.required,
-											validators.slackWebhookUrl,
-										),
-									}}
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='slack-webhook'>
-												Webhook URL *
-											</Label>
-											<div className='relative'>
-												<Input
-													id='slack-webhook'
-													type={
-														showWebhookUrl.slack
-															? 'text'
-															: 'password'
-													}
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='https://hooks.slack.com/services/...'
-													className='pr-10'
-												/>
-												<Button
-													type='button'
-													variant='ghost'
-													size='sm'
-													className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
-													onClick={() =>
-														setShowWebhookUrl(
-															(prev) => ({
-																...prev,
-																slack:
-																	!prev.slack,
-															}),
-														)
-													}
-												>
-													{showWebhookUrl.slack ? (
-														<EyeOff className='h-4 w-4' />
-													) : (
-														<Eye className='h-4 w-4' />
-													)}
-												</Button>
-											</div>
-											<FieldError
-												errors={field.state.meta.errors}
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											Webhook Configuration
+										</CardTitle>
+										<CardDescription>
+											Enter your Slack webhook details
+										</CardDescription>
+									</CardHeader>
+									<CardContent className='space-y-4'>
+										<slackForm.Field
+											name='webhook_url'
+											validators={{
+												onChange: combineValidators(
+													validators.required,
+													validators.slackWebhookUrl,
+												),
+											}}
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='slack-webhook'>
+														Webhook URL *
+													</Label>
+													<div className='relative'>
+														<Input
+															id='slack-webhook'
+															type={
+																showWebhookUrl.slack
+																	? 'text'
+																	: 'password'
+															}
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	e.target
+																		.value,
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='https://hooks.slack.com/services/...'
+															className='pr-10'
+														/>
+														<Button
+															type='button'
+															variant='ghost'
+															size='sm'
+															className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+															onClick={() =>
+																setShowWebhookUrl(
+																	(prev) => ({
+																		...prev,
+																		slack:
+																			!prev.slack,
+																	}),
+																)
+															}
+														>
+															{showWebhookUrl.slack ? (
+																<EyeOff className='h-4 w-4' />
+															) : (
+																<Eye className='h-4 w-4' />
+															)}
+														</Button>
+													</div>
+													<FieldError
+														errors={
+															field.state.meta
+																.errors
+														}
+													/>
+												</div>
+											)}
+										/>
+
+										<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+											<slackForm.Field
+												name='channel'
+												validators={{
+													onChange:
+														validators.slackChannel,
+												}}
+												children={(field) => (
+													<div className='space-y-2'>
+														<Label htmlFor='slack-channel'>
+															Channel Selection
+														</Label>
+														<Input
+															id='slack-channel'
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	e.target
+																		.value,
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='#alerts'
+														/>
+														<p className='text-xs text-muted-foreground'>
+															Optional: Override
+															webhook default
+															channel
+														</p>
+														<FieldError
+															errors={
+																field.state.meta
+																	.errors
+															}
+														/>
+													</div>
+												)}
+											/>
+
+											<slackForm.Field
+												name='username'
+												children={(field) => (
+													<div className='space-y-2'>
+														<Label htmlFor='slack-username'>
+															Bot Username
+														</Label>
+														<Input
+															id='slack-username'
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	e.target
+																		.value,
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='Watchtower'
+														/>
+														<p className='text-xs text-muted-foreground'>
+															How the bot appears
+															in Slack
+														</p>
+													</div>
+												)}
 											/>
 										</div>
-									)}
-								/>
+									</CardContent>
+								</Card>
 
-								<div className='grid grid-cols-2 gap-4'>
-									<slackForm.Field
-										name='channel'
-										validators={{
-											onChange: validators.slackChannel,
-										}}
-										children={(field) => (
-											<div className='space-y-2'>
-												<Label htmlFor='slack-channel'>
-													Channel
-												</Label>
-												<Input
-													id='slack-channel'
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='#alerts'
-												/>
-												<p className='text-xs text-muted-foreground'>
-													Optional: #channel or @user
-													to override webhook default
-												</p>
-												<FieldError
-													errors={
-														field.state.meta.errors
-													}
-												/>
+								{/* Message Preview */}
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											Message Formatting
+										</CardTitle>
+										<CardDescription>
+											Preview how notifications appear in
+											Slack
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										<div className='p-4 bg-slate-900 rounded-lg text-white font-mono text-sm'>
+											<div className='flex items-center gap-2 mb-2'>
+												<div className='w-6 h-6 bg-green-500 rounded flex items-center justify-center text-xs font-bold'>
+													W
+												</div>
+												<span className='font-medium'>
+													Watchtower
+												</span>
+												<span className='text-slate-400 text-xs'>
+													BOT
+												</span>
+												<span className='text-slate-500 text-xs ml-auto'>
+													just now
+												</span>
 											</div>
-										)}
-									/>
-
-									<slackForm.Field
-										name='username'
-										children={(field) => (
-											<div className='space-y-2'>
-												<Label htmlFor='slack-username'>
-													Username
-												</Label>
-												<Input
-													id='slack-username'
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='Watchtower'
-												/>
-												<FieldError
-													errors={
-														field.state.meta.errors
-													}
-												/>
+											<div className='ml-8 space-y-1'>
+												<div className='flex items-center gap-2'>
+													<span className='text-red-400'>
+														🔴
+													</span>
+													<span>
+														<strong>
+															Service Down:
+														</strong>{' '}
+														API Endpoint
+													</span>
+												</div>
+												<div className='text-slate-300 text-sm'>
+													https://api.example.com/health
+													is unreachable
+												</div>
+												<div className='text-slate-400 text-xs'>
+													Duration: 00:02:34 •
+													Response: Timeout
+												</div>
 											</div>
-										)}
-									/>
-								</div>
+										</div>
+									</CardContent>
+								</Card>
 
-								<Button
-									type='submit'
-									disabled={slackForm.state.isSubmitting}
-								>
-									{slackForm.state.isSubmitting && (
-										<ButtonLoadingSkeleton />
-									)}
-									{slackForm.state.isSubmitting
-										? 'Saving...'
-										: 'Save Slack Configuration'}
-								</Button>
-							</form>
-						</TabsContent>
-
-						{/* Discord Configuration */}
-						<TabsContent value='discord' className='space-y-4'>
-							<div className='flex items-center justify-between'>
-								<div>
-									<h3 className='text-lg font-medium'>
-										Discord Configuration
-									</h3>
-									<p className='text-sm text-muted-foreground'>
-										Configure Discord webhook for
-										notifications
-									</p>
-								</div>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={() => testChannel('discord')}
-									disabled={testStatus.discord === 'testing'}
-								>
-									{testStatus.discord === 'testing' ? (
-										<>
+								<div className='flex items-center gap-3 pt-4'>
+									<Button
+										type='submit'
+										disabled={slackForm.state.isSubmitting}
+										className='px-6'
+									>
+										{slackForm.state.isSubmitting && (
 											<ButtonLoadingSkeleton />
-											Testing...
-										</>
-									) : (
-										<>
-											<TestTube className='h-4 w-4 mr-2' />
-											Test
-										</>
-									)}
-								</Button>
-							</div>
-
-							<form
-								onSubmit={(e) => {
-									e.preventDefault()
-									discordForm.handleSubmit()
-								}}
-								className='space-y-4'
-							>
-								<discordForm.Field
-									name='enabled'
-									children={(field) => (
-										<div className='flex items-center space-x-2'>
-											<Switch
-												id='discord-enabled'
-												checked={field.state.value}
-												onCheckedChange={(checked) =>
-													field.handleChange(checked)
-												}
-											/>
-											<Label htmlFor='discord-enabled'>
-												Enable Discord Notifications
-											</Label>
-										</div>
-									)}
-								/>
-
-								<discordForm.Field
-									name='webhook_url'
-									validators={{
-										onChange: combineValidators(
-											validators.required,
-											validators.discordWebhookUrl,
-										),
-									}}
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='discord-webhook'>
-												Webhook URL *
-											</Label>
-											<div className='relative'>
-												<Input
-													id='discord-webhook'
-													type={
-														showWebhookUrl.discord
-															? 'text'
-															: 'password'
-													}
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='https://discord.com/api/webhooks/...'
-													className='pr-10'
-												/>
-												<Button
-													type='button'
-													variant='ghost'
-													size='sm'
-													className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
-													onClick={() =>
-														setShowWebhookUrl(
-															(prev) => ({
-																...prev,
-																discord:
-																	!prev.discord,
-															}),
-														)
-													}
-												>
-													{showWebhookUrl.discord ? (
-														<EyeOff className='h-4 w-4' />
-													) : (
-														<Eye className='h-4 w-4' />
-													)}
-												</Button>
-											</div>
-											<FieldError
-												errors={field.state.meta.errors}
-											/>
-										</div>
-									)}
-								/>
-
-								<discordForm.Field
-									name='username'
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='discord-username'>
-												Username
-											</Label>
-											<Input
-												id='discord-username'
-												value={field.state.value}
-												onChange={(e) =>
-													field.handleChange(
-														e.target.value,
-													)
-												}
-												onBlur={field.handleBlur}
-												placeholder='Watchtower'
-											/>
-											<FieldError
-												errors={field.state.meta.errors}
-											/>
-										</div>
-									)}
-								/>
-
-								<Button
-									type='submit'
-									disabled={discordForm.state.isSubmitting}
-								>
-									{discordForm.state.isSubmitting && (
-										<ButtonLoadingSkeleton />
-									)}
-									{discordForm.state.isSubmitting
-										? 'Saving...'
-										: 'Save Discord Configuration'}
-								</Button>
+										)}
+										{slackForm.state.isSubmitting
+											? 'Saving...'
+											: 'Save Configuration'}
+									</Button>
+									<Button variant='outline' type='button'>
+										Reset to Defaults
+									</Button>
+								</div>
 							</form>
 						</TabsContent>
 
 						{/* Webhook Configuration */}
-						<TabsContent value='webhook' className='space-y-4'>
+						<TabsContent value='webhook' className='space-y-6 p-6'>
 							<div className='flex items-center justify-between'>
-								<div>
-									<h3 className='text-lg font-medium'>
-										Webhook Configuration
+								<div className='space-y-1'>
+									<h3 className='text-xl font-semibold'>
+										Generic Webhook
 									</h3>
-									<p className='text-sm text-muted-foreground'>
-										Configure custom webhook for
-										notifications
+									<p className='text-muted-foreground'>
+										Connect to any service that accepts HTTP
+										webhooks
 									</p>
 								</div>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={() => testChannel('webhook')}
-									disabled={testStatus.webhook === 'testing'}
-								>
-									{testStatus.webhook === 'testing' ? (
-										<>
-											<ButtonLoadingSkeleton />
-											Testing...
-										</>
-									) : (
-										<>
-											<TestTube className='h-4 w-4 mr-2' />
-											Test
-										</>
+								<div className='flex items-center gap-2'>
+									{testStatus.webhook === 'success' && (
+										<Badge
+											variant='default'
+											className='bg-green-100 text-green-800 border-green-200'
+										>
+											<CheckCircle2 className='h-3 w-3 mr-1' />
+											Test Passed
+										</Badge>
 									)}
-								</Button>
+									{testStatus.webhook === 'error' && (
+										<Badge variant='destructive'>
+											<AlertCircle className='h-3 w-3 mr-1' />
+											Test Failed
+										</Badge>
+									)}
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => testChannel('webhook')}
+										disabled={
+											testStatus.webhook === 'testing'
+										}
+									>
+										{testStatus.webhook === 'testing' ? (
+											<>
+												<ButtonLoadingSkeleton />
+												Testing...
+											</>
+										) : (
+											<>
+												<TestTube className='h-4 w-4 mr-2' />
+												Test Payload
+											</>
+										)}
+									</Button>
+								</div>
 							</div>
 
 							<form
@@ -1029,12 +1329,12 @@ export default function NotificationChannels({
 									e.preventDefault()
 									webhookForm.handleSubmit()
 								}}
-								className='space-y-4'
+								className='space-y-6'
 							>
 								<webhookForm.Field
 									name='enabled'
 									children={(field) => (
-										<div className='flex items-center space-x-2'>
+										<div className='flex items-center space-x-3'>
 											<Switch
 												id='webhook-enabled'
 												checked={field.state.value}
@@ -1042,118 +1342,338 @@ export default function NotificationChannels({
 													field.handleChange(checked)
 												}
 											/>
-											<Label htmlFor='webhook-enabled'>
+											<Label
+												htmlFor='webhook-enabled'
+												className='text-base font-medium'
+											>
 												Enable Webhook Notifications
 											</Label>
 										</div>
 									)}
 								/>
 
-								<webhookForm.Field
-									name='webhook_url'
-									validators={{
-										onChange: combineValidators(
-											validators.required,
-											validators.url,
-										),
-									}}
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='webhook-url'>
-												Webhook URL *
-											</Label>
-											<div className='relative'>
-												<Input
-													id='webhook-url'
-													type={
-														showWebhookUrl.webhook
-															? 'text'
-															: 'password'
-													}
-													value={field.state.value}
-													onChange={(e) =>
-														field.handleChange(
-															e.target.value,
-														)
-													}
-													onBlur={field.handleBlur}
-													placeholder='https://your-webhook-endpoint.com/webhook'
-													className='pr-10'
-												/>
-												<Button
-													type='button'
-													variant='ghost'
-													size='sm'
-													className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
-													onClick={() =>
-														setShowWebhookUrl(
-															(prev) => ({
-																...prev,
-																webhook:
-																	!prev.webhook,
-															}),
-														)
-													}
-												>
-													{showWebhookUrl.webhook ? (
-														<EyeOff className='h-4 w-4' />
-													) : (
-														<Eye className='h-4 w-4' />
-													)}
-												</Button>
+								{/* Endpoint Configuration */}
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											Endpoint Configuration
+										</CardTitle>
+										<CardDescription>
+											Configure the target webhook
+											endpoint
+										</CardDescription>
+									</CardHeader>
+									<CardContent className='space-y-4'>
+										<webhookForm.Field
+											name='webhook_url'
+											validators={{
+												onChange: combineValidators(
+													validators.required,
+													validators.url,
+												),
+											}}
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='webhook-url'>
+														Webhook URL *
+													</Label>
+													<div className='relative'>
+														<Input
+															id='webhook-url'
+															type={
+																showWebhookUrl.webhook
+																	? 'text'
+																	: 'password'
+															}
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	e.target
+																		.value,
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='https://your-webhook-endpoint.com/webhook'
+															className='pr-10'
+														/>
+														<Button
+															type='button'
+															variant='ghost'
+															size='sm'
+															className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+															onClick={() =>
+																setShowWebhookUrl(
+																	(prev) => ({
+																		...prev,
+																		webhook:
+																			!prev.webhook,
+																	}),
+																)
+															}
+														>
+															{showWebhookUrl.webhook ? (
+																<EyeOff className='h-4 w-4' />
+															) : (
+																<Eye className='h-4 w-4' />
+															)}
+														</Button>
+													</div>
+													<FieldError
+														errors={
+															field.state.meta
+																.errors
+														}
+													/>
+												</div>
+											)}
+										/>
+									</CardContent>
+								</Card>
+
+								{/* Headers and Authentication */}
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											Security Settings
+										</CardTitle>
+										<CardDescription>
+											Authentication headers and security
+											options
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										<webhookForm.Field
+											name='headers'
+											validators={{
+												onChange:
+													validators.webhookHeaders,
+											}}
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='webhook-headers'>
+														Headers (JSON)
+													</Label>
+													<Textarea
+														id='webhook-headers'
+														value={
+															field.state.value
+														}
+														onChange={(e) =>
+															field.handleChange(
+																e.target.value,
+															)
+														}
+														onBlur={
+															field.handleBlur
+														}
+														rows={8}
+														className='font-mono text-sm'
+													/>
+													<p className='text-xs text-muted-foreground'>
+														HTTP headers as JSON
+														object. Commonly used
+														for Authorization, API
+														keys, etc.
+													</p>
+													<FieldError
+														errors={
+															field.state.meta
+																.errors
+														}
+													/>
+												</div>
+											)}
+										/>
+
+										{/* Security Recommendations */}
+										<div className='mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg'>
+											<div className='flex items-center gap-2 mb-2'>
+												<Shield className='h-4 w-4 text-amber-600' />
+												<span className='font-medium text-amber-800'>
+													Security Best Practices
+												</span>
 											</div>
-											<FieldError
-												errors={field.state.meta.errors}
-											/>
+											<ul className='text-sm text-amber-700 space-y-1'>
+												<li>
+													• Use HTTPS endpoints only
+													for secure transmission
+												</li>
+												<li>
+													• Include authentication
+													headers (API keys, Bearer
+													tokens)
+												</li>
+												<li>
+													• Consider implementing HMAC
+													signature verification
+												</li>
+												<li>
+													• Validate webhook responses
+													(2xx status codes)
+												</li>
+											</ul>
 										</div>
-									)}
-								/>
+									</CardContent>
+								</Card>
 
-								<webhookForm.Field
-									name='headers'
-									validators={{
-										onChange: validators.webhookHeaders,
-									}}
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='webhook-headers'>
-												Headers (JSON)
-											</Label>
-											<Textarea
-												id='webhook-headers'
-												value={field.state.value}
-												onChange={(e) =>
-													field.handleChange(
-														e.target.value,
-													)
-												}
-												onBlur={field.handleBlur}
-												placeholder='{"Authorization": "Bearer token", "Content-Type": "application/json"}'
-												rows={4}
-											/>
-											<p className='text-xs text-muted-foreground'>
-												Optional HTTP headers as JSON
-												object (e.g., for Authorization,
-												API keys)
-											</p>
-											<FieldError
-												errors={field.state.meta.errors}
-											/>
+								{/* Payload Template */}
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											Payload Template
+										</CardTitle>
+										<CardDescription>
+											JSON payload structure with variable
+											substitution
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										<div className='space-y-4'>
+											<div className='p-4 bg-slate-900 rounded-lg overflow-x-auto'>
+												<pre className='text-sm text-green-400 font-mono'>
+													{`{
+  "event": "{{event_type}}",
+  "service": {
+    "name": "{{service_name}}",
+    "url": "{{service_url}}",
+    "status": "{{status}}"
+  },
+  "alert": {
+    "message": "{{alert_message}}",
+    "severity": "{{severity}}",
+    "timestamp": "{{timestamp}}",
+    "duration": "{{duration}}"
+  },
+  "metadata": {
+    "response_time": "{{response_time}}",
+    "response_code": "{{response_code}}",
+    "source": "Watchtower"
+  }
+}`}
+												</pre>
+											</div>
+
+											<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm'>
+												<div>
+													<h4 className='font-medium mb-1'>
+														Event Variables
+													</h4>
+													<ul className='space-y-1 text-muted-foreground'>
+														<li>• event_type</li>
+														<li>• timestamp</li>
+														<li>• severity</li>
+													</ul>
+												</div>
+												<div>
+													<h4 className='font-medium mb-1'>
+														Service Variables
+													</h4>
+													<ul className='space-y-1 text-muted-foreground'>
+														<li>• service_name</li>
+														<li>• service_url</li>
+														<li>• status</li>
+													</ul>
+												</div>
+												<div>
+													<h4 className='font-medium mb-1'>
+														Response Variables
+													</h4>
+													<ul className='space-y-1 text-muted-foreground'>
+														<li>• response_time</li>
+														<li>• response_code</li>
+														<li>• duration</li>
+													</ul>
+												</div>
+												<div>
+													<h4 className='font-medium mb-1'>
+														Alert Variables
+													</h4>
+													<ul className='space-y-1 text-muted-foreground'>
+														<li>• alert_message</li>
+														<li>• incident_id</li>
+														<li>• escalation</li>
+													</ul>
+												</div>
+											</div>
 										</div>
-									)}
-								/>
+									</CardContent>
+								</Card>
 
-								<Button
-									type='submit'
-									disabled={webhookForm.state.isSubmitting}
-								>
-									{webhookForm.state.isSubmitting && (
-										<ButtonLoadingSkeleton />
-									)}
-									{webhookForm.state.isSubmitting
-										? 'Saving...'
-										: 'Save Webhook Configuration'}
-								</Button>
+								{/* Response Handling */}
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											Response Handling
+										</CardTitle>
+										<CardDescription>
+											Expected response codes and error
+											handling
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+											<div className='p-3 bg-green-50 border border-green-200 rounded-lg'>
+												<div className='flex items-center gap-2 mb-1'>
+													<CheckCircle2 className='h-4 w-4 text-green-600' />
+													<span className='font-medium text-green-800'>
+														Success (2xx)
+													</span>
+												</div>
+												<p className='text-sm text-green-700'>
+													Webhook delivered
+													successfully
+												</p>
+											</div>
+											<div className='p-3 bg-yellow-50 border border-yellow-200 rounded-lg'>
+												<div className='flex items-center gap-2 mb-1'>
+													<Clock className='h-4 w-4 text-yellow-600' />
+													<span className='font-medium text-yellow-800'>
+														Retry (4xx/5xx)
+													</span>
+												</div>
+												<p className='text-sm text-yellow-700'>
+													Will retry up to 3 times
+												</p>
+											</div>
+											<div className='p-3 bg-red-50 border border-red-200 rounded-lg'>
+												<div className='flex items-center gap-2 mb-1'>
+													<AlertCircle className='h-4 w-4 text-red-600' />
+													<span className='font-medium text-red-800'>
+														Failed
+													</span>
+												</div>
+												<p className='text-sm text-red-700'>
+													Logged for investigation
+												</p>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+
+								<div className='flex items-center gap-3 pt-4'>
+									<Button
+										type='submit'
+										disabled={
+											webhookForm.state.isSubmitting
+										}
+										className='px-6'
+									>
+										{webhookForm.state.isSubmitting && (
+											<ButtonLoadingSkeleton />
+										)}
+										{webhookForm.state.isSubmitting
+											? 'Saving...'
+											: 'Save Configuration'}
+									</Button>
+									<Button variant='outline' type='button'>
+										Reset to Defaults
+									</Button>
+								</div>
 							</form>
 						</TabsContent>
 					</Tabs>

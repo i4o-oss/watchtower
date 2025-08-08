@@ -20,6 +20,7 @@ import {
 import { requireAuth } from '~/lib/auth'
 import { useSSE } from '~/hooks/useSSE'
 import { LazyMonitoringCharts as MonitoringCharts } from '~/components/lazy-monitoring-charts'
+import { Search } from 'lucide-react'
 import type { Route } from './+types/monitoring'
 
 export function meta({}: Route.MetaArgs) {
@@ -225,106 +226,80 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 				<Button onClick={refreshLogs}>Refresh</Button>
 			</div>
 
-			{/* Filters */}
-			<Card className='mb-6'>
-				<CardContent className='pt-6'>
-					<div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'>
-						<div>
-							<Input
-								placeholder='Search endpoints...'
-								value={searchTerm}
-								onChange={(e) =>
-									updateFilter('search', e.target.value)
-								}
-							/>
-						</div>
-
-						<div>
-							<Select
-								value={statusFilter}
-								onValueChange={(value) =>
-									updateFilter('status', value)
-								}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder='All statuses' />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value='all'>
-										All Statuses
-									</SelectItem>
-									<SelectItem value='success'>
-										Success Only
-									</SelectItem>
-									<SelectItem value='failed'>
-										Failed Only
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-
-						<div>
-							<Select
-								value={endpointFilter}
-								onValueChange={(value) =>
-									updateFilter('endpoint', value)
-								}
-							>
-								<SelectTrigger>
-									<SelectValue placeholder='All endpoints' />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value='all'>
-										All Endpoints
-									</SelectItem>
-									{endpoints.endpoints.map(
-										(endpoint: any) => (
-											<SelectItem
-												key={endpoint.id}
-												value={endpoint.id}
-											>
-												{endpoint.name}
-											</SelectItem>
-										),
-									)}
-								</SelectContent>
-							</Select>
-						</div>
-
-						<div>
-							<Select
-								value={timeRange}
-								onValueChange={(value) =>
-									updateFilter('timeRange', value)
-								}
-							>
-								<SelectTrigger>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value='1'>Last Hour</SelectItem>
-									<SelectItem value='6'>
-										Last 6 Hours
-									</SelectItem>
-									<SelectItem value='24'>
-										Last 24 Hours
-									</SelectItem>
-									<SelectItem value='168'>
-										Last Week
-									</SelectItem>
-									<SelectItem value='720'>
-										Last 30 Days
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-
-						<div className='text-sm text-muted-foreground flex items-center'>
-							Showing {filteredLogs.length} of {logs.length} logs
-						</div>
+			{/* Filters and Controls */}
+			<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+				<div className='flex flex-1 items-center gap-4'>
+					<div className='relative flex-1 max-w-sm'>
+						<Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+						<Input
+							placeholder='Search endpoints...'
+							value={searchTerm}
+							onChange={(e) =>
+								updateFilter('search', e.target.value)
+							}
+							className='pl-10'
+						/>
 					</div>
-				</CardContent>
-			</Card>
+					<Select
+						value={statusFilter}
+						onValueChange={(value) => updateFilter('status', value)}
+					>
+						<SelectTrigger className='w-36'>
+							<SelectValue placeholder='All Status' />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value='all'>All Statuses</SelectItem>
+							<SelectItem value='success'>
+								Success Only
+							</SelectItem>
+							<SelectItem value='failed'>Failed Only</SelectItem>
+						</SelectContent>
+					</Select>
+					<Select
+						value={endpointFilter}
+						onValueChange={(value) =>
+							updateFilter('endpoint', value)
+						}
+					>
+						<SelectTrigger className='w-40'>
+							<SelectValue placeholder='All Endpoints' />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value='all'>All Endpoints</SelectItem>
+							{endpoints.endpoints.map((endpoint: any) => (
+								<SelectItem
+									key={endpoint.id}
+									value={endpoint.id}
+								>
+									{endpoint.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={timeRange}
+						onValueChange={(value) =>
+							updateFilter('timeRange', value)
+						}
+					>
+						<SelectTrigger className='w-36'>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value='1'>Last Hour</SelectItem>
+							<SelectItem value='6'>Last 6 Hours</SelectItem>
+							<SelectItem value='24'>Last 24 Hours</SelectItem>
+							<SelectItem value='168'>Last Week</SelectItem>
+							<SelectItem value='720'>Last 30 Days</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+				<div className='flex items-center gap-2'>
+					<div className='text-sm text-muted-foreground'>
+						{filteredLogs.length} of {logs.length} log(s)
+					</div>
+				</div>
+			</div>
 
 			{/* Logs List */}
 			<Card>
