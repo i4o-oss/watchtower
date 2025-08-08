@@ -264,12 +264,12 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	return (
 		<PageContent>
 			<PageHeader
-				title='Admin Dashboard'
+				title='Dashboard'
 				description='Monitor and manage your endpoints, incidents, and logs'
 			>
 				<div className='flex flex-wrap items-center gap-2'>
 					<Link to='/admin/endpoints/new'>
-						<Button className='bg-emerald-600 hover:bg-emerald-700'>
+						<Button>
 							<Plus className='h-4 w-4 mr-2' />
 							Add Endpoint
 						</Button>

@@ -770,7 +770,7 @@ export default function EditEndpoint({
 										Status
 									</p>
 									<p
-										className={`font-semibold ${endpoint.enabled ? 'text-green-600' : 'text-gray-500'}`}
+										className={`font-semibold ${endpoint.enabled ? 'text-green-600' : 'text-muted-foreground'}`}
 									>
 										{endpoint.enabled
 											? 'Active'

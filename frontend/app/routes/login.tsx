@@ -86,22 +86,19 @@ export default function Login() {
 	})
 
 	return (
-		<div
-			className='min-h-screen flex items-center justify-center px-4'
-			style={{ backgroundColor: 'var(--background-off-white)' }}
-		>
+		<div className='min-h-screen flex items-center justify-center px-4'>
 			<Card className='w-full max-w-[400px]'>
 				<CardHeader className='space-y-1 text-center'>
 					<div className='mb-2'>
-						<h1 className='text-h2 font-bold text-foreground'>
+						<h1 className='text-2xl font-bold text-foreground'>
 							Watchtower
 						</h1>
-						<p className='text-body text-muted-foreground mt-1'>
+						<p className='text-sm text-muted-foreground mt-1'>
 							Monitor with confidence
 						</p>
 					</div>
-					<CardTitle className='text-h2'>Welcome Back</CardTitle>
-					<CardDescription className='text-body'>
+					<CardTitle>Welcome Back</CardTitle>
+					<CardDescription>
 						Enter your credentials to sign in to your account
 					</CardDescription>
 				</CardHeader>
@@ -114,13 +111,8 @@ export default function Login() {
 						className='space-y-4'
 					>
 						{error && (
-							<Alert
-								variant='destructive'
-								className='bg-error-red/5 border-error-red/20'
-							>
-								<AlertDescription className='text-body'>
-									{error}
-								</AlertDescription>
+							<Alert variant='destructive'>
+								<AlertDescription>{error}</AlertDescription>
 							</Alert>
 						)}
 
@@ -136,7 +128,7 @@ export default function Login() {
 								<div className='space-y-2'>
 									<Label
 										htmlFor='email'
-										className='text-body font-medium'
+										className='text-sm font-medium'
 									>
 										Email
 									</Label>
@@ -154,7 +146,7 @@ export default function Login() {
 										autoComplete='email'
 										className={`h-10 transition-colors duration-200 ${
 											field.state.meta.errors.length > 0
-												? 'border-error-red focus-visible:ring-error-red'
+												? 'border-destructive focus-visible:ring-destructive'
 												: 'focus-visible:ring-primary'
 										}`}
 									/>
@@ -177,7 +169,7 @@ export default function Login() {
 								<div className='space-y-2'>
 									<Label
 										htmlFor='password'
-										className='text-body font-medium'
+										className='text-sm font-medium'
 									>
 										Password
 									</Label>
@@ -203,7 +195,7 @@ export default function Login() {
 											className={`h-10 pr-10 transition-colors duration-200 ${
 												field.state.meta.errors.length >
 												0
-													? 'border-error-red focus-visible:ring-error-red'
+													? 'border-destructive focus-visible:ring-destructive'
 													: 'focus-visible:ring-primary'
 											}`}
 										/>
@@ -256,7 +248,7 @@ export default function Login() {
 
 						<Button
 							type='submit'
-							className='w-full h-10 text-button bg-primary hover:bg-primary/90 transition-colors duration-200'
+							className='w-full'
 							disabled={isSubmitting}
 						>
 							{isSubmitting ? (
@@ -273,16 +265,16 @@ export default function Login() {
 					<div className='mt-6 space-y-3 text-center'>
 						<Link
 							to='/forgot-password'
-							className='text-link hover:text-primary/80 transition-colors duration-200 text-sm block'
+							className='text-primary hover:text-primary/80 transition-colors duration-200 text-sm block'
 						>
 							Forgot password?
 						</Link>
 
-						<div className='text-body-small text-muted-foreground'>
+						<div className='text-xs text-muted-foreground'>
 							Don't have an account?{' '}
 							<Link
 								to='/register'
-								className='text-link hover:text-primary/80 transition-colors duration-200'
+								className='text-primary hover:text-primary/80 transition-colors duration-200'
 							>
 								Create one
 							</Link>

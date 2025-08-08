@@ -563,7 +563,7 @@ export default function IncidentAnalytics({
 			case 'low':
 				return 'text-blue-600 bg-blue-50 border-blue-200'
 			default:
-				return 'text-gray-600 bg-gray-50 border-gray-200'
+				return 'text-muted-foreground bg-muted border-border'
 		}
 	}
 

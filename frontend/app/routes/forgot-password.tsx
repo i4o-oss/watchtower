@@ -71,20 +71,18 @@ export default function ForgotPassword() {
 			<div className='min-h-screen flex items-center justify-center bg-background px-4'>
 				<Card className='w-full max-w-md'>
 					<CardHeader className='space-y-1 text-center'>
-						<div className='mx-auto w-12 h-12 bg-success-green/10 rounded-full flex items-center justify-center mb-4'>
-							<CheckCircle className='w-6 h-6 text-success-green' />
+						<div className='mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4'>
+							<CheckCircle className='w-6 h-6 text-green-600' />
 						</div>
-						<CardTitle className='text-h2'>
-							Check Your Email
-						</CardTitle>
-						<CardDescription className='text-body text-center'>
+						<CardTitle>Check Your Email</CardTitle>
+						<CardDescription className='text-center'>
 							We'll send you a secure link to reset your password
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<div className='space-y-4'>
-							<Alert className='bg-success-green/5 border-success-green/20'>
-								<AlertDescription className='text-body'>
+							<Alert className='bg-green-50 border-green-200'>
+								<AlertDescription>
 									If an account with that email exists, we've
 									sent you a password reset link. Please check
 									your inbox and spam folder.
@@ -113,7 +111,7 @@ export default function ForgotPassword() {
 					<CardTitle className='text-h2 text-center'>
 						Reset Password
 					</CardTitle>
-					<CardDescription className='text-body text-center'>
+					<CardDescription className='text-center'>
 						Enter your email and we'll send you a secure link to
 						reset your password
 					</CardDescription>
@@ -144,7 +142,7 @@ export default function ForgotPassword() {
 								<div className='space-y-2'>
 									<Label
 										htmlFor='email'
-										className='text-body font-medium'
+										className='text-sm font-medium'
 									>
 										Email Address
 									</Label>
@@ -171,7 +169,7 @@ export default function ForgotPassword() {
 
 						<Button
 							type='submit'
-							className='w-full h-10 text-button'
+							className='w-full'
 							disabled={isSubmitting}
 						>
 							{isSubmitting
@@ -183,7 +181,7 @@ export default function ForgotPassword() {
 					<div className='mt-6 text-center'>
 						<Link
 							to='/login'
-							className='text-link hover:text-primary inline-flex items-center gap-2 transition-colors duration-200'
+							className='text-primary hover:text-primary/80 inline-flex items-center gap-2 transition-colors duration-200'
 						>
 							<ArrowLeft className='w-4 h-4' />
 							Back to Sign In

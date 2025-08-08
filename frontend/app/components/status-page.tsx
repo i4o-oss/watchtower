@@ -95,13 +95,13 @@ interface IncidentsResponse {
 function LoadingShimmer() {
 	return (
 		<div className='animate-pulse space-y-4'>
-			<div className='bg-gray-200 rounded-md h-4 w-3/4'></div>
-			<div className='bg-gray-200 rounded-md h-3 w-1/2'></div>
-			<div className='bg-gray-200 rounded-md h-16 w-full'></div>
+			<div className='bg-muted rounded-md h-4 w-3/4'></div>
+			<div className='bg-muted rounded-md h-3 w-1/2'></div>
+			<div className='bg-muted rounded-md h-16 w-full'></div>
 			<div className='flex justify-between'>
-				<div className='bg-gray-200 rounded-md h-3 w-16'></div>
-				<div className='bg-gray-200 rounded-md h-3 w-16'></div>
-				<div className='bg-gray-200 rounded-md h-3 w-16'></div>
+				<div className='bg-muted rounded-md h-3 w-16'></div>
+				<div className='bg-muted rounded-md h-3 w-16'></div>
+				<div className='bg-muted rounded-md h-3 w-16'></div>
 			</div>
 		</div>
 	)
@@ -151,7 +151,7 @@ function ServiceMiniChart({ serviceId }: { serviceId: string }) {
 	}, [serviceId])
 
 	if (loading) {
-		return <div className='h-12 bg-gray-100 animate-pulse rounded'></div>
+		return <div className='h-12 bg-muted animate-pulse rounded'></div>
 	}
 
 	return (
@@ -261,7 +261,7 @@ function UptimeGraph({
 	if (loading) {
 		return (
 			<div className='h-64 flex items-center justify-center'>
-				<RefreshCw className='w-6 h-6 animate-spin text-gray-400' />
+				<RefreshCw className='w-6 h-6 animate-spin text-muted-foreground' />
 			</div>
 		)
 	}
@@ -277,8 +277,8 @@ function UptimeGraph({
 							className={cn(
 								'px-3 py-1 text-sm font-medium rounded-md transition-colors',
 								period === selectedPeriod
-									? 'bg-gray-900 text-white'
-									: 'text-gray-600 hover:text-gray-900 hover:bg-gray-100',
+									? 'bg-foreground text-background'
+									: 'text-muted-foreground hover:text-accent-foreground hover:bg-accent',
 							)}
 						>
 							{period === '30d'
@@ -338,7 +338,7 @@ function UptimeGraph({
 				</ResponsiveContainer>
 			</div>
 
-			<div className='text-xs text-gray-500 text-center'>
+			<div className='text-xs text-muted-foreground text-center'>
 				Showing uptime percentage over the last{' '}
 				{selectedPeriod === '30d'
 					? '30 days'
@@ -636,28 +636,28 @@ export function StatusPage({
 	// Screen 1A: Loading State with centered logo and Accent Mint pulse animation
 	if (loading) {
 		return (
-			<div className='min-h-screen bg-white'>
+			<div className='min-h-screen bg-background'>
 				{/* Navigation Bar */}
-				<nav className='border-b border-gray-200 bg-white'>
+				<nav className='border-b border-border bg-background'>
 					<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
 						<div className='flex h-16 justify-between items-center'>
 							<div className='flex items-center'>
-								<Shield className='h-8 w-8 text-gray-900 mr-2' />
-								<span className='text-xl font-semibold text-gray-900'>
+								<Shield className='h-8 w-8 text-foreground mr-2' />
+								<span className='text-xl font-semibold text-foreground'>
 									Watchtower
 								</span>
 							</div>
 							<div className='flex items-center space-x-8'>
 								<a
 									href='#'
-									className='text-sm font-medium text-gray-900 border-b-2 border-gray-900 pb-2'
+									className='text-sm font-medium text-foreground border-b-2 border-foreground pb-2'
 								>
 									Status
 								</a>
 								<Button
 									variant='ghost'
 									size='sm'
-									className='text-gray-600 hover:text-gray-900'
+									className='text-muted-foreground hover:text-accent-foreground'
 								>
 									<Bell className='h-4 w-4 mr-2' />
 									Subscribe to Updates
@@ -672,7 +672,7 @@ export function StatusPage({
 					<div className='text-center'>
 						<div className='relative'>
 							<Shield
-								className='h-16 w-16 mx-auto text-gray-400 animate-pulse'
+								className='h-16 w-16 mx-auto text-muted-foreground animate-pulse'
 								style={{
 									animationDuration: '2s',
 									color: '#6EE7B7', // Accent Mint
@@ -688,7 +688,7 @@ export function StatusPage({
 								}}
 							/>
 						</div>
-						<p className='mt-4 text-sm text-gray-600'>
+						<p className='mt-4 text-sm text-muted-foreground'>
 							Loading system status...
 						</p>
 					</div>
@@ -748,28 +748,28 @@ export function StatusPage({
 	const systemStatus = getSystemStatus()
 
 	return (
-		<div className='min-h-screen bg-white'>
+		<div className='min-h-screen bg-background'>
 			{/* Navigation Bar */}
-			<nav className='border-b border-gray-200 bg-white sticky top-0 z-50'>
+			<nav className='border-b border-border bg-background sticky top-0 z-50'>
 				<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
 					<div className='flex h-16 justify-between items-center'>
 						<div className='flex items-center'>
-							<Shield className='h-8 w-8 text-gray-900 mr-2' />
-							<span className='text-xl font-semibold text-gray-900'>
+							<Shield className='h-8 w-8 text-foreground mr-2' />
+							<span className='text-xl font-semibold text-foreground'>
 								Watchtower
 							</span>
 						</div>
 						<div className='flex items-center space-x-8'>
 							<a
 								href='#'
-								className='text-sm font-medium text-gray-900 border-b-2 border-gray-900 pb-2'
+								className='text-sm font-medium text-foreground border-b-2 border-foreground pb-2'
 							>
 								Status
 							</a>
 							<Button
 								variant='ghost'
 								size='sm'
-								className='text-gray-600 hover:text-gray-900'
+								className='text-muted-foreground hover:text-accent-foreground'
 							>
 								<Bell className='h-4 w-4 mr-2' />
 								Subscribe to Updates
@@ -787,7 +787,7 @@ export function StatusPage({
 							<CheckCircle className='h-6 w-6 text-green-600 mr-3' />
 							<div>
 								<h1
-									className='text-2xl font-bold leading-tight text-gray-900'
+									className='text-2xl font-bold leading-tight text-foreground'
 									style={{
 										fontSize: '32px',
 										lineHeight: '40px',
@@ -812,7 +812,7 @@ export function StatusPage({
 							<AlertTriangle className='h-6 w-6 text-yellow-600 mr-3' />
 							<div>
 								<h1
-									className='text-2xl font-bold leading-tight text-gray-900'
+									className='text-2xl font-bold leading-tight text-foreground'
 									style={{
 										fontSize: '32px',
 										lineHeight: '40px',
@@ -837,7 +837,7 @@ export function StatusPage({
 							<XCircle className='h-6 w-6 text-red-600 mr-3' />
 							<div>
 								<h1
-									className='text-2xl font-bold leading-tight text-gray-900'
+									className='text-2xl font-bold leading-tight text-foreground'
 									style={{
 										fontSize: '32px',
 										lineHeight: '40px',
@@ -861,20 +861,20 @@ export function StatusPage({
 				<div className='flex justify-between items-center mb-8'>
 					<div>
 						<h2
-							className='text-2xl font-semibold text-gray-900'
+							className='text-2xl font-semibold text-foreground'
 							style={{ fontSize: '24px', lineHeight: '32px' }}
 						>
 							Services
 						</h2>
-						<p className='text-gray-600 mt-1'>
+						<p className='text-muted-foreground mt-1'>
 							Current status and uptime for all monitored services
 						</p>
 					</div>
 					<div className='flex items-center space-x-2'>
-						<span className='text-sm text-gray-600'>
+						<span className='text-sm text-muted-foreground'>
 							Show data for:
 						</span>
-						<div className='flex rounded-md border border-gray-300'>
+						<div className='flex rounded-md border border-border'>
 							{(['30d', '90d', '1y'] as const).map((period) => (
 								<button
 									key={period}
@@ -882,8 +882,8 @@ export function StatusPage({
 									className={cn(
 										'px-3 py-1 text-sm font-medium transition-colors',
 										period === timePeriod
-											? 'bg-gray-900 text-white'
-											: 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+											? 'bg-foreground text-background'
+											: 'text-muted-foreground hover:text-accent-foreground hover:bg-muted/50',
 										period === '30d' && 'rounded-l-md',
 										period === '1y' && 'rounded-r-md',
 									)}
@@ -915,20 +915,20 @@ export function StatusPage({
 									onClick={() =>
 										setSelectedIncident(incident)
 									}
-									className='bg-white rounded-md p-4 border border-red-300 cursor-pointer hover:bg-red-25 transition-colors'
+									className='bg-background rounded-md p-4 border border-red-300 cursor-pointer hover:bg-red-25 transition-colors'
 								>
 									<div className='flex items-start justify-between'>
 										<div className='flex-1'>
-											<h4 className='font-medium text-gray-900'>
+											<h4 className='font-medium text-foreground'>
 												{incident.title}
 											</h4>
-											<p className='text-sm text-gray-600 mt-1'>
+											<p className='text-sm text-muted-foreground mt-1'>
 												{incident.description.length >
 												100
 													? `${incident.description.substring(0, 100)}...`
 													: incident.description}
 											</p>
-											<p className='text-xs text-gray-500 mt-2'>
+											<p className='text-xs text-muted-foreground mt-2'>
 												Started{' '}
 												{new Date(
 													incident.start_time,
@@ -994,9 +994,9 @@ export function StatusPage({
 									}
 								default:
 									return {
-										bg: 'bg-gray-50',
-										border: 'border-gray-200',
-										dot: 'bg-gray-500',
+										bg: 'bg-muted/50',
+										border: 'border-border',
+										dot: 'bg-muted-foreground',
 									}
 							}
 						}
@@ -1023,16 +1023,16 @@ export function StatusPage({
 												)}
 											/>
 											<div>
-												<h3 className='font-semibold text-gray-900 text-base'>
+												<h3 className='font-semibold text-foreground text-base'>
 													{service.name}
 												</h3>
-												<p className='text-sm text-gray-600 capitalize'>
+												<p className='text-sm text-muted-foreground capitalize'>
 													{service.status}
 												</p>
 											</div>
 										</div>
 										<div className='text-right'>
-											<div className='text-sm font-medium text-gray-900'>
+											<div className='text-sm font-medium text-foreground'>
 												{service[
 													timePeriod === '30d'
 														? 'uptime_30_day'
@@ -1042,7 +1042,7 @@ export function StatusPage({
 												].toFixed(1)}
 												%
 											</div>
-											<div className='text-xs text-gray-500'>
+											<div className='text-xs text-muted-foreground'>
 												{timePeriod === '30d'
 													? '30d'
 													: timePeriod === '1y'
@@ -1061,7 +1061,7 @@ export function StatusPage({
 									</div>
 
 									{/* Metrics */}
-									<div className='flex justify-between items-center text-sm text-gray-600'>
+									<div className='flex justify-between items-center text-sm text-muted-foreground'>
 										<div className='flex items-center space-x-1'>
 											<Activity className='w-3 h-3' />
 											<span>
@@ -1092,10 +1092,10 @@ export function StatusPage({
 				>
 					<DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
 						<DialogHeader>
-							<DialogTitle className='text-xl font-semibold text-gray-900'>
+							<DialogTitle className='text-xl font-semibold text-foreground'>
 								{selectedService?.name} Service Details
 							</DialogTitle>
-							<DialogDescription className='text-gray-600'>
+							<DialogDescription className='text-muted-foreground'>
 								Detailed uptime metrics and performance data
 							</DialogDescription>
 						</DialogHeader>
@@ -1103,29 +1103,29 @@ export function StatusPage({
 							<div className='space-y-6'>
 								{/* Service Overview */}
 								<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-									<div className='bg-gray-50 rounded-lg p-4'>
-										<div className='text-sm text-gray-600'>
+									<div className='bg-muted/50 rounded-lg p-4'>
+										<div className='text-sm text-muted-foreground'>
 											Current Status
 										</div>
-										<div className='text-lg font-semibold capitalize text-gray-900'>
+										<div className='text-lg font-semibold capitalize text-foreground'>
 											{selectedService.status}
 										</div>
 									</div>
-									<div className='bg-gray-50 rounded-lg p-4'>
-										<div className='text-sm text-gray-600'>
+									<div className='bg-muted/50 rounded-lg p-4'>
+										<div className='text-sm text-muted-foreground'>
 											Response Time
 										</div>
-										<div className='text-lg font-semibold text-gray-900'>
+										<div className='text-lg font-semibold text-foreground'>
 											{selectedService.response_time_ms ||
 												0}
 											ms
 										</div>
 									</div>
-									<div className='bg-gray-50 rounded-lg p-4'>
-										<div className='text-sm text-gray-600'>
+									<div className='bg-muted/50 rounded-lg p-4'>
+										<div className='text-sm text-muted-foreground'>
 											90-Day Uptime
 										</div>
-										<div className='text-lg font-semibold text-gray-900'>
+										<div className='text-lg font-semibold text-foreground'>
 											{selectedService.uptime_90_day.toFixed(
 												2,
 											)}
@@ -1135,8 +1135,8 @@ export function StatusPage({
 								</div>
 
 								{/* Interactive Uptime Chart */}
-								<div className='bg-white border border-gray-200 rounded-lg p-6'>
-									<h4 className='text-lg font-semibold text-gray-900 mb-4'>
+								<div className='bg-background border border-border rounded-lg p-6'>
+									<h4 className='text-lg font-semibold text-foreground mb-4'>
 										Uptime History
 									</h4>
 									<UptimeGraph
@@ -1156,10 +1156,10 @@ export function StatusPage({
 				>
 					<DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
 						<DialogHeader>
-							<DialogTitle className='text-xl font-semibold text-gray-900'>
+							<DialogTitle className='text-xl font-semibold text-foreground'>
 								{selectedIncident?.title}
 							</DialogTitle>
-							<DialogDescription className='text-gray-600'>
+							<DialogDescription className='text-muted-foreground'>
 								Incident #{selectedIncident?.id.slice(0, 8)} •{' '}
 								{selectedIncident?.severity} severity
 							</DialogDescription>
@@ -1219,7 +1219,7 @@ export function StatusPage({
 								{selectedIncident.affected_services.length >
 									0 && (
 									<div>
-										<h4 className='font-semibold text-gray-900 mb-2'>
+										<h4 className='font-semibold text-foreground mb-2'>
 											Affected Services
 										</h4>
 										<div className='flex flex-wrap gap-2'>

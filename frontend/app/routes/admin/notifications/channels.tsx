@@ -451,7 +451,7 @@ export default function NotificationChannels({
 													selectedProvider.name ===
 													provider.name
 														? 'ring-2 ring-blue-500 shadow-md'
-														: 'hover:ring-1 hover:ring-gray-300'
+														: 'hover:ring-1 hover:ring-border'
 												}`}
 												onClick={() =>
 													setSelectedProvider(

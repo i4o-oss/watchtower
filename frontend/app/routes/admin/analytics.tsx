@@ -429,7 +429,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
 			case 'down':
 				return <ArrowDownRight className='h-4 w-4 text-red-600' />
 			default:
-				return <Minus className='h-4 w-4 text-gray-500' />
+				return <Minus className='h-4 w-4 text-muted-foreground' />
 		}
 	}
 
@@ -443,7 +443,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
 			case 'down':
 				return 'bg-red-500'
 			default:
-				return 'bg-gray-300'
+				return 'bg-muted'
 		}
 	}
 

@@ -92,9 +92,9 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 	}
 
 	return (
-		<div className='min-h-screen bg-gray-50'>
+		<div className='min-h-screen bg-background'>
 			{/* Top Header Bar */}
-			<header className='sticky top-0 z-30 h-16 bg-white border-b border-gray-200'>
+			<header className='sticky top-0 z-30 h-16 bg-card border-b border-border'>
 				<div className='max-w-[94rem] mx-auto px-6'>
 					<div className='flex h-full items-center justify-between'>
 						{/* Left - Logo and Mobile Menu */}
@@ -117,8 +117,8 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 								to='/admin'
 								className='flex items-center gap-3'
 							>
-								<Activity className='h-6 w-6 text-emerald-600' />
-								<span className='text-h4 font-semibold text-gray-900'>
+								<Activity className='h-6 w-6 text-primary' />
+								<span className='text-lg font-semibold text-foreground'>
 									Watchtower
 								</span>
 							</Link>
@@ -143,16 +143,16 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 								</Button>
 							</Link>
 							{/* User Profile */}
-							<div className='hidden lg:flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors'>
-								<div className='h-8 w-8 bg-emerald-100 rounded-full flex items-center justify-center'>
-									<User className='h-4 w-4 text-emerald-600' />
+							<div className='hidden lg:flex items-center gap-2 cursor-pointer hover:bg-accent rounded-lg p-2 transition-colors'>
+								<div className='h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center'>
+									<User className='h-4 w-4 text-primary' />
 								</div>
 								<div className='text-sm'>
-									<div className='font-medium text-gray-900'>
+									<div className='font-medium text-foreground'>
 										Admin
 									</div>
 								</div>
-								<ChevronDown className='h-4 w-4 text-gray-400' />
+								<ChevronDown className='h-4 w-4 text-muted-foreground' />
 							</div>
 						</div>
 					</div>
@@ -160,9 +160,9 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			</header>
 
 			{/* Breadcrumb Bar */}
-			<div className='bg-white border-b border-gray-100 hidden lg:block'>
+			<div className='bg-card border-b border-border hidden lg:block'>
 				<div className='max-w-[94rem] mx-auto px-6 py-3'>
-					<div className='text-sm text-gray-500'>
+					<div className='text-sm text-muted-foreground'>
 						{getBreadcrumbs(location.pathname)}
 					</div>
 				</div>
@@ -186,8 +186,8 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 										className={cn(
 											'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ease-out',
 											active
-												? 'bg-emerald-600 text-white shadow-sm'
-												: 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-700',
+												? 'bg-primary text-primary-foreground shadow-sm'
+												: 'text-foreground hover:bg-accent hover:text-accent-foreground',
 										)}
 									>
 										<Icon
@@ -195,7 +195,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 												'h-5 w-5',
 												active
 													? 'text-white'
-													: 'text-gray-500',
+													: 'text-muted-foreground',
 											)}
 										/>
 										<span>{item.name}</span>
@@ -236,7 +236,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 				<div className='fixed inset-0 z-50 lg:hidden'>
 					{/* Backdrop */}
 					<div
-						className='fixed inset-0 bg-gray-900/50 backdrop-blur-sm'
+						className='fixed inset-0 bg-background/80 backdrop-blur-sm'
 						onClick={closeMobileMenu}
 					/>
 
@@ -250,8 +250,8 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 									onClick={closeMobileMenu}
 									className='flex items-center gap-3'
 								>
-									<Activity className='h-6 w-6 text-emerald-600' />
-									<span className='text-h4 font-medium text-gray-900'>
+									<Activity className='h-6 w-6 text-primary' />
+									<span className='text-lg font-medium text-foreground'>
 										Watchtower
 									</span>
 								</Link>
@@ -279,8 +279,8 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 											className={cn(
 												'flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-150 ease-out min-h-[44px]',
 												active
-													? 'bg-emerald-600 text-white shadow-sm'
-													: 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-700',
+													? 'bg-primary text-primary-foreground shadow-sm'
+													: 'text-foreground hover:bg-accent hover:text-accent-foreground',
 											)}
 										>
 											<Icon
@@ -288,7 +288,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 													'h-5 w-5 flex-shrink-0',
 													active
 														? 'text-white'
-														: 'text-gray-500',
+														: 'text-muted-foreground',
 												)}
 											/>
 											<div>
@@ -305,8 +305,8 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 							</nav>
 
 							{/* Mobile Quick Actions */}
-							<div className='p-4 border-t bg-gray-50'>
-								<h4 className='text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide'>
+							<div className='p-4 border-t bg-muted/50'>
+								<h4 className='text-sm font-semibold text-foreground mb-3 uppercase tracking-wide'>
 									Quick Actions
 								</h4>
 								<div className='grid grid-cols-2 gap-2'>

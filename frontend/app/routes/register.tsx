@@ -107,23 +107,18 @@ export default function Register() {
 	// If registration is blocked, show a different UI
 	if (isRegistrationBlocked) {
 		return (
-			<div
-				className='min-h-screen flex items-center justify-center px-4'
-				style={{ backgroundColor: 'var(--background-off-white)' }}
-			>
+			<div className='min-h-screen flex items-center justify-center px-4'>
 				<Card className='w-full max-w-[400px]'>
 					<CardHeader className='space-y-1 text-center'>
-						<CardTitle className='text-h2'>
-							Registration Closed
-						</CardTitle>
-						<CardDescription className='text-body'>
+						<CardTitle>Registration Closed</CardTitle>
+						<CardDescription>
 							Registration is closed. Please contact your
 							administrator for access.
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<Alert className='bg-neutral-light-gray border-neutral-gray/20'>
-							<AlertDescription className='text-body text-neutral-dark-gray'>
+						<Alert>
+							<AlertDescription>
 								Registration is closed. Please contact your
 								administrator for access.
 							</AlertDescription>
@@ -132,7 +127,7 @@ export default function Register() {
 						<div className='mt-6 text-center'>
 							<Link
 								to='/login'
-								className='text-link hover:text-primary/80 transition-colors duration-200'
+								className='text-primary hover:text-primary/80 transition-colors duration-200'
 							>
 								Already have an account? Sign in
 							</Link>
@@ -144,19 +139,14 @@ export default function Register() {
 	}
 
 	return (
-		<div
-			className='min-h-screen flex items-center justify-center px-4'
-			style={{ backgroundColor: 'var(--background-off-white)' }}
-		>
+		<div className='min-h-screen flex items-center justify-center px-4'>
 			<Card className='w-full max-w-[400px]'>
 				<CardHeader className='space-y-1 text-center'>
-					<CardTitle className='text-h2'>
-						Set up your Watchtower
-					</CardTitle>
-					<CardDescription className='text-body'>
+					<CardTitle>Set up your Watchtower</CardTitle>
+					<CardDescription>
 						Create your admin account to get started monitoring
 					</CardDescription>
-					<div className='text-body-small text-muted-foreground mt-2'>
+					<div className='text-xs text-muted-foreground mt-2'>
 						Step 1 of 3
 					</div>
 				</CardHeader>
@@ -169,13 +159,8 @@ export default function Register() {
 						className='space-y-4'
 					>
 						{error && (
-							<Alert
-								variant='destructive'
-								className='bg-error-red/5 border-error-red/20'
-							>
-								<AlertDescription className='text-body'>
-									{error}
-								</AlertDescription>
+							<Alert variant='destructive'>
+								<AlertDescription>{error}</AlertDescription>
 							</Alert>
 						)}
 
@@ -191,7 +176,7 @@ export default function Register() {
 								<div className='space-y-2'>
 									<Label
 										htmlFor='email'
-										className='text-body font-medium'
+										className='text-sm font-medium'
 									>
 										Email
 									</Label>
@@ -209,7 +194,7 @@ export default function Register() {
 										autoComplete='email'
 										className={`h-10 transition-colors duration-200 ${
 											field.state.meta.errors.length > 0
-												? 'border-error-red focus-visible:ring-error-red'
+												? 'border-destructive focus-visible:ring-destructive'
 												: 'focus-visible:ring-primary'
 										}`}
 									/>
@@ -232,7 +217,7 @@ export default function Register() {
 								<div className='space-y-2'>
 									<Label
 										htmlFor='password'
-										className='text-body font-medium'
+										className='text-sm font-medium'
 									>
 										Password
 									</Label>
@@ -258,7 +243,7 @@ export default function Register() {
 											className={`h-10 pr-10 transition-colors duration-200 ${
 												field.state.meta.errors.length >
 												0
-													? 'border-error-red focus-visible:ring-error-red'
+													? 'border-destructive focus-visible:ring-destructive'
 													: field.state.value
 														? 'border-primary focus-visible:ring-primary'
 														: 'focus-visible:ring-primary'
@@ -311,7 +296,7 @@ export default function Register() {
 								<div className='space-y-2'>
 									<Label
 										htmlFor='confirmPassword'
-										className='text-body font-medium'
+										className='text-sm font-medium'
 									>
 										Confirm Password
 									</Label>
@@ -337,14 +322,14 @@ export default function Register() {
 											className={`h-10 pr-10 transition-colors duration-200 ${
 												field.state.meta.errors.length >
 												0
-													? 'border-error-red focus-visible:ring-error-red'
+													? 'border-destructive focus-visible:ring-destructive'
 													: field.state.value &&
 															field.state
 																.value ===
 																form.getFieldValue(
 																	'password',
 																)
-														? 'border-success-green focus-visible:ring-success-green'
+														? 'border-green-500 focus-visible:ring-green-500'
 														: 'focus-visible:ring-primary'
 											}`}
 										/>
@@ -376,7 +361,7 @@ export default function Register() {
 
 						<Button
 							type='submit'
-							className='w-full h-10 text-button bg-primary hover:bg-primary/90 transition-colors duration-200'
+							className='w-full'
 							disabled={isSubmitting}
 						>
 							{isSubmitting ? (
@@ -390,11 +375,11 @@ export default function Register() {
 						</Button>
 					</form>
 
-					<div className='mt-6 text-center text-body-small text-muted-foreground'>
+					<div className='mt-6 text-center text-xs text-muted-foreground'>
 						Already have an account?{' '}
 						<Link
 							to='/login'
-							className='text-link hover:text-primary/80 transition-colors duration-200'
+							className='text-primary hover:text-primary/80 transition-colors duration-200'
 						>
 							Sign in
 						</Link>
