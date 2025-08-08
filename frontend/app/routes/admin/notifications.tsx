@@ -115,7 +115,8 @@ export default function AdminNotifications({
 				<CardContent>
 					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
 						{channelTypes.map((channel) => {
-							const status = channels[channel.type]
+							const status =
+								channels[channel.type as keyof typeof channels]
 							const Icon = channel.icon
 
 							return (

@@ -1215,11 +1215,68 @@
 						"testStrategy": "Test authentication protection works correctly, verify role-based navigation visibility functions as expected, validate loading states display during route transitions, and ensure existing admin routes work seamlessly with the new layout system."
 					}
 				]
+			},
+			{
+				"id": 32,
+				"title": "Revamp Endpoint Management System UI",
+				"description": "Build a comprehensive CRUD interface for monitoring endpoint configuration with three main screens: Endpoints List View, Create/Edit Endpoint Form, and Endpoint Detail View using React Router v7, Shadcn UI, and Tailwind CSS.",
+				"details": "Implement a complete endpoint management system with three interconnected screens using React Router v7 routing. Create the Endpoints List View with populated state showing endpoint cards displaying name, URL, status indicators, last check time, and uptime percentage; empty state with illustration and 'Add First Endpoint' CTA; and loading state with skeleton components. Build the Create/Edit Endpoint Form with multi-step creation flow including basic info (name, URL, method), monitoring configuration (interval, timeout, retries), notification settings, and validation states with real-time feedback using react-hook-form and zod validation. Develop the Endpoint Detail View with comprehensive health overview including status timeline, response time graphs using recharts, uptime statistics, recent incidents, and configuration details. Use Shadcn UI components (Card, Form, Button, Input, Select, Badge, Dialog, Skeleton, Alert) styled with Tailwind CSS following bold simplicity design principles. Implement responsive design with mobile-first approach, proper loading states, error boundaries, and optimistic updates. Integrate with existing admin API endpoints for CRUD operations and real-time WebSocket updates for status changes. Use React Query for efficient data fetching, caching, and synchronization.",
+				"testStrategy": "Test all three screens render correctly with proper routing and navigation between views. Verify Endpoints List View displays all states (populated, empty, loading) appropriately with skeleton loading and smooth transitions. Validate Create/Edit Form handles all validation scenarios, displays error messages correctly, and successfully submits data to API endpoints. Test Endpoint Detail View loads accurate data, displays charts properly, and updates in real-time via WebSocket connections. Verify responsive design works across mobile (320px+), tablet (768px+), and desktop (1024px+) breakpoints. Test keyboard navigation, screen reader compatibility, and WCAG 2.1 AA compliance. Validate error boundaries catch and display API errors gracefully. Test optimistic updates and conflict resolution when multiple users edit simultaneously.",
+				"status": "done",
+				"dependencies": [31, 5, 20, 6, 21],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Implement Endpoints List View Component",
+						"description": "Create the main endpoints listing screen with populated state showing endpoint cards, empty state with illustration and CTA, and loading state with skeleton components using Shadcn UI Card, Badge, Skeleton, and Button components.",
+						"dependencies": [],
+						"details": "Build the endpoints list view component that displays endpoint cards with name, URL, status indicators (using Badge component for online/offline/warning states), last check time, and uptime percentage. Implement three distinct states: populated state with endpoint data in Card components, empty state with illustration and 'Add First Endpoint' button, and loading state using Skeleton components. Style with Tailwind CSS following the techy white/dark green design palette. Include responsive grid layout that adapts to different screen sizes.",
+						"status": "done",
+						"testStrategy": "Test all three states (populated, empty, loading) render correctly with proper styling. Verify endpoint cards display all required information and status badges show correct colors. Test responsive grid layout works on mobile, tablet, and desktop. Validate skeleton loading states appear correctly during data fetching."
+					},
+					{
+						"id": 2,
+						"title": "Build Create/Edit Endpoint Form with Multi-step Flow",
+						"description": "Develop the endpoint creation and editing form with multi-step flow including basic info, monitoring configuration, and notification settings using react-hook-form and zod validation with Shadcn UI Form components.",
+						"dependencies": ["32.1"],
+						"details": "Create a comprehensive form component using react-hook-form for state management and zod for validation. Implement multi-step flow: Step 1 - Basic Info (name, URL, HTTP method using Select component), Step 2 - Monitoring Configuration (check interval, timeout, retry count using Input and Select), Step 3 - Notification Settings (email alerts, webhook URLs). Use Shadcn UI Form, Input, Select, Button, and Alert components. Add real-time validation feedback with error states and success indicators. Include form persistence across steps and proper navigation between steps.",
+						"status": "done",
+						"testStrategy": "Test form validation works correctly for each step with proper error messages. Verify form persistence when navigating between steps. Test both create and edit modes with pre-populated data for editing. Validate all input types work correctly and form submission handles success/error states appropriately."
+					},
+					{
+						"id": 3,
+						"title": "Develop Endpoint Detail View with Health Metrics",
+						"description": "Create the detailed endpoint view screen showing comprehensive health overview with status timeline, response time graphs using recharts, uptime statistics, recent incidents, and configuration details using Shadcn UI components.",
+						"dependencies": ["32.1"],
+						"details": "Build a comprehensive endpoint detail screen using Shadcn UI Card components for different sections. Implement status timeline showing historical uptime/downtime periods with color-coded indicators. Create response time graphs using recharts library with line charts for 24h, 7d, and 30d views. Display uptime statistics with percentage calculations and availability metrics. Show recent incidents list with severity indicators using Badge components. Include configuration details section showing current endpoint settings in a readable format. Add real-time updates via WebSocket integration for live status changes.",
+						"status": "done",
+						"testStrategy": "Test all sections render correctly with proper data visualization. Verify recharts graphs display response time data accurately across different time ranges. Test real-time updates work correctly when endpoint status changes. Validate incident history displays with proper severity indicators and timestamps."
+					},
+					{
+						"id": 4,
+						"title": "Implement React Router v7 Navigation and URL Structure",
+						"description": "Set up React Router v7 routing system for all three screens with proper URL structure, navigation between views, and route parameters for endpoint identification and state management.",
+						"dependencies": ["32.1", "32.2", "32.3"],
+						"details": "Configure React Router v7 with routes: /admin/endpoints (list view), /admin/endpoints/new (create form), /admin/endpoints/:id/edit (edit form), /admin/endpoints/:id (detail view). Implement proper navigation components and breadcrumbs using Shadcn UI Navigation Menu. Add route guards for authentication and proper error boundaries for 404 handling. Configure dynamic imports for code splitting and lazy loading of route components. Implement proper URL parameter handling for endpoint IDs and form state persistence across navigation.",
+						"status": "done",
+						"testStrategy": "Test all routes render correctly with proper URL updates. Verify navigation between screens works seamlessly with browser back/forward buttons. Test route parameters are handled correctly for endpoint IDs. Validate authentication guards work and redirect appropriately. Test lazy loading and code splitting functionality."
+					},
+					{
+						"id": 5,
+						"title": "Integrate API Endpoints and Real-time Updates",
+						"description": "Connect all UI components with backend API endpoints using React Query for data fetching and caching, implement WebSocket integration for real-time status updates, and add optimistic updates for better UX.",
+						"dependencies": ["32.1", "32.2", "32.3", "32.4"],
+						"details": "Integrate React Query for efficient data fetching, caching, and synchronization with backend admin API endpoints. Implement queries for endpoints list, individual endpoint details, and mutations for create/update/delete operations. Add WebSocket client for real-time endpoint status updates and incident notifications. Implement optimistic updates for form submissions to provide immediate feedback. Add proper error handling with retry logic and user-friendly error messages using Shadcn UI Alert components. Include loading states management and cache invalidation strategies.",
+						"status": "done",
+						"testStrategy": "Test all API integrations work correctly with proper error handling. Verify React Query caching reduces unnecessary API calls. Test WebSocket real-time updates reflect immediately in the UI. Validate optimistic updates provide smooth user experience during form submissions. Test offline/online state handling and retry mechanisms."
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-08T04:20:13.564Z",
+			"updated": "2025-08-08T06:55:00.663Z",
 			"description": "Tasks for master context"
 		}
 	}

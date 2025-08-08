@@ -27,6 +27,7 @@ import { useSuccessToast, useErrorToast } from '~/components/toast'
 import { requireAuth } from '~/lib/auth'
 import { getApiErrorMessage } from '~/lib/validation'
 import { validators, combineValidators, FieldError } from '~/lib/form-utils'
+import { ArrowLeft, Plus, Check, Zap, Settings, Globe } from 'lucide-react'
 import type { Route } from './+types/new'
 
 export function meta({}: Route.MetaArgs) {
@@ -151,413 +152,607 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 	})
 
 	return (
-		<div className='max-w-2xl'>
-			<div className='flex justify-between items-center mb-8'>
-				<div>
-					<h1 className='text-3xl font-bold'>New Endpoint</h1>
-					<p className='text-muted-foreground'>
-						Create a new monitoring endpoint
-					</p>
+		<div className='max-w-4xl mx-auto space-y-8'>
+			{/* Header */}
+			<div className='space-y-6'>
+				<div className='flex items-center gap-3'>
+					<Link to='/admin/endpoints'>
+						<Button variant='ghost' size='sm' className='gap-2'>
+							<ArrowLeft className='h-4 w-4' />
+							Back to Endpoints
+						</Button>
+					</Link>
 				</div>
-				<Link to='/admin/endpoints'>
-					<Button variant='outline'>Cancel</Button>
-				</Link>
+
+				<div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+					<div className='space-y-2'>
+						<h1 className='text-4xl font-bold tracking-tight flex items-center gap-3'>
+							<div className='flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10'>
+								<Plus className='h-6 w-6 text-primary' />
+							</div>
+							New Endpoint
+						</h1>
+						<p className='text-xl text-muted-foreground'>
+							Create a new monitoring endpoint to track your
+							services
+						</p>
+					</div>
+				</div>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Endpoint Configuration</CardTitle>
-					<CardDescription>
-						Configure your endpoint monitoring settings
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<form
-						onSubmit={(e) => {
-							e.preventDefault()
-							form.handleSubmit()
-						}}
-						className='space-y-6'
-					>
-						{error && (
-							<Alert variant='destructive'>
-								<AlertDescription>{error}</AlertDescription>
-							</Alert>
-						)}
-
-						{/* Basic Information */}
-						<div className='space-y-4'>
-							<h3 className='text-lg font-medium'>
-								Basic Information
-							</h3>
-
-							<form.Field
-								name='name'
-								validators={{
-									onChange: validators.required,
-								}}
-								children={(field) => (
-									<div className='space-y-2'>
-										<Label htmlFor='name'>Name *</Label>
-										<Input
-											id='name'
-											value={field.state.value}
-											onChange={(e) =>
-												field.handleChange(
-													e.target.value,
-												)
-											}
-											onBlur={field.handleBlur}
-											placeholder='My API Endpoint'
-											required
-										/>
-										<FieldError
-											errors={field.state.meta.errors}
-										/>
-									</div>
-								)}
-							/>
-
-							<form.Field
-								name='description'
-								children={(field) => (
-									<div className='space-y-2'>
-										<Label htmlFor='description'>
-											Description
-										</Label>
-										<Textarea
-											id='description'
-											value={field.state.value}
-											onChange={(e) =>
-												field.handleChange(
-													e.target.value,
-												)
-											}
-											onBlur={field.handleBlur}
-											placeholder='Optional description of what this endpoint monitors'
-											rows={3}
-										/>
-										<FieldError
-											errors={field.state.meta.errors}
-										/>
-									</div>
-								)}
-							/>
-
-							<form.Field
-								name='url'
-								validators={{
-									onChange: combineValidators(
-										validators.required,
-										validators.url,
-									),
-								}}
-								children={(field) => (
-									<div className='space-y-2'>
-										<Label htmlFor='url'>URL *</Label>
-										<Input
-											id='url'
-											type='url'
-											value={field.state.value}
-											onChange={(e) =>
-												field.handleChange(
-													e.target.value,
-												)
-											}
-											onBlur={field.handleBlur}
-											placeholder='https://api.example.com/health'
-											required
-										/>
-										<FieldError
-											errors={field.state.meta.errors}
-										/>
-									</div>
-								)}
-							/>
-
-							<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-								<form.Field
-									name='method'
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='method'>
-												HTTP Method
-											</Label>
-											<Select
-												value={field.state.value}
-												onValueChange={(value) =>
-													field.handleChange(value)
-												}
-											>
-												<SelectTrigger>
-													<SelectValue />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectItem value='GET'>
-														GET
-													</SelectItem>
-													<SelectItem value='POST'>
-														POST
-													</SelectItem>
-													<SelectItem value='PUT'>
-														PUT
-													</SelectItem>
-													<SelectItem value='PATCH'>
-														PATCH
-													</SelectItem>
-													<SelectItem value='DELETE'>
-														DELETE
-													</SelectItem>
-													<SelectItem value='HEAD'>
-														HEAD
-													</SelectItem>
-													<SelectItem value='OPTIONS'>
-														OPTIONS
-													</SelectItem>
-												</SelectContent>
-											</Select>
-											<FieldError
-												errors={field.state.meta.errors}
-											/>
-										</div>
-									)}
-								/>
-
-								<form.Field
-									name='expected_status_code'
-									validators={{
-										onChange: combineValidators(
-											validators.required,
-											validators.number,
-											validators.positive,
-										),
-									}}
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='status'>
-												Expected Status Code
-											</Label>
-											<Input
-												id='status'
-												type='number'
-												value={field.state.value}
-												onChange={(e) =>
-													field.handleChange(
-														Number(e.target.value),
-													)
-												}
-												onBlur={field.handleBlur}
-												min='100'
-												max='599'
-											/>
-											<FieldError
-												errors={field.state.meta.errors}
-											/>
-										</div>
-									)}
-								/>
+			{/* Form */}
+			<div className='grid gap-8 lg:grid-cols-3'>
+				{/* Main Form */}
+				<div className='lg:col-span-2'>
+					<Card className='border-0 shadow-lg'>
+						<CardHeader className='pb-8'>
+							<div className='flex items-center gap-3'>
+								<div className='flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10'>
+									<Settings className='h-5 w-5 text-primary' />
+								</div>
+								<div>
+									<CardTitle className='text-2xl'>
+										Endpoint Configuration
+									</CardTitle>
+									<CardDescription className='text-base'>
+										Configure your endpoint monitoring
+										settings and preferences
+									</CardDescription>
+								</div>
 							</div>
-						</div>
-
-						{/* Request Configuration */}
-						<div className='space-y-4'>
-							<h3 className='text-lg font-medium'>
-								Request Configuration
-							</h3>
-
-							<form.Field
-								name='headers'
-								children={(field) => (
-									<div className='space-y-2'>
-										<JsonEditor
-											title='HTTP Headers'
-											value={field.state.value}
-											onChange={(value) =>
-												field.handleChange(value)
-											}
-											height={200}
-											placeholder={{
-												Authorization:
-													'Bearer your-token-here',
-												'Content-Type':
-													'application/json',
-												'User-Agent':
-													'Watchtower-Monitor/1.0',
-											}}
-										/>
-										<FieldError
-											errors={field.state.meta.errors}
-										/>
-									</div>
-								)}
-							/>
-
-							<form.Field
-								name='method'
-								children={(methodField) => (
-									<>
-										{(methodField.state.value === 'POST' ||
-											methodField.state.value === 'PUT' ||
-											methodField.state.value ===
-												'PATCH') && (
-											<form.Field
-												name='body'
-												children={(field) => (
-													<div className='space-y-2'>
-														<JsonEditor
-															title='Request Body'
-															value={
-																field.state
-																	.value
-															}
-															onChange={(value) =>
-																field.handleChange(
-																	value,
-																)
-															}
-															height={250}
-															placeholder={{
-																key: 'value',
-																data: {
-																	nested: 'object',
-																},
-															}}
-															validate={false}
-														/>
-														<FieldError
-															errors={
-																field.state.meta
-																	.errors
-															}
-														/>
-													</div>
-												)}
-											/>
-										)}
-									</>
-								)}
-							/>
-						</div>
-
-						{/* Monitoring Configuration */}
-						<div className='space-y-4'>
-							<h3 className='text-lg font-medium'>
-								Monitoring Configuration
-							</h3>
-
-							<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-								<form.Field
-									name='timeout_seconds'
-									validators={{
-										onChange: combineValidators(
-											validators.required,
-											validators.number,
-											validators.positive,
-										),
-									}}
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='timeout'>
-												Timeout (seconds)
-											</Label>
-											<Input
-												id='timeout'
-												type='number'
-												value={field.state.value}
-												onChange={(e) =>
-													field.handleChange(
-														Number(e.target.value),
-													)
-												}
-												onBlur={field.handleBlur}
-												min='1'
-												max='300'
-											/>
-											<FieldError
-												errors={field.state.meta.errors}
-											/>
-										</div>
-									)}
-								/>
-
-								<form.Field
-									name='check_interval_seconds'
-									validators={{
-										onChange: combineValidators(
-											validators.required,
-											validators.number,
-											validators.positive,
-										),
-									}}
-									children={(field) => (
-										<div className='space-y-2'>
-											<Label htmlFor='interval'>
-												Check Interval (seconds)
-											</Label>
-											<Input
-												id='interval'
-												type='number'
-												value={field.state.value}
-												onChange={(e) =>
-													field.handleChange(
-														Number(e.target.value),
-													)
-												}
-												onBlur={field.handleBlur}
-												min='1'
-												max='86400'
-											/>
-											<FieldError
-												errors={field.state.meta.errors}
-											/>
-										</div>
-									)}
-								/>
-							</div>
-
-							<form.Field
-								name='enabled'
-								children={(field) => (
-									<div className='flex items-center space-x-2'>
-										<Switch
-											id='enabled'
-											checked={field.state.value}
-											onCheckedChange={(checked) =>
-												field.handleChange(checked)
-											}
-										/>
-										<Label htmlFor='enabled'>
-											Enable monitoring
-										</Label>
-										<FieldError
-											errors={field.state.meta.errors}
-										/>
-									</div>
-								)}
-							/>
-						</div>
-
-						<div className='flex justify-end space-x-2'>
-							<Link to='/admin/endpoints'>
-								<Button type='button' variant='outline'>
-									Cancel
-								</Button>
-							</Link>
-							<Button
-								type='submit'
-								disabled={form.state.isSubmitting}
+						</CardHeader>
+						<CardContent className='space-y-8'>
+							<form
+								onSubmit={(e) => {
+									e.preventDefault()
+									form.handleSubmit()
+								}}
+								className='space-y-10'
 							>
-								{form.state.isSubmitting && (
-									<ButtonLoadingSkeleton />
+								{error && (
+									<Alert variant='destructive'>
+										<AlertDescription>
+											{error}
+										</AlertDescription>
+									</Alert>
 								)}
-								{form.state.isSubmitting
-									? 'Creating...'
-									: 'Create Endpoint'}
-							</Button>
-						</div>
-					</form>
-				</CardContent>
-			</Card>
+
+								{/* Basic Information */}
+								<div className='space-y-6'>
+									<div className='flex items-center gap-3 pb-4 border-b border-border/50'>
+										<div className='flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10'>
+											<Globe className='h-4 w-4 text-primary' />
+										</div>
+										<h3 className='text-xl font-semibold'>
+											Basic Information
+										</h3>
+									</div>
+
+									<form.Field
+										name='name'
+										validators={{
+											onChange: validators.required,
+										}}
+										children={(field) => (
+											<div className='space-y-2'>
+												<Label htmlFor='name'>
+													Name *
+												</Label>
+												<Input
+													id='name'
+													value={field.state.value}
+													onChange={(e) =>
+														field.handleChange(
+															e.target.value,
+														)
+													}
+													onBlur={field.handleBlur}
+													placeholder='My API Endpoint'
+													required
+												/>
+												<FieldError
+													errors={
+														field.state.meta.errors
+													}
+												/>
+											</div>
+										)}
+									/>
+
+									<form.Field
+										name='description'
+										children={(field) => (
+											<div className='space-y-2'>
+												<Label htmlFor='description'>
+													Description
+												</Label>
+												<Textarea
+													id='description'
+													value={field.state.value}
+													onChange={(e) =>
+														field.handleChange(
+															e.target.value,
+														)
+													}
+													onBlur={field.handleBlur}
+													placeholder='Optional description of what this endpoint monitors'
+													rows={3}
+												/>
+												<FieldError
+													errors={
+														field.state.meta.errors
+													}
+												/>
+											</div>
+										)}
+									/>
+
+									<form.Field
+										name='url'
+										validators={{
+											onChange: combineValidators(
+												validators.required,
+												validators.url,
+											),
+										}}
+										children={(field) => (
+											<div className='space-y-2'>
+												<Label htmlFor='url'>
+													URL *
+												</Label>
+												<Input
+													id='url'
+													type='url'
+													value={field.state.value}
+													onChange={(e) =>
+														field.handleChange(
+															e.target.value,
+														)
+													}
+													onBlur={field.handleBlur}
+													placeholder='https://api.example.com/health'
+													required
+												/>
+												<FieldError
+													errors={
+														field.state.meta.errors
+													}
+												/>
+											</div>
+										)}
+									/>
+
+									<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+										<form.Field
+											name='method'
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='method'>
+														HTTP Method
+													</Label>
+													<Select
+														value={
+															field.state.value
+														}
+														onValueChange={(
+															value,
+														) =>
+															field.handleChange(
+																value,
+															)
+														}
+													>
+														<SelectTrigger>
+															<SelectValue />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value='GET'>
+																GET
+															</SelectItem>
+															<SelectItem value='POST'>
+																POST
+															</SelectItem>
+															<SelectItem value='PUT'>
+																PUT
+															</SelectItem>
+															<SelectItem value='PATCH'>
+																PATCH
+															</SelectItem>
+															<SelectItem value='DELETE'>
+																DELETE
+															</SelectItem>
+															<SelectItem value='HEAD'>
+																HEAD
+															</SelectItem>
+															<SelectItem value='OPTIONS'>
+																OPTIONS
+															</SelectItem>
+														</SelectContent>
+													</Select>
+													<FieldError
+														errors={
+															field.state.meta
+																.errors
+														}
+													/>
+												</div>
+											)}
+										/>
+
+										<form.Field
+											name='expected_status_code'
+											validators={{
+												onChange: (props: {
+													value: number
+												}) => {
+													if (!props.value)
+														return 'This field is required'
+													if (props.value <= 0)
+														return 'Must be a positive number'
+													return undefined
+												},
+											}}
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='status'>
+														Expected Status Code
+													</Label>
+													<Input
+														id='status'
+														type='number'
+														value={
+															field.state.value
+														}
+														onChange={(e) =>
+															field.handleChange(
+																Number(
+																	e.target
+																		.value,
+																),
+															)
+														}
+														onBlur={
+															field.handleBlur
+														}
+														min='100'
+														max='599'
+													/>
+													<FieldError
+														errors={
+															field.state.meta
+																.errors
+														}
+													/>
+												</div>
+											)}
+										/>
+									</div>
+								</div>
+
+								{/* Request Configuration */}
+								<div className='space-y-6'>
+									<div className='flex items-center gap-3 pb-4 border-b border-border/50'>
+										<div className='flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10'>
+											<Settings className='h-4 w-4 text-primary' />
+										</div>
+										<h3 className='text-xl font-semibold'>
+											Request Configuration
+										</h3>
+									</div>
+
+									<form.Field
+										name='headers'
+										children={(field) => (
+											<div className='space-y-2'>
+												<JsonEditor
+													title='HTTP Headers'
+													value={field.state.value}
+													onChange={(value) =>
+														field.handleChange(
+															value,
+														)
+													}
+													height={200}
+													placeholder={{
+														Authorization:
+															'Bearer your-token-here',
+														'Content-Type':
+															'application/json',
+														'User-Agent':
+															'Watchtower-Monitor/1.0',
+													}}
+												/>
+												<FieldError
+													errors={
+														field.state.meta.errors
+													}
+												/>
+											</div>
+										)}
+									/>
+
+									<form.Field
+										name='method'
+										children={(methodField) => (
+											<>
+												{(methodField.state.value ===
+													'POST' ||
+													methodField.state.value ===
+														'PUT' ||
+													methodField.state.value ===
+														'PATCH') && (
+													<form.Field
+														name='body'
+														children={(field) => (
+															<div className='space-y-2'>
+																<JsonEditor
+																	title='Request Body'
+																	value={
+																		field
+																			.state
+																			.value
+																	}
+																	onChange={(
+																		value,
+																	) =>
+																		field.handleChange(
+																			value,
+																		)
+																	}
+																	height={250}
+																	placeholder={{
+																		key: 'value',
+																		data: {
+																			nested: 'object',
+																		},
+																	}}
+																	validate={
+																		false
+																	}
+																/>
+																<FieldError
+																	errors={
+																		field
+																			.state
+																			.meta
+																			.errors
+																	}
+																/>
+															</div>
+														)}
+													/>
+												)}
+											</>
+										)}
+									/>
+								</div>
+
+								{/* Monitoring Configuration */}
+								<div className='space-y-6'>
+									<div className='flex items-center gap-3 pb-4 border-b border-border/50'>
+										<div className='flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10'>
+											<Zap className='h-4 w-4 text-primary' />
+										</div>
+										<h3 className='text-xl font-semibold'>
+											Monitoring Configuration
+										</h3>
+									</div>
+
+									<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+										<form.Field
+											name='timeout_seconds'
+											validators={{
+												onChange: (props: {
+													value: number
+												}) => {
+													if (!props.value)
+														return 'This field is required'
+													if (props.value <= 0)
+														return 'Must be a positive number'
+													return undefined
+												},
+											}}
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='timeout'>
+														Timeout (seconds)
+													</Label>
+													<Input
+														id='timeout'
+														type='number'
+														value={
+															field.state.value
+														}
+														onChange={(e) =>
+															field.handleChange(
+																Number(
+																	e.target
+																		.value,
+																),
+															)
+														}
+														onBlur={
+															field.handleBlur
+														}
+														min='1'
+														max='300'
+													/>
+													<FieldError
+														errors={
+															field.state.meta
+																.errors
+														}
+													/>
+												</div>
+											)}
+										/>
+
+										<form.Field
+											name='check_interval_seconds'
+											validators={{
+												onChange: (props: {
+													value: number
+												}) => {
+													if (!props.value)
+														return 'This field is required'
+													if (props.value <= 0)
+														return 'Must be a positive number'
+													return undefined
+												},
+											}}
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='interval'>
+														Check Interval (seconds)
+													</Label>
+													<Input
+														id='interval'
+														type='number'
+														value={
+															field.state.value
+														}
+														onChange={(e) =>
+															field.handleChange(
+																Number(
+																	e.target
+																		.value,
+																),
+															)
+														}
+														onBlur={
+															field.handleBlur
+														}
+														min='1'
+														max='86400'
+													/>
+													<FieldError
+														errors={
+															field.state.meta
+																.errors
+														}
+													/>
+												</div>
+											)}
+										/>
+									</div>
+
+									<form.Field
+										name='enabled'
+										children={(field) => (
+											<div className='flex items-center space-x-2'>
+												<Switch
+													id='enabled'
+													checked={field.state.value}
+													onCheckedChange={(
+														checked,
+													) =>
+														field.handleChange(
+															checked,
+														)
+													}
+												/>
+												<Label htmlFor='enabled'>
+													Enable monitoring
+												</Label>
+												<FieldError
+													errors={
+														field.state.meta.errors
+													}
+												/>
+											</div>
+										)}
+									/>
+								</div>
+
+								<div className='flex flex-col sm:flex-row justify-end gap-3 pt-8 border-t border-border/50'>
+									<Link to='/admin/endpoints'>
+										<Button
+											type='button'
+											variant='outline'
+											size='lg'
+											className='w-full sm:w-auto'
+										>
+											Cancel
+										</Button>
+									</Link>
+									<Button
+										type='submit'
+										size='lg'
+										className='gap-2 shadow-lg w-full sm:w-auto'
+										disabled={form.state.isSubmitting}
+									>
+										{form.state.isSubmitting ? (
+											<>
+												<ButtonLoadingSkeleton />
+												Creating...
+											</>
+										) : (
+											<>
+												<Check className='h-4 w-4' />
+												Create Endpoint
+											</>
+										)}
+									</Button>
+								</div>
+							</form>
+						</CardContent>
+					</Card>
+				</div>
+
+				{/* Sidebar */}
+				<div className='space-y-6'>
+					<Card className='border-0 shadow-sm'>
+						<CardHeader>
+							<CardTitle className='text-lg'>
+								Quick Tips
+							</CardTitle>
+						</CardHeader>
+						<CardContent className='space-y-4'>
+							<div className='space-y-3'>
+								<div className='flex items-start gap-3'>
+									<div className='w-2 h-2 rounded-full bg-primary mt-2' />
+									<div>
+										<p className='font-medium'>
+											Choose meaningful names
+										</p>
+										<p className='text-sm text-muted-foreground'>
+											Use descriptive names that clearly
+											identify the service being
+											monitored.
+										</p>
+									</div>
+								</div>
+								<div className='flex items-start gap-3'>
+									<div className='w-2 h-2 rounded-full bg-primary mt-2' />
+									<div>
+										<p className='font-medium'>
+											Set appropriate intervals
+										</p>
+										<p className='text-sm text-muted-foreground'>
+											Balance monitoring frequency with
+											server load. Start with 5-minute
+											intervals.
+										</p>
+									</div>
+								</div>
+								<div className='flex items-start gap-3'>
+									<div className='w-2 h-2 rounded-full bg-primary mt-2' />
+									<div>
+										<p className='font-medium'>
+											Test your endpoint
+										</p>
+										<p className='text-sm text-muted-foreground'>
+											After creation, verify the endpoint
+											is working correctly by checking the
+											monitoring logs.
+										</p>
+									</div>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+			</div>
 		</div>
 	)
 }
