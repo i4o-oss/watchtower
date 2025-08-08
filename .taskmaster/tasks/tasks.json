@@ -1036,164 +1036,133 @@
 			},
 			{
 				"id": 28,
-				"title": "Setup Backend Database Schema",
-				"description": "Create comprehensive database schema for monitoring system including endpoints, logs, incidents, users, and notifications",
-				"details": "Create SQL migration files for: endpoints table (id, name, description, url, method, headers, body, interval, enabled, created_at, updated_at), monitoring_logs table (id, endpoint_id, timestamp, status_code, response_time, error_message, success), incidents table (id, title, description, severity, status, start_time, end_time, created_at, updated_at), endpoint_incidents table (endpoint_id, incident_id, affected_start, affected_end), users table (id, username, password_hash, role, created_at, updated_at), notification_channels table, notification_rules table, notification_logs table, and notification_templates table. Use appropriate indexes for performance and foreign key constraints for data integrity.",
-				"testStrategy": "Validate schema creation with test database setup, verify all foreign key relationships, test data insertion and retrieval for each table, validate index performance with sample data",
-				"priority": "high",
+				"title": "Translate Style Guide to Shadcn UI and Tailwind Themes",
+				"description": "Create comprehensive Shadcn UI and Tailwind CSS theme configurations that implement the design system principles outlined in the style guide, establishing the visual foundation for all frontend components.",
+				"details": "Read and analyze .docs/STYLE_GUIDE.md to extract design principles including bold simplicity, breathable whitespace, strategic color accents, and typography hierarchy. Create Tailwind CSS configuration with custom color palette implementing strategic color theory with subtle gradients and purposeful accents. Configure typography scale with weight variance and proportional scaling for information architecture. Set up spacing scale for systematic negative space and cognitive breathing room. Implement Shadcn UI theme variables mapping to Tailwind tokens for consistent component styling. Create CSS custom properties for motion choreography with physics-based transitions. Establish accessibility-driven contrast ratios meeting WCAG guidelines. Configure responsive breakpoints for content-first layouts. Create utility classes for visual density optimization and feedback responsiveness via state transitions. Document theme usage patterns and component styling guidelines.",
+				"testStrategy": "Verify theme compilation without errors, test color contrast ratios meet accessibility standards, validate typography scales render correctly across devices, test motion transitions feel natural and physics-based, verify Shadcn UI components inherit theme correctly, test responsive breakpoints work as expected, validate utility classes generate properly, test theme switching if multiple themes exist, verify consistent styling across all planned components",
+				"status": "done",
 				"dependencies": [],
-				"status": "pending",
+				"priority": "medium",
 				"subtasks": []
 			},
 			{
 				"id": 29,
-				"title": "Implement Backend Authentication System",
-				"description": "Create secure authentication system with admin-only registration and session management",
-				"details": "Implement JWT-based authentication with bcrypt password hashing. Create registration endpoint that only allows first user signup then automatically locks down. Include middleware for route protection, session validation, and registration status checking. Add endpoints: POST /api/auth/register (with lockdown logic), POST /api/auth/login, POST /api/auth/logout, GET /api/auth/registration-status. Store registration status in database and implement anti-takeover protection.",
-				"testStrategy": "Unit tests for password hashing and JWT generation, integration tests for registration lockdown logic, test authentication middleware with valid/invalid tokens, verify registration blocking after first user",
-				"priority": "high",
-				"dependencies": [28],
-				"status": "pending",
+				"title": "Revamp Public Status Page UI with React Router v7",
+				"description": "Completely redesign and rebuild the public status page interface using React Router v7, implementing three distinct screens (Public Status Dashboard, Service Detail View, and Incident Detail Modal) with modern Shadcn UI components and a techy white/dark green color palette.",
+				"details": "Replace the existing public status page with a comprehensive three-screen interface built on React Router v7. Implement the Public Status Dashboard as the main landing page featuring four distinct states: All Systems Operational (green indicators), Partial Outage (yellow warnings), Major Outage (red alerts), and Under Maintenance (blue notices). Create a Service Detail View accessible via routing that displays individual service metrics, 90-day uptime graphs with interactive daily breakdowns, recent incident history, and real-time status updates. Build an Incident Detail Modal that opens over existing content with comprehensive incident information, timeline updates, affected services, and resolution details. Utilize Shadcn UI components including Card, Badge, Button, Dialog, Progress, Table, and Alert components for consistent design language. Implement the techy white/dark green color palette with strategic accent colors for status indicators, utilizing CSS custom properties for theme consistency. Add smooth page transitions using React Router v7's built-in animation support and Framer Motion for micro-interactions. Implement responsive design with mobile-first approach using Tailwind CSS breakpoints. Integrate real-time WebSocket connections for live status updates without page refreshes. Add proper loading states, error boundaries, and accessibility features including ARIA labels and keyboard navigation. Implement URL-based state management for deep linking to specific services and incidents.",
+				"testStrategy": "Verify React Router v7 routing works correctly between all three screens with proper URL updates and browser navigation. Test all four dashboard states render correctly with appropriate color coding and status indicators. Validate Service Detail View displays accurate uptime data and interactive graphs respond to user interactions. Test Incident Detail Modal opens/closes properly with correct data display and accessible keyboard navigation. Verify Shadcn UI components render consistently across all screens and breakpoints. Test color palette implementation matches design specifications with proper contrast ratios for accessibility. Validate real-time WebSocket updates reflect immediately across all relevant UI components without causing layout shifts. Test responsive design across mobile, tablet, and desktop viewports. Verify loading states and error handling work appropriately for all API calls and WebSocket connections. Test deep linking functionality allows direct access to specific services and incidents via URL.",
+				"status": "done",
+				"dependencies": [28, 23, 21, 6],
+				"priority": "medium",
 				"subtasks": [
 					{
 						"id": 1,
-						"title": "Set up JWT authentication middleware and utilities",
-						"description": "Create JWT token generation, verification, and middleware functions for protecting routes",
+						"title": "Set up React Router v7 configuration and routing structure",
+						"description": "Install and configure React Router v7, set up the routing structure for the three main screens (Public Status Dashboard, Service Detail View, and Incident Detail Modal), and implement navigation components with proper URL patterns and route parameters.",
 						"dependencies": [],
-						"details": "Implement JWT signing and verification using a secure secret key. Create middleware to extract and validate tokens from request headers. Include token expiration handling and error responses for invalid/expired tokens.",
-						"status": "pending",
-						"testStrategy": "Unit tests for JWT generation/verification functions and middleware behavior with valid/invalid tokens"
+						"details": "Install React Router v7 and configure the router with routes for the main dashboard (/), service detail view (/service/:id), and incident modal routing. Set up route parameters for service IDs and incident IDs. Configure proper route guards and navigation components. Implement breadcrumb navigation and ensure proper browser history management.",
+						"status": "done",
+						"testStrategy": "Verify all routes are accessible with correct URLs, test browser navigation (back/forward buttons), validate route parameters are passed correctly, and ensure deep linking works for all screens"
 					},
 					{
 						"id": 2,
-						"title": "Implement password hashing with bcrypt",
-						"description": "Create secure password hashing and comparison utilities using bcrypt",
-						"dependencies": [],
-						"details": "Set up bcrypt with appropriate salt rounds (12+) for password hashing. Create utility functions for hashing passwords during registration and comparing passwords during login. Handle bcrypt errors gracefully.",
-						"status": "pending",
-						"testStrategy": "Unit tests for password hashing and comparison functions with various password inputs"
+						"title": "Build Public Status Dashboard with four system states",
+						"description": "Create the main dashboard component featuring the four distinct system states (All Systems Operational, Partial Outage, Major Outage, Under Maintenance) with proper color coding and status indicators using Shadcn UI components.",
+						"dependencies": ["29.1"],
+						"details": "Implement the main dashboard layout using Shadcn Card, Badge, and Alert components. Create status indicator components for each of the four states with appropriate color schemes (green, yellow, red, blue). Add service status grid with real-time updates. Implement the techy white/dark green color palette using CSS custom properties. Add loading states and error boundaries.",
+						"status": "done",
+						"testStrategy": "Test all four dashboard states render correctly with proper colors, verify status indicators update in real-time, validate responsive design across devices, and test loading and error states"
 					},
 					{
 						"id": 3,
-						"title": "Create registration status tracking system",
-						"description": "Implement database schema and logic to track whether first user has registered",
-						"dependencies": [],
-						"details": "Add registration_locked field to settings/config table. Create functions to check and update registration status. Implement anti-takeover protection by ensuring only the first successful registration can occur.",
-						"status": "pending",
-						"testStrategy": "Database tests for registration status persistence and race condition handling"
+						"title": "Implement Service Detail View with uptime graphs and metrics",
+						"description": "Create the Service Detail View component that displays individual service metrics, interactive 90-day uptime graphs with daily breakdowns, recent incident history, and real-time status updates.",
+						"dependencies": ["29.1"],
+						"details": "Build service detail page with Shadcn Table and Progress components for metrics display. Implement interactive 90-day uptime charts using a charting library compatible with React. Add daily breakdown functionality on chart interaction. Display recent incident history with timeline components. Integrate real-time WebSocket updates for live metrics. Add proper loading states and error handling.",
+						"status": "done",
+						"testStrategy": "Verify uptime graphs display accurate historical data, test interactive daily breakdowns, validate real-time updates work properly, and ensure incident history displays correctly with proper chronological ordering"
 					},
 					{
 						"id": 4,
-						"title": "Build authentication endpoints",
-						"description": "Create POST /api/auth/register, POST /api/auth/login, POST /api/auth/logout, and GET /api/auth/registration-status endpoints",
-						"dependencies": [1, 2, 3],
-						"details": "Implement registration endpoint with first-user-only logic, login endpoint with password verification and JWT issuance, logout endpoint for token invalidation, and status endpoint to check if registration is available. Include proper error handling and validation.",
-						"status": "pending",
-						"testStrategy": "Integration tests for all endpoints covering success cases, error cases, and registration lockdown behavior"
+						"title": "Create Incident Detail Modal with comprehensive incident information",
+						"description": "Build the Incident Detail Modal component using Shadcn Dialog that displays comprehensive incident information, timeline updates, affected services, and resolution details with proper routing integration.",
+						"dependencies": ["29.1"],
+						"details": "Implement incident modal using Shadcn Dialog component that overlays existing content. Display incident timeline with status updates, affected services list, resolution details, and post-mortem information. Add proper routing so modals can be accessed via direct URLs. Implement smooth animations and transitions. Ensure modal is accessible with keyboard navigation and proper ARIA labels.",
+						"status": "done",
+						"testStrategy": "Test incident modal opens correctly from various entry points, verify comprehensive incident data displays properly, validate URL-based modal access works, and test accessibility features including keyboard navigation"
 					},
 					{
 						"id": 5,
-						"title": "Implement route protection middleware",
-						"description": "Create middleware to protect routes requiring authentication and integrate with existing endpoints",
-						"dependencies": [1, 4],
-						"details": "Build authentication middleware that validates JWT tokens and attaches user information to requests. Create role-based protection if needed. Apply middleware to protected routes and ensure proper error responses for unauthorized access.",
-						"status": "pending",
-						"testStrategy": "End-to-end tests for protected routes with authenticated and unauthenticated requests"
+						"title": "Integrate WebSocket connections and implement responsive design with animations",
+						"description": "Connect all components to WebSocket for real-time updates, implement responsive design with mobile-first approach, add smooth page transitions and micro-interactions, and ensure accessibility compliance.",
+						"dependencies": ["29.2", "29.3", "29.4"],
+						"details": "Integrate WebSocket connections throughout all components for live status updates. Implement responsive design using Tailwind CSS breakpoints with mobile-first approach. Add smooth page transitions using React Router v7's animation support and Framer Motion for micro-interactions. Implement proper ARIA labels, keyboard navigation, and screen reader support. Add URL-based state management for deep linking to specific services and incidents.",
+						"status": "done",
+						"testStrategy": "Test real-time WebSocket updates across all components, verify responsive design on various screen sizes, validate smooth animations and transitions, test accessibility features with screen readers, and ensure deep linking works correctly for all states"
 					}
 				]
 			},
 			{
 				"id": 30,
-				"title": "Create Monitoring Engine Core",
-				"description": "Develop the background monitoring system with goroutines for continuous endpoint checking",
-				"details": "Build monitoring engine using Go goroutines with configurable intervals (1min-24hr). Implement HTTP client with custom headers, request bodies, timeout handling, and retry logic. Track response times with millisecond precision, validate status codes, and handle errors gracefully. Create monitoring scheduler that manages multiple endpoints concurrently and stores results in monitoring_logs table. Include circuit breaker pattern for failed endpoints.",
-				"testStrategy": "Unit tests for HTTP client functionality, integration tests with mock HTTP servers, load testing with 100+ concurrent monitors, verify retry logic and timeout handling, test data logging accuracy",
-				"priority": "high",
-				"dependencies": [28],
-				"status": "pending",
-				"subtasks": []
-			},
-			{
-				"id": 31,
-				"title": "Implement Backend API Endpoints",
-				"description": "Create comprehensive REST API for both public status access and admin management",
-				"details": "Implement public API: GET /api/status (current status), GET /api/uptime/:endpoint_id (uptime data), GET /api/incidents (published incidents), GET /api/incidents/:date (date-specific incidents). Implement admin API: GET/POST/PUT/DELETE /api/admin/endpoints (CRUD operations), GET /api/admin/monitoring-logs (history), POST/PUT/DELETE /api/admin/incidents (incident management). Add proper error handling, validation, and JSON responses. Include rate limiting and CORS configuration.",
-				"testStrategy": "API integration tests for all endpoints, test authentication middleware on admin routes, validate JSON responses and error codes, test pagination and filtering for large datasets, verify CORS and rate limiting",
-				"priority": "high",
-				"dependencies": [29, 30],
-				"status": "pending",
-				"subtasks": []
-			},
-			{
-				"id": 32,
-				"title": "Setup React Router v7 Frontend Application",
-				"description": "Initialize React Router v7 SPA with TypeScript, TanStack Forms, and basic routing structure",
-				"details": "Create React Router v7 application in SPA mode with TypeScript configuration. Setup TanStack Forms v1.14.1 for type-safe form management. Create basic routing structure: / (public status page), /login, /register (conditional), /admin/* (protected routes). Configure clientLoader and clientAction functions for data fetching. Setup CSS framework, component structure, and development environment with hot reloading.",
-				"testStrategy": "Test routing functionality and navigation, verify TypeScript compilation, test TanStack Forms integration, validate responsive design setup, ensure hot reloading works correctly",
-				"priority": "high",
-				"dependencies": [],
-				"status": "pending",
-				"subtasks": []
-			},
-			{
-				"id": 33,
-				"title": "Create Public Status Page Frontend",
-				"description": "Build responsive public status page with real-time updates and interactive uptime graphs",
-				"details": "Create public status page showing all monitored endpoints with color-coded status indicators (green/red/yellow). Implement 90-day uptime graphs using Chart.js or similar library with interactive daily breakdown on click. Add incident display with popup modals for detailed information. Include auto-refresh functionality with WebSocket support for real-time updates. Ensure responsive design for mobile and desktop with loading states and error handling.",
-				"testStrategy": "Test responsive design across devices, verify real-time updates functionality, test graph interactivity and data accuracy, validate auto-refresh behavior, test with large numbers of endpoints",
-				"priority": "high",
-				"dependencies": [32],
-				"status": "pending",
-				"subtasks": []
-			},
-			{
-				"id": 34,
-				"title": "Implement Admin Dashboard Frontend",
-				"description": "Create comprehensive admin interface for endpoint management, monitoring configuration, and incident handling",
-				"details": "Build admin dashboard with tabbed interface for different functions. Create endpoint management forms using TanStack Forms with validation for URL, method, headers (key-value pairs), JSON request body editor, and monitoring intervals. Implement incident management interface with CRUD operations. Add monitoring history visualization with charts and data tables. Include confirmation dialogs for destructive actions and proper error handling throughout.",
-				"testStrategy": "Test all CRUD operations for endpoints and incidents, validate form validation and error handling, test JSON editor functionality, verify chart rendering with real data, test responsive design for mobile administration",
+				"title": "Implement Authentication User Interface",
+				"description": "Create React Router v7 routes and Shadcn UI components for user registration, login, and password recovery screens with techy white and dark green color palette",
+				"details": "Build authentication UI using React Router v7 with proper route configuration for /login, /register, and /forgot-password endpoints. Implement Shadcn UI components including forms with proper validation using react-hook-form and zod schemas. Create responsive layouts with the techy white (#FFFFFF) and dark green (#1B4D3E, #2D7A5F) color palette. Implement form components: LoginForm with email/password fields and remember me option, RegisterForm with email, username, password, and confirm password fields with strength validation, ForgotPasswordForm with email input and reset instructions. Add loading states, error handling, and success messages. Implement proper form accessibility with ARIA labels and keyboard navigation. Integrate with authentication API endpoints from Task 18 using axios or fetch. Add client-side validation with real-time feedback and proper error display. Include password visibility toggles and form auto-complete attributes. Implement protected route components and authentication state management using React Context or Zustand.",
+				"testStrategy": "Test all form validations work correctly, verify API integration with authentication endpoints, test responsive design across different screen sizes, validate accessibility features with screen readers, test form submissions and error handling, verify proper navigation flow between authentication screens, test password strength validation and visibility toggles, validate form state persistence and auto-complete functionality",
+				"status": "done",
+				"dependencies": [18],
 				"priority": "medium",
-				"dependencies": [32, 33],
-				"status": "pending",
-				"subtasks": []
-			},
-			{
-				"id": 35,
-				"title": "Implement WebSocket Real-time Updates",
-				"description": "Add WebSocket functionality for real-time status updates on both frontend and backend",
-				"details": "Implement WebSocket server in Go at /ws/status endpoint for broadcasting real-time status updates. Create WebSocket client in React for receiving updates and updating UI without page refresh. Handle connection management, reconnection logic, and error handling. Broadcast status changes, incident updates, and monitoring results to connected clients. Include proper authentication for admin-specific updates.",
-				"testStrategy": "Test WebSocket connection establishment and maintenance, verify real-time update delivery, test reconnection logic on network issues, validate message broadcasting to multiple clients, test authentication for admin updates",
-				"priority": "medium",
-				"dependencies": [31, 33],
-				"status": "pending",
-				"subtasks": []
-			},
-			{
-				"id": 36,
-				"title": "Create Notification System Backend",
-				"description": "Implement comprehensive notification system with multiple channels (email, Slack, Discord, webhooks)",
-				"details": "Build notification service with pluggable provider architecture supporting email (SMTP), Slack webhooks, Discord webhooks, and generic HTTP webhooks. Implement notification rules engine for mapping endpoints to channels with trigger conditions (downtime, recovery, incidents). Add asynchronous notification processing with queue system and retry logic. Create notification templates with variable substitution and delivery tracking. Include rate limiting and notification history logging.",
-				"testStrategy": "Unit tests for each notification provider, integration tests with real services (using test accounts), test notification rule processing, verify queue system and retry logic, test template rendering and variable substitution",
-				"priority": "medium",
-				"dependencies": [31],
-				"status": "pending",
-				"subtasks": []
-			},
-			{
-				"id": 37,
-				"title": "Complete Frontend Forms Integration",
-				"description": "Finalize all forms using TanStack Forms with comprehensive validation and error handling",
-				"details": "Complete implementation of all forms using TanStack Forms: login/registration forms with email validation, endpoint configuration forms with URL/header validation, incident management forms, and notification channel setup forms. Add real-time validation, loading states, success notifications, and proper error recovery. Implement auto-save functionality and conditional field display. Ensure type safety throughout with TypeScript integration.",
-				"testStrategy": "Test all form validations and error scenarios, verify auto-save functionality, test form submission with network errors, validate type safety compilation, test user experience across all forms with accessibility compliance",
-				"priority": "medium",
-				"dependencies": [34, 36],
-				"status": "pending",
-				"subtasks": []
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Setup React Router v7 Authentication Routes",
+						"description": "Configure React Router v7 with authentication routes for /login, /register, and /forgot-password endpoints including route protection and navigation guards",
+						"dependencies": [],
+						"details": "Install and configure React Router v7, create route definitions for authentication pages (/login, /register, /forgot-password), implement protected route wrapper component, add route guards for authenticated/unauthenticated users, configure proper route redirects and navigation flow between auth pages",
+						"status": "done",
+						"testStrategy": "Test route navigation works correctly, verify protected routes redirect unauthenticated users, test route guards prevent access to auth pages when already logged in, validate proper URL handling and browser back/forward navigation"
+					},
+					{
+						"id": 2,
+						"title": "Create Shadcn UI Form Components with Validation",
+						"description": "Build reusable form components using Shadcn UI, react-hook-form, and zod schemas for login, registration, and password recovery forms",
+						"dependencies": ["30.1"],
+						"details": "Install and setup react-hook-form and zod for form validation, create LoginForm component with email/password fields and remember me checkbox, build RegisterForm with email, username, password, and confirm password fields, implement ForgotPasswordForm with email input, add zod validation schemas with proper error messages, implement password strength validation and real-time feedback",
+						"status": "done",
+						"testStrategy": "Test all form validations work correctly with various input combinations, verify zod schemas catch invalid data, test real-time validation feedback, validate form submission handling and error display"
+					},
+					{
+						"id": 3,
+						"title": "Implement Techy Color Palette and Responsive Styling",
+						"description": "Apply the techy white and dark green color palette to authentication components with responsive design and accessibility features",
+						"dependencies": ["30.2"],
+						"details": "Configure Shadcn UI theme with techy white (#FFFFFF) and dark green (#1B4D3E, #2D7A5F) colors, create responsive layouts for mobile and desktop screens, implement proper form styling with focus states and hover effects, add loading states and visual feedback, implement password visibility toggles, add proper ARIA labels and keyboard navigation support",
+						"status": "done",
+						"testStrategy": "Test responsive design across different screen sizes, verify color palette consistency, validate accessibility features with screen readers, test keyboard navigation flow, verify proper focus management and visual feedback"
+					},
+					{
+						"id": 4,
+						"title": "Integrate Authentication API Endpoints",
+						"description": "Connect authentication forms to backend API endpoints from Task 18 with proper error handling and loading states",
+						"dependencies": ["30.3"],
+						"details": "Implement API integration using fetch or axios for login, register, and password reset endpoints, add proper request/response handling with loading states, implement comprehensive error handling with user-friendly error messages, add success notifications and proper redirect flow, handle JWT token storage and retrieval, implement auto-complete attributes for better UX",
+						"status": "done",
+						"testStrategy": "Test API integration with all authentication endpoints, verify proper error handling for various API error responses, test loading states during API calls, validate success flow and redirects, test token handling and storage"
+					},
+					{
+						"id": 5,
+						"title": "Setup Authentication State Management and Context",
+						"description": "Implement authentication state management using React Context or Zustand to manage user session and authentication status across the application",
+						"dependencies": ["30.4"],
+						"details": "Create authentication context or Zustand store to manage user session state, implement login/logout actions and state updates, add authentication status checking and token validation, create useAuth hook for easy access to auth state, implement automatic token refresh logic, add persistence for authentication state across browser sessions, integrate with protected route components",
+						"status": "done",
+						"testStrategy": "Test authentication state persistence across page refreshes, verify state updates correctly on login/logout, test useAuth hook functionality, validate token refresh logic, test integration with protected routes and proper state synchronization"
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-07-18T04:29:12.054Z",
+			"updated": "2025-08-08T03:58:42.235Z",
 			"description": "Tasks for master context"
 		}
 	}
