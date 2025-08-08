@@ -9,8 +9,12 @@ import {
 	CardTitle,
 } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
+import { PageHeader } from '~/components/page-header'
+import { PageContent } from '~/components/page-content'
+import { ActionBar } from '~/components/action-bar'
 import { requireAuth } from '~/lib/auth'
 import { useSSE } from '~/hooks/useSSE'
+import { Globe, AlertTriangle, BarChart3, Plus } from 'lucide-react'
 import type { Route } from './+types/index'
 
 export function meta({}: Route.MetaArgs) {
@@ -258,16 +262,35 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	).length
 
 	return (
-		<div>
-			<div className='mb-8'>
-				<h1 className='text-3xl font-bold'>Admin Dashboard</h1>
-				<p className='text-muted-foreground'>
-					Monitor and manage your endpoints, incidents, and logs
-				</p>
-			</div>
+		<PageContent>
+			<PageHeader
+				title='Admin Dashboard'
+				description='Monitor and manage your endpoints, incidents, and logs'
+			>
+				<div className='flex flex-wrap items-center gap-2'>
+					<Link to='/admin/endpoints/new'>
+						<Button className='bg-emerald-600 hover:bg-emerald-700'>
+							<Plus className='h-4 w-4 mr-2' />
+							Add Endpoint
+						</Button>
+					</Link>
+					<Link to='/admin/incidents/new'>
+						<Button variant='outline'>
+							<AlertTriangle className='h-4 w-4 mr-2' />
+							Create Incident
+						</Button>
+					</Link>
+					<Link to='/admin/monitoring'>
+						<Button variant='outline'>
+							<BarChart3 className='h-4 w-4 mr-2' />
+							View Monitoring
+						</Button>
+					</Link>
+				</div>
+			</PageHeader>
 
 			{/* Quick Stats */}
-			<div className='grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8'>
+			<div className='grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'>
 				<Card>
 					<CardHeader className='pb-3'>
 						<CardTitle className='text-sm font-medium'>
@@ -342,7 +365,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 			</div>
 
 			{/* Main Sections */}
-			<div className='grid gap-6 xl:grid-cols-2 mb-8'>
+			<div className='grid gap-6 lg:grid-cols-1'>
 				{/* Recent Endpoints */}
 				<Card>
 					<CardHeader className='flex flex-row items-center justify-between'>
@@ -489,31 +512,6 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</CardContent>
 				</Card>
 			</div>
-
-			{/* Quick Actions */}
-			<Card>
-				<CardHeader>
-					<CardTitle>Quick Actions</CardTitle>
-					<CardDescription>
-						Common administrative tasks
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className='flex flex-wrap gap-3'>
-						<Link to='/admin/endpoints/new'>
-							<Button>Add New Endpoint</Button>
-						</Link>
-						<Link to='/admin/incidents/new'>
-							<Button variant='outline'>Create Incident</Button>
-						</Link>
-						<Link to='/admin/monitoring'>
-							<Button variant='outline'>
-								View Monitoring Logs
-							</Button>
-						</Link>
-					</div>
-				</CardContent>
-			</Card>
-		</div>
+		</PageContent>
 	)
 }

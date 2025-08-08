@@ -374,4 +374,51 @@ body {
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 	}
+
+	/* Admin Layout Utilities */
+	.admin-sidebar-transition {
+		transition: width 200ms ease-out, margin-left 200ms ease-out;
+	}
+
+	.admin-nav-item {
+		@apply relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ease-out;
+	}
+
+	.admin-nav-item-active {
+		@apply bg-emerald-600 text-white shadow-sm;
+	}
+
+	.admin-nav-item-inactive {
+		@apply text-gray-600 hover:bg-emerald-50 hover:text-emerald-700;
+	}
+
+	.admin-nav-tooltip {
+		@apply absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-50 whitespace-nowrap;
+	}
+
+	/* Mobile menu animation */
+	.mobile-menu-enter {
+		transform: translateX(-100%);
+	}
+
+	.mobile-menu-enter-active {
+		transform: translateX(0);
+		transition: transform 200ms ease-out;
+	}
+
+	/* Loading state animations */
+	.loading-fade-in {
+		animation: fadeIn 300ms ease-out;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
 }

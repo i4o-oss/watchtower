@@ -1158,11 +1158,68 @@
 						"testStrategy": "Test authentication state persistence across page refreshes, verify state updates correctly on login/logout, test useAuth hook functionality, validate token refresh logic, test integration with protected routes and proper state synchronization"
 					}
 				]
+			},
+			{
+				"id": 31,
+				"title": "Revamp Admin Dashboard Layout UI",
+				"description": "Create a unified navigation and layout system for all administrative functions with responsive design, modern styling using Shadcn UI and Tailwind CSS, implementing desktop sidebar navigation and mobile responsive layout with React Router v7 integration.",
+				"details": "Implement a comprehensive admin dashboard layout system using React Router v7 as the foundation. Create a responsive sidebar navigation component with collapsible functionality for desktop and a mobile-first hamburger menu for smaller screens. Design the layout using Shadcn UI components including Navigation Menu, Sheet (for mobile drawer), Button, and Card components. Implement the techy white and dark green color palette using Tailwind CSS custom theme configuration with CSS variables for consistent theming. Create a main layout wrapper component that handles routing and navigation state, with proper outlet rendering for nested admin routes. Add loading states using Shadcn UI Skeleton components and Spinner for route transitions. Implement proper authentication guards and role-based navigation visibility. Create reusable layout components including PageHeader, PageContent, and ActionBar for consistent admin page structure. Add responsive breakpoints using Tailwind's responsive utilities (sm:, md:, lg:, xl:) ensuring mobile-first design principles. Integrate with existing admin functionality by wrapping the current admin routes in the new layout system. Include keyboard navigation support, proper ARIA labels for accessibility, and smooth animations using Tailwind's transition utilities. Configure proper TypeScript interfaces for layout props and navigation items.",
+				"testStrategy": "Test responsive behavior across all screen sizes (mobile 320px+, tablet 768px+, desktop 1024px+) ensuring sidebar collapses appropriately and mobile navigation functions correctly. Verify React Router v7 navigation works seamlessly with the new layout system including proper URL updates and browser back/forward functionality. Test loading states appear correctly during route transitions and data fetching operations. Validate accessibility features including keyboard navigation, screen reader compatibility, and proper focus management. Test the techy color palette renders consistently across all components and maintains proper contrast ratios. Verify integration with existing admin functionality including endpoint management, incident management, and monitoring features. Test authentication state changes and role-based navigation visibility. Validate mobile touch interactions and gesture support for navigation elements.",
+				"status": "done",
+				"dependencies": [8, 29],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Create Core Layout Components Structure",
+						"description": "Build the foundational layout components including MainLayout wrapper, Sidebar, Header, and PageWrapper components with proper TypeScript interfaces and React Router v7 outlet integration.",
+						"dependencies": [],
+						"details": "Create the main layout architecture with MainLayout component that handles routing and navigation state. Implement proper outlet rendering for nested admin routes. Define TypeScript interfaces for layout props, navigation items, and component structure. Set up the basic component hierarchy and file structure for the admin layout system.",
+						"status": "done",
+						"testStrategy": "Test component rendering and proper outlet integration with React Router v7. Verify TypeScript interfaces are correctly defined and props are passed appropriately between layout components."
+					},
+					{
+						"id": 2,
+						"title": "Implement Responsive Sidebar Navigation",
+						"description": "Create a collapsible sidebar navigation component for desktop with proper navigation items, icons, and state management using Shadcn UI Navigation Menu components.",
+						"dependencies": ["31.1"],
+						"details": "Build the desktop sidebar using Shadcn UI Navigation Menu components with collapsible functionality. Implement navigation state management, proper routing integration, and smooth collapse/expand animations. Add navigation items with icons, active states, and proper accessibility attributes including ARIA labels and keyboard navigation support.",
+						"status": "done",
+						"testStrategy": "Test sidebar collapse/expand functionality, verify navigation items render correctly with proper active states, validate keyboard navigation and accessibility features work as expected."
+					},
+					{
+						"id": 3,
+						"title": "Build Mobile Navigation with Hamburger Menu",
+						"description": "Create mobile-responsive navigation using Shadcn UI Sheet component with hamburger menu trigger and proper mobile-first responsive behavior.",
+						"dependencies": ["31.1"],
+						"details": "Implement mobile navigation using Shadcn UI Sheet component for the drawer functionality. Create hamburger menu trigger with proper animations and mobile-responsive behavior. Ensure navigation items are properly accessible on mobile devices with touch-friendly interaction and proper spacing. Add responsive breakpoints using Tailwind utilities.",
+						"status": "done",
+						"testStrategy": "Test mobile navigation across different screen sizes (320px+), verify hamburger menu opens/closes correctly, validate touch interactions and responsive behavior on mobile devices."
+					},
+					{
+						"id": 4,
+						"title": "Configure Tailwind CSS Theme and Styling",
+						"description": "Set up the techy white and dark green color palette using Tailwind CSS custom theme configuration with CSS variables and implement consistent styling across all layout components.",
+						"dependencies": ["31.2", "31.3"],
+						"details": "Configure Tailwind CSS custom theme with techy white and dark green color palette using CSS variables for consistent theming. Implement responsive design utilities and create custom component styles. Add transition utilities for smooth animations and ensure proper color contrast and accessibility compliance throughout the layout system.",
+						"status": "done",
+						"testStrategy": "Verify custom theme colors render correctly across all components, test responsive breakpoints (sm:, md:, lg:, xl:), validate color contrast meets accessibility standards and animations work smoothly."
+					},
+					{
+						"id": 5,
+						"title": "Integrate Authentication Guards and Route Protection",
+						"description": "Implement authentication guards, role-based navigation visibility, loading states with Shadcn UI components, and integrate the new layout system with existing admin routes.",
+						"dependencies": ["31.1", "31.2", "31.3", "31.4"],
+						"details": "Add authentication guards to protect admin routes and implement role-based navigation visibility. Create loading states using Shadcn UI Skeleton components and Spinner for route transitions. Integrate the new layout system with existing admin functionality by wrapping current admin routes. Include reusable components like PageHeader, PageContent, and ActionBar for consistent admin page structure.",
+						"status": "done",
+						"testStrategy": "Test authentication protection works correctly, verify role-based navigation visibility functions as expected, validate loading states display during route transitions, and ensure existing admin routes work seamlessly with the new layout system."
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-08T03:58:42.235Z",
+			"updated": "2025-08-08T04:20:13.564Z",
 			"description": "Tasks for master context"
 		}
 	}
