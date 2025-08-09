@@ -17,10 +17,10 @@ import { useSSE } from '~/hooks/useSSE'
 import { Globe, AlertTriangle, BarChart3, Plus } from 'lucide-react'
 import type { Route } from './+types/index'
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
 	return [
-		{ title: 'Admin Dashboard - Watchtower' },
-		{ name: 'description', content: 'Watchtower admin dashboard' },
+		{ title: 'Dashboard - Watchtower' },
+		{ name: 'description', content: 'Watchtower dashboard' },
 	]
 }
 
@@ -181,23 +181,19 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 											: incident,
 								),
 							}
-						} else {
-							// Add new incident if it should be visible (open or investigating)
-							if (
-								updatedIncident.status === 'open' ||
-								updatedIncident.status === 'investigating'
-							) {
-								return {
-									...prev,
-									incidents: [
-										...prev.incidents,
-										updatedIncident,
-									],
-									total: prev.total + 1,
-								}
-							}
-							return prev
 						}
+						// Add new incident if it should be visible (open or investigating)
+						if (
+							updatedIncident.status === 'open' ||
+							updatedIncident.status === 'investigating'
+						) {
+							return {
+								...prev,
+								incidents: [...prev.incidents, updatedIncident],
+								total: prev.total + 1,
+							}
+						}
+						return prev
 					})
 				} catch (error) {
 					console.error(
@@ -262,36 +258,187 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	).length
 
 	return (
-		<PageContent>
-			<PageHeader
-				title='Dashboard'
-				description='Monitor and manage your endpoints, incidents, and logs'
-			>
-				<div className='flex flex-wrap items-center gap-2'>
-					<Link to='/admin/endpoints/new'>
-						<Button>
-							<Plus className='h-4 w-4' />
-							Add Endpoint
-						</Button>
-					</Link>
-					<Link to='/admin/incidents/new'>
-						<Button variant='outline'>
-							<AlertTriangle className='h-4 w-4' />
-							Create Incident
-						</Button>
-					</Link>
-					<Link to='/admin/monitoring'>
-						<Button variant='outline'>
-							<BarChart3 className='h-4 w-4' />
-							View Monitoring
-						</Button>
-					</Link>
+		<main className='flex gap-4'>
+			<PageContent className='flex flex-grow'>
+				<PageHeader
+					title='Dashboard'
+					description='Monitor and manage your endpoints, incidents, and logs'
+				>
+					<div className='flex flex-wrap items-center gap-2'>
+						<Link to='/admin/endpoints/new'>
+							<Button>
+								<Plus className='h-4 w-4' />
+								Add Endpoint
+							</Button>
+						</Link>
+						<Link to='/admin/incidents/new'>
+							<Button variant='outline'>
+								<AlertTriangle className='h-4 w-4' />
+								Create Incident
+							</Button>
+						</Link>
+						<Link to='/admin/monitoring'>
+							<Button variant='outline'>
+								<BarChart3 className='h-4 w-4' />
+								View Monitoring
+							</Button>
+						</Link>
+					</div>
+				</PageHeader>
+
+				{/* Main Sections */}
+				<div className='grid gap-6 lg:grid-cols-1'>
+					{/* Recent Endpoints */}
+					<Card>
+						<CardHeader className='flex flex-row items-center justify-between'>
+							<div>
+								<CardTitle>Recent Endpoints</CardTitle>
+								<CardDescription>
+									Your monitoring endpoints
+								</CardDescription>
+							</div>
+							<Link to='/admin/endpoints'>
+								<Button variant='outline' size='sm'>
+									View All
+								</Button>
+							</Link>
+						</CardHeader>
+						<CardContent>
+							{endpoints.endpoints.length === 0 ? (
+								<div className='text-center py-8 text-muted-foreground'>
+									<p>No endpoints configured yet</p>
+									<Link to='/admin/endpoints/new'>
+										<Button className='mt-2' size='sm'>
+											Create First Endpoint
+										</Button>
+									</Link>
+								</div>
+							) : (
+								<div className='space-y-3'>
+									{endpoints.endpoints
+										.slice(0, 5)
+										.map((endpoint: any) => (
+											<div
+												key={endpoint.id}
+												className='flex items-center justify-between p-3 border rounded-lg'
+											>
+												<div>
+													<h4 className='font-medium'>
+														{endpoint.name}
+													</h4>
+													<p className='text-sm text-muted-foreground'>
+														{endpoint.url}
+													</p>
+												</div>
+												<div className='flex items-center gap-2'>
+													<Badge
+														variant={
+															endpoint.enabled
+																? 'default'
+																: 'secondary'
+														}
+													>
+														{endpoint.enabled
+															? 'Active'
+															: 'Disabled'}
+													</Badge>
+													<Link
+														to={`/admin/endpoints/${endpoint.id}`}
+													>
+														<Button
+															variant='ghost'
+															size='sm'
+														>
+															View
+														</Button>
+													</Link>
+												</div>
+											</div>
+										))}
+								</div>
+							)}
+						</CardContent>
+					</Card>
+
+					{/* Recent Incidents */}
+					<Card>
+						<CardHeader className='flex flex-row items-center justify-between'>
+							<div>
+								<CardTitle>Open Incidents</CardTitle>
+								<CardDescription>
+									Current issues requiring attention
+								</CardDescription>
+							</div>
+							<Link to='/admin/incidents'>
+								<Button variant='outline' size='sm'>
+									View All
+								</Button>
+							</Link>
+						</CardHeader>
+						<CardContent>
+							{incidents.incidents.length === 0 ? (
+								<div className='text-center py-8 text-muted-foreground'>
+									<p>No open incidents</p>
+									<p className='text-sm'>
+										All systems operational
+									</p>
+								</div>
+							) : (
+								<div className='space-y-3'>
+									{incidents.incidents
+										.slice(0, 5)
+										.map((incident: any) => (
+											<div
+												key={incident.id}
+												className='flex items-center justify-between p-3 border rounded-lg'
+											>
+												<div>
+													<h4 className='font-medium'>
+														{incident.title}
+													</h4>
+													<p className='text-sm text-muted-foreground'>
+														{new Date(
+															incident.created_at,
+														).toLocaleDateString()}
+													</p>
+												</div>
+												<div className='flex items-center gap-2'>
+													<Badge
+														variant={
+															incident.severity ===
+															'high'
+																? 'destructive'
+																: incident.severity ===
+																		'medium'
+																	? 'default'
+																	: 'secondary'
+														}
+													>
+														{incident.severity}
+													</Badge>
+													<Link
+														to={`/admin/incidents/${incident.id}`}
+													>
+														<Button
+															variant='ghost'
+															size='sm'
+														>
+															View
+														</Button>
+													</Link>
+												</div>
+											</div>
+										))}
+								</div>
+							)}
+						</CardContent>
+					</Card>
 				</div>
-			</PageHeader>
+			</PageContent>
 
 			{/* Quick Stats */}
-			<div className='grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'>
-				<Card>
+			<div className='w-80 flex flex-col divide-y divide-y-border rounded-xl border border-border overflow-hidden'>
+				<Card className='rounded-none border-none'>
 					<CardHeader>
 						<CardTitle className='text-sm font-medium'>
 							Total Endpoints
@@ -307,7 +454,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className='rounded-none border-none'>
 					<CardHeader>
 						<CardTitle className='text-sm font-medium'>
 							Recent Failures
@@ -323,7 +470,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className='rounded-none border-none'>
 					<CardHeader>
 						<CardTitle className='text-sm font-medium'>
 							Open Incidents
@@ -339,7 +486,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className='rounded-none border-none'>
 					<CardHeader>
 						<CardTitle className='text-sm font-medium'>
 							System Status
@@ -350,7 +497,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 							<Badge
 								variant={
 									openIncidents === 0
-										? 'operational'
+										? 'default'
 										: 'destructive'
 								}
 							>
@@ -363,155 +510,6 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</CardContent>
 				</Card>
 			</div>
-
-			{/* Main Sections */}
-			<div className='grid gap-6 lg:grid-cols-1'>
-				{/* Recent Endpoints */}
-				<Card>
-					<CardHeader className='flex flex-row items-center justify-between'>
-						<div>
-							<CardTitle>Recent Endpoints</CardTitle>
-							<CardDescription>
-								Your monitoring endpoints
-							</CardDescription>
-						</div>
-						<Link to='/admin/endpoints'>
-							<Button variant='outline' size='sm'>
-								View All
-							</Button>
-						</Link>
-					</CardHeader>
-					<CardContent>
-						{endpoints.endpoints.length === 0 ? (
-							<div className='text-center py-8 text-muted-foreground'>
-								<p>No endpoints configured yet</p>
-								<Link to='/admin/endpoints/new'>
-									<Button className='mt-2' size='sm'>
-										Create First Endpoint
-									</Button>
-								</Link>
-							</div>
-						) : (
-							<div className='space-y-3'>
-								{endpoints.endpoints
-									.slice(0, 5)
-									.map((endpoint: any) => (
-										<div
-											key={endpoint.id}
-											className='flex items-center justify-between p-3 border rounded-lg'
-										>
-											<div>
-												<h4 className='font-medium'>
-													{endpoint.name}
-												</h4>
-												<p className='text-sm text-muted-foreground'>
-													{endpoint.url}
-												</p>
-											</div>
-											<div className='flex items-center gap-2'>
-												<Badge
-													variant={
-														endpoint.enabled
-															? 'default'
-															: 'secondary'
-													}
-												>
-													{endpoint.enabled
-														? 'Active'
-														: 'Disabled'}
-												</Badge>
-												<Link
-													to={`/admin/endpoints/${endpoint.id}`}
-												>
-													<Button
-														variant='ghost'
-														size='sm'
-													>
-														View
-													</Button>
-												</Link>
-											</div>
-										</div>
-									))}
-							</div>
-						)}
-					</CardContent>
-				</Card>
-
-				{/* Recent Incidents */}
-				<Card>
-					<CardHeader className='flex flex-row items-center justify-between'>
-						<div>
-							<CardTitle>Open Incidents</CardTitle>
-							<CardDescription>
-								Current issues requiring attention
-							</CardDescription>
-						</div>
-						<Link to='/admin/incidents'>
-							<Button variant='outline' size='sm'>
-								View All
-							</Button>
-						</Link>
-					</CardHeader>
-					<CardContent>
-						{incidents.incidents.length === 0 ? (
-							<div className='text-center py-8 text-muted-foreground'>
-								<p>No open incidents</p>
-								<p className='text-sm'>
-									All systems operational
-								</p>
-							</div>
-						) : (
-							<div className='space-y-3'>
-								{incidents.incidents
-									.slice(0, 5)
-									.map((incident: any) => (
-										<div
-											key={incident.id}
-											className='flex items-center justify-between p-3 border rounded-lg'
-										>
-											<div>
-												<h4 className='font-medium'>
-													{incident.title}
-												</h4>
-												<p className='text-sm text-muted-foreground'>
-													{new Date(
-														incident.created_at,
-													).toLocaleDateString()}
-												</p>
-											</div>
-											<div className='flex items-center gap-2'>
-												<Badge
-													variant={
-														incident.severity ===
-														'high'
-															? 'destructive'
-															: incident.severity ===
-																	'medium'
-																? 'default'
-																: 'secondary'
-													}
-												>
-													{incident.severity}
-												</Badge>
-												<Link
-													to={`/admin/incidents/${incident.id}`}
-												>
-													<Button
-														variant='ghost'
-														size='sm'
-													>
-														View
-													</Button>
-												</Link>
-											</div>
-										</div>
-									))}
-							</div>
-						)}
-					</CardContent>
-				</Card>
-			</div>
-		</PageContent>
+		</main>
 	)
 }

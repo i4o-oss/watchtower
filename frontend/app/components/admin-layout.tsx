@@ -28,6 +28,8 @@ import {
 	DropdownMenuItem,
 } from '~/components/ui/dropdown-menu'
 import { Avatar, AvatarImage, AvatarFallback } from '~/components/ui/avatar'
+import { requireAuth } from '~/lib/auth'
+import { useSSE } from '~/hooks/useSSE'
 
 interface AdminLayoutProps {
 	children: React.ReactNode
@@ -81,6 +83,85 @@ const breadcrumbMap: Record<string, string> = {
 export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 	const location = useLocation()
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+	const [incidents, setIncidents] = useState([])
+
+	useSSE({
+		incident_created: (event) => {
+			try {
+				const newIncident = JSON.parse(event.data)
+				setIncidents((prev: any) => ({
+					...prev,
+					incidents: [...prev.incidents, newIncident],
+					total: prev.total + 1,
+				}))
+			} catch (error) {
+				console.error('Error parsing incident_created event:', error)
+			}
+		},
+		incident_updated: (event) => {
+			try {
+				const updatedIncident = JSON.parse(event.data)
+				setIncidents((prev: any) => {
+					// If incident is now resolved, remove it from the list
+					if (updatedIncident.status === 'resolved') {
+						return {
+							...prev,
+							incidents: prev.incidents.filter(
+								(incident: any) =>
+									incident.id !== updatedIncident.id,
+							),
+							total: prev.total - 1,
+						}
+					}
+
+					// Check if incident exists in current list
+					const existingIncidentIndex = prev.incidents.findIndex(
+						(incident: any) => incident.id === updatedIncident.id,
+					)
+
+					if (existingIncidentIndex !== -1) {
+						// Update existing incident
+						return {
+							...prev,
+							incidents: prev.incidents.map((incident: any) =>
+								incident.id === updatedIncident.id
+									? updatedIncident
+									: incident,
+							),
+						}
+					}
+					// Add new incident if it should be visible (open or investigating)
+					if (
+						updatedIncident.status === 'open' ||
+						updatedIncident.status === 'investigating'
+					) {
+						return {
+							...prev,
+							incidents: [...prev.incidents, updatedIncident],
+							total: prev.total + 1,
+						}
+					}
+					return prev
+				})
+			} catch (error) {
+				console.error('Error parsing incident_updated event:', error)
+			}
+		},
+		incident_deleted: (event) => {
+			try {
+				const deletedIncident = JSON.parse(event.data)
+				setIncidents((prev: any) => ({
+					...prev,
+					incidents: prev.incidents.filter(
+						(incident: any) => incident.id !== deletedIncident.id,
+					),
+					total: prev.total - 1,
+				}))
+			} catch (error) {
+				console.error('Error parsing incident_deleted event:', error)
+			}
+		},
+	})
 
 	const isActive = (href: string) => {
 		if (href === '/admin') {
@@ -133,14 +214,15 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 						<div className='flex items-center gap-3'>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
-									<Avatar className='border border-border cursor-pointer'>
-										<AvatarImage
-											className='p-2 rounded-md overflow-hidden'
-											src='/images/user.svg'
-										/>
-									</Avatar>
+									<Button size='sm' variant='ghost'>
+										<UserIcon className='h-4 w-4' />
+										Account
+									</Button>
 								</DropdownMenuTrigger>
-								<DropdownMenuContent align='end'>
+								<DropdownMenuContent
+									align='end'
+									className='w-48'
+								>
 									<DropdownMenuLabel>
 										My Account
 									</DropdownMenuLabel>
@@ -160,7 +242,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 			{/* Breadcrumb Bar */}
 			<div className='h-16 bg-card border-b border-border hidden lg:block'>
-				<div className='w-full h-full max-w-[94rem] mx-auto flex items-center px-6 py-3'>
+				<div className='w-full h-full max-w-[94rem] mx-auto flex items-center justify-between px-6 py-3'>
 					<div className='text-sm text-muted-foreground'>
 						{getBreadcrumbs(location.pathname).map(
 							(segment, index) => (
@@ -191,6 +273,25 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 								</span>
 							),
 						)}
+					</div>
+					<div className='flex items-center gap-2'>
+						<Badge
+							className='px-4 py-2'
+							variant={
+								incidents.length === 0
+									? 'outline'
+									: 'destructive'
+							}
+						>
+							{incidents.length === 0 ? (
+								<span className='bg-green-500 w-2 h-2 rounded-full -ml-1 mr-2' />
+							) : (
+								<span className='bg-red-500 w-2 h-2 rounded-full -ml-1 mr-2' />
+							)}
+							{incidents.length === 0
+								? 'All Systems Operational'
+								: 'Issues'}
+						</Badge>
 					</div>
 				</div>
 			</div>

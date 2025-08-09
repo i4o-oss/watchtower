@@ -1,4 +1,5 @@
 import { cn } from '~/lib/utils'
+import { Card } from './ui/card'
 
 interface PageContentProps {
 	children: React.ReactNode
@@ -6,5 +7,5 @@ interface PageContentProps {
 }
 
 export function PageContent({ children, className }: PageContentProps) {
-	return <div className={cn('space-y-6', className)}>{children}</div>
+	return <Card className={className}>{children}</Card>
 }
