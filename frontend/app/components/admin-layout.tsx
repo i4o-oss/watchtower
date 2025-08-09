@@ -16,8 +16,18 @@ import {
 	Menu,
 	Settings,
 	User,
+	UserIcon,
 	X,
 } from 'lucide-react'
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuItem,
+} from '~/components/ui/dropdown-menu'
+import { Avatar, AvatarImage, AvatarFallback } from '~/components/ui/avatar'
 
 interface AdminLayoutProps {
 	children: React.ReactNode
@@ -57,6 +67,17 @@ const navigation = [
 	},
 ]
 
+const breadcrumbMap: Record<string, string> = {
+	admin: 'Dashboard',
+	endpoints: 'Endpoints',
+	monitoring: 'Monitoring',
+	incidents: 'Incidents',
+	notifications: 'Notifications',
+	channels: 'Channels',
+	new: 'New',
+	edit: 'Edit',
+}
+
 export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 	const location = useLocation()
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -72,30 +93,14 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 	// Generate breadcrumbs based on current path
 	const getBreadcrumbs = (pathname: string) => {
-		const segments = pathname.split('/').filter(Boolean)
-		if (segments.length <= 1) return 'Dashboard'
-
-		const breadcrumbMap: Record<string, string> = {
-			admin: 'Dashboard',
-			endpoints: 'Endpoints',
-			monitoring: 'Monitoring',
-			incidents: 'Incidents',
-			notifications: 'Notifications',
-			channels: 'Channels',
-			new: 'New',
-			edit: 'Edit',
-		}
-
-		return segments
-			.map((segment) => breadcrumbMap[segment] || segment)
-			.join(' > ')
+		return pathname.split('/').filter(Boolean)
 	}
 
 	return (
 		<div className='min-h-screen bg-background'>
 			{/* Top Header Bar */}
 			<header className='sticky top-0 z-30 h-16 bg-card border-b border-border'>
-				<div className='max-w-[94rem] mx-auto px-6'>
+				<div className='w-full h-full max-w-[94rem] mx-auto px-6'>
 					<div className='flex h-full items-center justify-between'>
 						{/* Left - Logo and Mobile Menu */}
 						<div className='flex items-center gap-4'>
@@ -126,44 +131,66 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 						{/* Right - Header Actions */}
 						<div className='flex items-center gap-3'>
-							<Button
-								variant='outline'
-								size='sm'
-								className='hidden sm:flex'
-							>
-								<Settings className='h-4 w-4' />
-								Settings
-							</Button>
-							<Link to='/dashboard'>
-								<Button variant='ghost' size='sm'>
-									<span className='hidden sm:inline'>
-										User Dashboard
-									</span>
-									<span className='sm:hidden'>Dashboard</span>
-								</Button>
-							</Link>
-							{/* User Profile */}
-							<div className='hidden lg:flex items-center gap-2 cursor-pointer hover:bg-accent rounded-lg p-2 transition-colors'>
-								<div className='h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center'>
-									<User className='h-4 w-4 text-primary' />
-								</div>
-								<div className='text-sm'>
-									<div className='font-medium text-foreground'>
-										Admin
-									</div>
-								</div>
-								<ChevronDown className='h-4 w-4 text-muted-foreground' />
-							</div>
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Avatar className='border border-border cursor-pointer'>
+										<AvatarImage
+											className='p-2 rounded-md overflow-hidden'
+											src='/images/user.svg'
+										/>
+									</Avatar>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align='end'>
+									<DropdownMenuLabel>
+										My Account
+									</DropdownMenuLabel>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem>Profile</DropdownMenuItem>
+									<DropdownMenuItem>Billing</DropdownMenuItem>
+									<DropdownMenuItem>Team</DropdownMenuItem>
+									<DropdownMenuItem>
+										Subscription
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 					</div>
 				</div>
 			</header>
 
 			{/* Breadcrumb Bar */}
-			<div className='bg-card border-b border-border hidden lg:block'>
-				<div className='max-w-[94rem] mx-auto px-6 py-3'>
+			<div className='h-16 bg-card border-b border-border hidden lg:block'>
+				<div className='w-full h-full max-w-[94rem] mx-auto flex items-center px-6 py-3'>
 					<div className='text-sm text-muted-foreground'>
-						{getBreadcrumbs(location.pathname)}
+						{getBreadcrumbs(location.pathname).map(
+							(segment, index) => (
+								<span key={segment}>
+									{index > 0 && (
+										<span className='mx-2'>/</span>
+									)}
+									{index ===
+									getBreadcrumbs(location.pathname).length -
+										1 ? (
+										<span>
+											{breadcrumbMap[segment] || segment}
+										</span>
+									) : (
+										<Link
+											to={
+												navigation.find(
+													(n) =>
+														n.name ===
+														breadcrumbMap[segment],
+												)?.href as string
+											}
+											className='text-primary hover:underline'
+										>
+											{breadcrumbMap[segment] || segment}
+										</Link>
+									)}
+								</span>
+							),
+						)}
 					</div>
 				</div>
 			</div>
@@ -171,8 +198,8 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			{/* Layout Container */}
 			<div className='max-w-[94rem] mx-auto flex'>
 				{/* Desktop Sidebar */}
-				<aside className='hidden lg:block w-60 shrink-0'>
-					<div className='sticky top-[129px] h-[calc(100vh-129px)] px-6 py-6'>
+				<aside className='hidden lg:block w-80 shrink-0'>
+					<div className='sticky top-[128px] h-[calc(100vh-128px)] px-6 py-6'>
 						{/* Navigation */}
 						<nav className='space-y-1'>
 							{navigation.map((item) => {
@@ -235,6 +262,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			{isMobileMenuOpen && (
 				<div className='fixed inset-0 z-50 lg:hidden'>
 					{/* Backdrop */}
+					{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
 					<div
 						className='fixed inset-0 bg-background/80 backdrop-blur-sm'
 						onClick={closeMobileMenu}
