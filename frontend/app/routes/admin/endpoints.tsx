@@ -30,7 +30,7 @@ import {
 	AlertTriangleIcon,
 	CheckCircle2,
 } from 'lucide-react'
-import { EndpointsTable, type Endpoint } from '~/components/endpoints-table'
+import { EndpointCards, type Endpoint } from '~/components/endpoint-cards'
 import type { Route } from './+types/endpoints'
 import { Separator } from '~/components/ui/separator'
 
@@ -230,11 +230,11 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 					</PageHeader>
 
 					<CardContent className='p-6'>
-						{/* Endpoints Table */}
+						{/* Endpoint Cards */}
 						{endpoints.length === 0 ? (
 							<EmptyState />
 						) : (
-							<EndpointsTable
+							<EndpointCards
 								data={endpoints}
 								isLoading={isLoading}
 								onToggleEndpoint={(endpoint) => {
