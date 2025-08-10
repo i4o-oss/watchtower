@@ -12,7 +12,7 @@ import {
 	Bell,
 	ChevronDown,
 	Globe,
-	Home,
+	HomeIcon,
 	Menu,
 	Settings,
 	User,
@@ -40,7 +40,7 @@ const navigation = [
 	{
 		name: 'Dashboard',
 		href: '/admin',
-		icon: Home,
+		icon: HomeIcon,
 		description: 'Overview and quick stats',
 	},
 	{
@@ -212,6 +212,10 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 						{/* Right - Header Actions */}
 						<div className='flex items-center gap-3'>
+							<Button size='sm' variant='ghost'>
+								<HomeIcon className='h-4 w-4' />
+								Dashboard
+							</Button>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button size='sm' variant='ghost'>

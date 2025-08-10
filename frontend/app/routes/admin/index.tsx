@@ -15,10 +15,7 @@ import { ActionBar } from '~/components/action-bar'
 import { requireAuth } from '~/lib/auth'
 import { useSSE } from '~/hooks/useSSE'
 import {
-	Globe,
-	AlertTriangle,
-	BarChart3,
-	Plus,
+	PlusIcon,
 	GlobeIcon,
 	AlertTriangleIcon,
 	CircleXIcon,
@@ -275,14 +272,14 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 				>
 					<div className='flex flex-wrap items-center gap-2'>
 						<Link to='/admin/endpoints/new'>
-							<Button>
-								<Plus className='h-4 w-4' />
+							<Button size='sm'>
+								<PlusIcon className='h-4 w-4' />
 								Add Endpoint
 							</Button>
 						</Link>
 						<Link to='/admin/incidents/new'>
-							<Button variant='outline'>
-								<AlertTriangle className='h-4 w-4' />
+							<Button size='sm' variant='outline'>
+								<AlertTriangleIcon className='h-4 w-4' />
 								Create Incident
 							</Button>
 						</Link>
@@ -300,11 +297,13 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 									Your monitoring endpoints
 								</CardDescription>
 							</div>
-							<Link to='/admin/endpoints'>
-								<Button variant='outline' size='sm'>
-									View All
-								</Button>
-							</Link>
+							<div className='flex items-center gap-2'>
+								<Link to='/admin/endpoints'>
+									<Button variant='outline' size='sm'>
+										View All
+									</Button>
+								</Link>
+							</div>
 						</CardHeader>
 						<CardContent>
 							{endpoints.endpoints.length === 0 ? (
