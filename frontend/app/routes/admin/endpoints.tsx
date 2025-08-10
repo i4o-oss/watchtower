@@ -18,11 +18,21 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
+import { Badge } from '~/components/ui/badge'
+import { PageHeader } from '~/components/page-header'
+import { PageContent } from '~/components/page-content'
 import { requireAuth } from '~/lib/auth'
 import { useSSE } from '~/hooks/useSSE'
-import { Plus, Activity } from 'lucide-react'
+import {
+	Plus,
+	Activity,
+	GlobeIcon,
+	AlertTriangleIcon,
+	CheckCircle2,
+} from 'lucide-react'
 import { EndpointsTable, type Endpoint } from '~/components/endpoints-table'
 import type { Route } from './+types/endpoints'
+import { Separator } from '~/components/ui/separator'
 
 export function meta({}: Route.MetaArgs) {
 	return [
@@ -170,6 +180,16 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 		}
 	}
 
+	const activeEndpoints = endpoints.filter((e) => e.enabled).length
+	const inactiveEndpoints = endpoints.length - activeEndpoints
+	const recentlyAdded = endpoints
+		.sort(
+			(a, b) =>
+				new Date(b.created_at).getTime() -
+				new Date(a.created_at).getTime(),
+		)
+		.slice(0, 1)[0]
+
 	// Empty state component
 	const EmptyState = () => (
 		<div className='text-center py-16'>
@@ -194,41 +214,118 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 	)
 
 	return (
-		<div className='space-y-8'>
-			{/* Header */}
-			<div className='flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between'>
-				<div className='space-y-1'>
-					<h1 className='text-4xl font-bold tracking-tight'>
-						Endpoints
-					</h1>
-					<p className='text-xl text-muted-foreground'>
-						Manage and monitor your service endpoints
-					</p>
-				</div>
-				<Link to='/admin/endpoints/new'>
-					<Button size='lg' className='gap-2 shadow-lg'>
-						<Plus className='h-4 w-4' />
-						Add Endpoint
-					</Button>
-				</Link>
-			</div>
+		<>
+			<main className='flex-1 flex flex-col xl:flex-row gap-6'>
+				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
+					<PageHeader
+						title='Endpoints'
+						description='Manage and monitor your service endpoints'
+					>
+						<Link to='/admin/endpoints/new'>
+							<Button size='sm'>
+								<Plus className='h-4 w-4' />
+								Add Endpoint
+							</Button>
+						</Link>
+					</PageHeader>
 
-			{/* Endpoints Table */}
-			{endpoints.length === 0 ? (
-				<EmptyState />
-			) : (
-				<EndpointsTable
-					data={endpoints}
-					isLoading={isLoading}
-					onToggleEndpoint={(endpoint) => {
-						toggleEndpoint(endpoint)
-					}}
-					onDeleteEndpoint={(endpoint) => {
-						setEndpointToDelete(endpoint)
-						setDeleteDialogOpen(true)
-					}}
-				/>
-			)}
+					<CardContent className='p-6'>
+						{/* Endpoints Table */}
+						{endpoints.length === 0 ? (
+							<EmptyState />
+						) : (
+							<EndpointsTable
+								data={endpoints}
+								isLoading={isLoading}
+								onToggleEndpoint={(endpoint) => {
+									toggleEndpoint(endpoint)
+								}}
+								onDeleteEndpoint={(endpoint) => {
+									setEndpointToDelete(endpoint)
+									setDeleteDialogOpen(true)
+								}}
+							/>
+						)}
+					</CardContent>
+				</PageContent>
+
+				{/* Quick Stats Sidebar */}
+				{/*{endpoints.length > 0 && (
+					<aside className='w-88 rounded-xl space-y-4'>
+						<Card>
+							<CardContent>
+								<div className='flex items-center gap-4'>
+									<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+										<GlobeIcon className='h-7 w-7' />
+									</div>
+									<div className='flex flex-col'>
+										<p className='text-sm font-normal'>
+											Total Endpoints
+										</p>
+										<p className='typography-h4'>{total}</p>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+						<Card>
+							<CardContent>
+								<div className='flex items-center gap-4'>
+									<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+										<CheckCircle2 className='h-7 w-7' />
+									</div>
+									<div className='flex flex-col'>
+										<p className='text-sm font-normal'>
+											Active Endpoints
+										</p>
+										<p className='typography-h4'>
+											{activeEndpoints}
+										</p>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+						<Card>
+							<CardContent>
+								<div className='flex items-center gap-4'>
+									<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+										<AlertTriangleIcon className='h-7 w-7' />
+									</div>
+									<div className='flex flex-col'>
+										<p className='text-sm font-normal'>
+											Inactive Endpoints
+										</p>
+										<p className='typography-h4'>
+											{inactiveEndpoints}
+										</p>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+						{recentlyAdded && (
+							<Card>
+								<CardContent>
+									<div className='flex flex-col gap-2'>
+										<p className='text-sm font-normal text-muted-foreground'>
+											Last Added
+										</p>
+										<p className='font-medium'>
+											{recentlyAdded.name}
+										</p>
+										<Badge
+											variant='outline'
+											className='w-fit'
+										>
+											{new Date(
+												recentlyAdded.created_at,
+											).toLocaleDateString()}
+										</Badge>
+									</div>
+								</CardContent>
+							</Card>
+						)}
+					</aside>
+				)}*/}
+			</main>
 
 			{/* Delete Confirmation Dialog */}
 			<AlertDialog
@@ -259,6 +356,6 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</div>
+		</>
 	)
 }

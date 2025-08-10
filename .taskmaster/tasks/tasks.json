@@ -1454,11 +1454,22 @@
 						"testStrategy": "Button component testing across all variants and sizes. Icon alignment verification in different button states. Documentation accuracy testing and developer usability validation. Visual regression testing for all updated button implementations."
 					}
 				]
+			},
+			{
+				"id": 37,
+				"title": "Update Admin Routes UI to Use Consistent PageContent Pattern",
+				"description": "Refactor admin routes (/admin/endpoints, /admin/monitoring, /admin/incidents, /admin/notifications) to use the same UI component structure as the main /admin route with PageContent, PageHeader, and consistent layout components.",
+				"details": "Update all admin sub-routes to follow the established UI pattern used in the main /admin route. This involves: 1) Wrap each route component with PageContent container for consistent spacing and layout, 2) Replace custom headers with PageHeader component including proper title, breadcrumb navigation, and action buttons, 3) Implement consistent sidebar navigation highlighting for active routes, 4) Apply uniform spacing, typography, and responsive design patterns using Tailwind CSS classes, 5) Ensure all admin routes use the same loading states, error boundaries, and empty states, 6) Update routing configuration to maintain proper navigation state and breadcrumb context, 7) Standardize action button placement and styling (Create, Edit, Delete buttons), 8) Implement consistent data table layouts with proper pagination, filtering, and sorting controls, 9) Apply uniform modal/dialog patterns for create/edit forms, 10) Ensure all routes follow the same responsive breakpoints and mobile-first design principles. Use React Router v7 for navigation management and maintain compatibility with existing authentication middleware.",
+				"testStrategy": "Verify all admin routes (/admin/endpoints, /admin/monitoring, /admin/incidents, /admin/notifications) render with consistent PageContent wrapper and proper spacing. Test PageHeader displays correct titles, breadcrumbs, and action buttons for each route. Validate sidebar navigation highlights active route properly. Test responsive design across mobile, tablet, and desktop breakpoints. Verify loading states, error boundaries, and empty states work consistently across all routes. Test navigation between admin routes maintains proper breadcrumb context. Validate modal/dialog patterns work uniformly across create/edit forms. Test data tables have consistent pagination, filtering, and sorting functionality. Verify all routes maintain existing functionality while using new UI patterns.",
+				"status": "pending",
+				"dependencies": [32, 35, 26],
+				"priority": "medium",
+				"subtasks": []
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-08T18:21:16.990Z",
+			"updated": "2025-08-10T06:39:54.871Z",
 			"description": "Tasks for master context"
 		}
 	}

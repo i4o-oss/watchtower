@@ -304,7 +304,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			<div className='max-w-[94rem] mx-auto flex'>
 				{/* Desktop Sidebar */}
 				<aside className='hidden lg:block w-80 shrink-0'>
-					<div className='sticky top-[128px] h-[calc(100vh-128px)] px-6 py-6'>
+					<div className='sticky top-[128px] h-[calc(100vh-128px)] pl-6 py-6'>
 						{/* Navigation */}
 						<nav className='space-y-1'>
 							{navigation.map((item) => {
