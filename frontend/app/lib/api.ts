@@ -5,7 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 // CSRF token cache to avoid fetching it multiple times
 let csrfTokenCache: string | null = null
-let csrfTokenExpiry: number = 0
+let csrfTokenExpiry = 0
 
 /**
  * Get CSRF token from server or cache

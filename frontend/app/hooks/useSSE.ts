@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-export interface SSEEventHandler {
-	(event: MessageEvent): void
-}
+export type SSEEventHandler = (event: MessageEvent) => void
 
 export interface SSEOptions {
 	url?: string
