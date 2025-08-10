@@ -14,8 +14,17 @@ import { PageContent } from '~/components/page-content'
 import { ActionBar } from '~/components/action-bar'
 import { requireAuth } from '~/lib/auth'
 import { useSSE } from '~/hooks/useSSE'
-import { Globe, AlertTriangle, BarChart3, Plus } from 'lucide-react'
+import {
+	Globe,
+	AlertTriangle,
+	BarChart3,
+	Plus,
+	GlobeIcon,
+	AlertTriangleIcon,
+	CircleXIcon,
+} from 'lucide-react'
 import type { Route } from './+types/index'
+import { Separator } from '~/components/ui/separator'
 
 export function meta() {
 	return [
@@ -258,8 +267,8 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	).length
 
 	return (
-		<main className='flex gap-4'>
-			<PageContent className='flex flex-grow'>
+		<main className='flex-1 flex flex-col xl:flex-row gap-6'>
+			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
 				<PageHeader
 					title='Dashboard'
 					description='Monitor and manage your endpoints, incidents, and logs'
@@ -277,19 +286,13 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 								Create Incident
 							</Button>
 						</Link>
-						<Link to='/admin/monitoring'>
-							<Button variant='outline'>
-								<BarChart3 className='h-4 w-4' />
-								View Monitoring
-							</Button>
-						</Link>
 					</div>
 				</PageHeader>
 
 				{/* Main Sections */}
-				<div className='grid gap-6 lg:grid-cols-1'>
+				<CardContent className='p-0 gap-0 flex flex-col'>
 					{/* Recent Endpoints */}
-					<Card>
+					<Card className='rounded-none shadow-none border-none'>
 						<CardHeader className='flex flex-row items-center justify-between'>
 							<div>
 								<CardTitle>Recent Endpoints</CardTitle>
@@ -360,8 +363,10 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 						</CardContent>
 					</Card>
 
+					<Separator />
+
 					{/* Recent Incidents */}
-					<Card>
+					<Card className='rounded-none shadow-none border-none'>
 						<CardHeader className='flex flex-row items-center justify-between'>
 							<div>
 								<CardTitle>Open Incidents</CardTitle>
@@ -433,83 +438,86 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 							)}
 						</CardContent>
 					</Card>
-				</div>
+				</CardContent>
 			</PageContent>
 
 			{/* Quick Stats */}
-			<div className='w-80 flex flex-col divide-y divide-y-border rounded-xl border border-border overflow-hidden'>
-				<Card className='rounded-none border-none'>
-					<CardHeader>
-						<CardTitle className='text-sm font-medium'>
-							Total Endpoints
-						</CardTitle>
-					</CardHeader>
+			<aside className='w-88 rounded-xl space-y-4'>
+				<Card>
 					<CardContent>
-						<div className='text-2xl font-bold'>
-							{endpoints.total}
+						<div className='flex items-center gap-4'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+								<GlobeIcon className='h-7 w-7' />
+							</div>
+							<div className='flex flex-col'>
+								<p className='text-sm font-normal'>
+									Total Endpoints
+								</p>
+								<p className='typography-h4'>
+									{endpoints.total}
+								</p>
+							</div>
 						</div>
-						<p className='text-xs text-muted-foreground'>
-							{activeEndpoints} active
-						</p>
 					</CardContent>
 				</Card>
-
-				<Card className='rounded-none border-none'>
-					<CardHeader>
-						<CardTitle className='text-sm font-medium'>
-							Recent Failures
-						</CardTitle>
-					</CardHeader>
+				<Card>
 					<CardContent>
-						<div className='text-2xl font-bold text-destructive'>
-							{recentFailures}
+						<div className='flex items-center gap-4'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+								<CircleXIcon className='h-7 w-7' />
+							</div>
+							<div className='flex flex-col'>
+								<p className='text-sm font-normal'>
+									Recent Failures (last 24 hours)
+								</p>
+								<p className='typography-h4'>
+									{recentFailures}
+								</p>
+							</div>
 						</div>
-						<p className='text-xs text-muted-foreground'>
-							Last 24 hours
-						</p>
 					</CardContent>
 				</Card>
-
-				<Card className='rounded-none border-none'>
-					<CardHeader>
-						<CardTitle className='text-sm font-medium'>
-							Open Incidents
-						</CardTitle>
-					</CardHeader>
+				<Card>
 					<CardContent>
-						<div className='text-2xl font-bold text-orange-600'>
-							{openIncidents}
+						<div className='flex items-center gap-4'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+								<AlertTriangleIcon className='h-7 w-7' />
+							</div>
+							<div className='flex flex-col'>
+								<p className='text-sm font-normal'>
+									Open Incidents
+								</p>
+								<p className='typography-h4'>{openIncidents}</p>
+							</div>
 						</div>
-						<p className='text-xs text-muted-foreground'>
-							Require attention
-						</p>
 					</CardContent>
 				</Card>
-
-				<Card className='rounded-none border-none'>
-					<CardHeader>
-						<CardTitle className='text-sm font-medium'>
-							System Status
-						</CardTitle>
-					</CardHeader>
+				<Card>
 					<CardContent>
-						<div className='flex items-center gap-2'>
-							<Badge
-								variant={
-									openIncidents === 0
-										? 'default'
-										: 'destructive'
-								}
-							>
-								{openIncidents === 0 ? 'Operational' : 'Issues'}
-							</Badge>
+						<div className='flex items-center gap-4'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+								<GlobeIcon className='h-7 w-7' />
+							</div>
+							<div className='flex flex-col'>
+								<p className='text-sm font-normal'>
+									System Status
+								</p>
+								<Badge
+									variant={
+										openIncidents === 0
+											? 'outline'
+											: 'destructive'
+									}
+								>
+									{openIncidents === 0
+										? 'Operational'
+										: 'Issues'}
+								</Badge>
+							</div>
 						</div>
-						<p className='text-xs text-muted-foreground'>
-							Overall health
-						</p>
 					</CardContent>
 				</Card>
-			</div>
+			</aside>
 		</main>
 	)
 }

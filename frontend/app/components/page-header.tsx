@@ -17,11 +17,9 @@ interface PageHeaderProps {
 export function PageHeader({ title, description, children }: PageHeaderProps) {
 	return (
 		<>
-			<CardHeader className='flex flex-row items-center justify-between'>
+			<CardHeader className='flex flex-row items-center justify-between px-6 py-6'>
 				<div className='flex flex-col gap-2'>
-					<CardTitle className='text-sm font-medium'>
-						{title}
-					</CardTitle>
+					<CardTitle className='typography-h4'>{title}</CardTitle>
 					<CardDescription>{description}</CardDescription>
 				</div>
 				{children && (
