@@ -131,7 +131,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 			}),
 			// Get recent logs for pattern analysis
 			fetch(
-				`${API_BASE_URL}/api/v1/admin/monitoring-logs?hours=${parseInt(timeRange) * 24}&limit=500`,
+				`${API_BASE_URL}/api/v1/admin/monitoring-logs?hours=${Number.parseInt(timeRange) * 24}&limit=500`,
 				{
 					method: 'GET',
 					credentials: 'include',
@@ -196,7 +196,7 @@ export default function IncidentAnalytics({
 	// Calculate comprehensive incident analytics
 	const analytics: IncidentAnalytics = useMemo(() => {
 		const now = new Date()
-		const timeRangeDays = parseInt(timeRange)
+		const timeRangeDays = Number.parseInt(timeRange)
 		const timeRangeMs = timeRangeDays * 24 * 60 * 60 * 1000
 		const startTime = new Date(now.getTime() - timeRangeMs)
 

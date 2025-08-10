@@ -161,7 +161,7 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
 	// Calculate analytics data
 	const analyticsData: AnalyticsData = useMemo(() => {
 		const now = new Date()
-		const timeRangeHours = parseInt(timeRange)
+		const timeRangeHours = Number.parseInt(timeRange)
 		const timeRangeMs = timeRangeHours * 60 * 60 * 1000
 		const startTime = new Date(now.getTime() - timeRangeMs)
 
