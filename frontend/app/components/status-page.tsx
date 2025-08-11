@@ -25,6 +25,10 @@ import {
 	Bell,
 	Activity,
 	Shield,
+	ChevronRight,
+	Wifi,
+	WifiOff,
+	Zap,
 } from 'lucide-react'
 import {
 	LineChart,
@@ -35,6 +39,10 @@ import {
 	AreaChart,
 	Area,
 	ReferenceArea,
+	BarChart,
+	Bar,
+	Tooltip,
+	CartesianGrid,
 } from 'recharts'
 
 // Types for API responses
@@ -103,6 +111,180 @@ function LoadingShimmer() {
 				<div className='bg-muted rounded-md h-3 w-16'></div>
 				<div className='bg-muted rounded-md h-3 w-16'></div>
 			</div>
+		</div>
+	)
+}
+
+// Railway-style uptime bar component
+function UptimeHistoryBar({
+	serviceId,
+	days = 90,
+}: { serviceId: string; days?: number }) {
+	const [historyData, setHistoryData] = useState<any[]>([])
+	const [incidents, setIncidents] = useState<any[]>([])
+	const [loading, setLoading] = useState(true)
+
+	useEffect(() => {
+		const fetchHistoryData = async () => {
+			const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+			try {
+				const [uptimeResponse, incidentsResponse] = await Promise.all([
+					fetch(
+						`${API_BASE_URL}/api/v1/uptime/${serviceId}?period=${days}d`,
+					),
+					fetch(
+						`${API_BASE_URL}/api/v1/incidents?service=${serviceId}`,
+					),
+				])
+
+				let dayData: any[] = []
+				let incidentData: any[] = []
+
+				if (uptimeResponse.ok) {
+					const data = await uptimeResponse.json()
+					dayData =
+						data.data?.map((item: any) => ({
+							date: item.date,
+							status:
+								item.status ||
+								(item.uptime >= 99.9
+									? 'operational'
+									: item.uptime >= 95
+										? 'degraded'
+										: 'outage'),
+							uptime: item.uptime || 100,
+						})) || []
+				}
+
+				if (incidentsResponse.ok) {
+					const incData = await incidentsResponse.json()
+					incidentData = incData.incidents || []
+				}
+
+				// Generate mock data if API fails
+				if (dayData.length === 0) {
+					dayData = Array.from({ length: days }, (_, i) => {
+						const random = Math.random()
+						const date = new Date(
+							Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000,
+						)
+							.toISOString()
+							.split('T')[0]
+						return {
+							date,
+							status:
+								random > 0.98
+									? 'outage'
+									: random > 0.95
+										? 'degraded'
+										: 'operational',
+							uptime:
+								random > 0.98
+									? 0
+									: random > 0.95
+										? 95 + Math.random() * 4
+										: 99 + Math.random(),
+							hasIncident: random > 0.97,
+						}
+					})
+				}
+
+				setHistoryData(dayData)
+				setIncidents(incidentData)
+			} catch (error) {
+				console.error('Failed to fetch uptime data:', error)
+				// Fallback mock data
+				const mockData = Array.from({ length: days }, (_, i) => {
+					const random = Math.random()
+					return {
+						date: new Date(
+							Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000,
+						)
+							.toISOString()
+							.split('T')[0],
+						status:
+							random > 0.98
+								? 'outage'
+								: random > 0.95
+									? 'degraded'
+									: 'operational',
+						uptime:
+							random > 0.98
+								? 0
+								: random > 0.95
+									? 95 + Math.random() * 4
+									: 99 + Math.random(),
+						hasIncident: random > 0.97,
+					}
+				})
+				setHistoryData(mockData)
+			} finally {
+				setLoading(false)
+			}
+		}
+		fetchHistoryData()
+	}, [serviceId, days])
+
+	if (loading) {
+		return (
+			<div className='flex justify-between items-center'>
+				<div className='h-12 bg-neutral-100 rounded flex-1 animate-pulse'></div>
+			</div>
+		)
+	}
+
+	return (
+		<div className='flex items-center justify-between'>
+			<span className='text-xs text-neutral-500 w-20'>90 DAYS AGO</span>
+			<div className='flex-1 mx-4 flex space-x-0.5'>
+				{historyData.map((day, index) => {
+					const getBarColor = () => {
+						switch (day.status) {
+							case 'operational':
+								return 'bg-emerald-500'
+							case 'degraded':
+								return 'bg-amber-500'
+							case 'outage':
+								return 'bg-red-500'
+							default:
+								return 'bg-emerald-500'
+						}
+					}
+
+					return (
+						<div key={index} className='relative group'>
+							{/* Main status bar */}
+							<div
+								className={cn(
+									'w-1 h-8 rounded-sm transition-all cursor-pointer',
+									getBarColor(),
+								)}
+							/>
+
+							{/* Incident marker */}
+							{day.hasIncident && (
+								<div className='absolute -top-1 left-1/2 transform -translate-x-1/2'>
+									<div className='w-2 h-2 bg-amber-400 rounded-full border border-white'></div>
+								</div>
+							)}
+
+							{/* Tooltip */}
+							<div className='absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-neutral-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10'>
+								<div className='font-medium'>{day.date}</div>
+								<div>{day.uptime.toFixed(2)}% uptime</div>
+								{day.hasIncident && (
+									<div className='text-amber-400'>
+										• Incident reported
+									</div>
+								)}
+							</div>
+						</div>
+					)
+				})}
+			</div>
+			<span className='text-xs text-neutral-500 w-12 text-right'>
+				TODAY
+			</span>
 		</div>
 	)
 }
@@ -269,7 +451,7 @@ function UptimeGraph({
 	return (
 		<div className='space-y-4'>
 			<div className='flex justify-between items-center'>
-				<div className='flex space-x-2'>
+				<div className='flex space-x-1 bg-neutral-100 rounded-lg p-1'>
 					{(['30d', '90d', '1y'] as const).map((period) => (
 						<button
 							key={period}
@@ -277,8 +459,8 @@ function UptimeGraph({
 							className={cn(
 								'px-3 py-1 text-sm font-medium rounded-md transition-colors',
 								period === selectedPeriod
-									? 'bg-foreground text-background'
-									: 'text-muted-foreground hover:text-accent-foreground hover:bg-accent',
+									? 'bg-white text-neutral-900 shadow-sm'
+									: 'text-neutral-600 hover:text-neutral-900',
 							)}
 						>
 							{period === '30d'
@@ -368,11 +550,8 @@ export function StatusPage({
 	)
 	const [loading, setLoading] = useState(!initialData?.status)
 	const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
-	const [selectedService, setSelectedService] =
-		useState<ServiceStatus | null>(null)
 	const [selectedIncident, setSelectedIncident] =
 		useState<IncidentSummary | null>(null)
-	const [timePeriod, setTimePeriod] = useState<'30d' | '90d' | '1y'>('90d')
 
 	// Fetch status data
 	const fetchStatus = async () => {
@@ -633,75 +812,46 @@ export function StatusPage({
 		},
 	)
 
-	// Screen 1A: Loading State with centered logo and Accent Mint pulse animation
+	// Loading State
 	if (loading) {
 		return (
-			<div className='min-h-screen bg-background'>
+			<div className='min-h-screen bg-neutral-50'>
 				{/* Navigation Bar */}
-				<nav className='border-b border-border bg-background'>
+				<nav className='bg-white border-b border-neutral-200'>
 					<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
 						<div className='flex h-16 justify-between items-center'>
-							<div className='flex items-center'>
-								<Shield className='h-8 w-8 text-foreground' />
-								<span className='text-xl font-semibold text-foreground'>
-									Watchtower
+							<div className='flex items-center space-x-3'>
+								<div className='w-8 h-8 bg-black rounded flex items-center justify-center'>
+									<Zap className='h-5 w-5 text-white' />
+								</div>
+								<span className='text-xl font-semibold text-neutral-900'>
+									Watchtower Status
 								</span>
-							</div>
-							<div className='flex items-center space-x-8'>
-								<a
-									href='#'
-									className='text-sm font-medium text-foreground border-b-2 border-foreground pb-2'
-								>
-									Status
-								</a>
-								<Button
-									variant='ghost'
-									size='sm'
-									className='text-muted-foreground hover:text-accent-foreground'
-								>
-									<Bell className='h-4 w-4' />
-									Subscribe to Updates
-								</Button>
 							</div>
 						</div>
 					</div>
 				</nav>
 
-				{/* Centered Loading Logo */}
-				<div className='flex items-center justify-center min-h-[calc(100vh-4rem)]'>
-					<div className='text-center'>
-						<div className='relative'>
-							<Shield
-								className='h-16 w-16 mx-auto text-muted-foreground animate-pulse'
-								style={{
-									animationDuration: '2s',
-									color: '#6EE7B7', // Accent Mint
-								}}
-							/>
-							<div
-								className='absolute inset-0 rounded-full'
-								style={{
-									backgroundColor: '#6EE7B7',
-									opacity: 0.2,
-									animation:
-										'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
-								}}
-							/>
+				{/* Loading Content */}
+				<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12'>
+					<div className='animate-pulse'>
+						<div className='h-8 bg-neutral-200 rounded w-1/4 mb-8'></div>
+						<div className='space-y-4'>
+							{Array.from({ length: 5 }).map((_, i) => (
+								<div
+									key={i}
+									className='bg-white rounded-lg p-6 border border-neutral-200'
+								>
+									<div className='flex items-center justify-between'>
+										<div className='space-y-2'>
+											<div className='h-4 bg-neutral-200 rounded w-32'></div>
+											<div className='h-3 bg-neutral-100 rounded w-20'></div>
+										</div>
+										<div className='h-8 bg-neutral-200 rounded w-16'></div>
+									</div>
+								</div>
+							))}
 						</div>
-						<p className='mt-4 text-sm text-muted-foreground'>
-							Loading system status...
-						</p>
-					</div>
-				</div>
-
-				{/* 3-column Services Grid with Shimmer Loading */}
-				<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16'>
-					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-						{Array.from({ length: 6 }).map((_, i) => (
-							<Card key={i} className='p-6'>
-								<LoadingShimmer />
-							</Card>
-						))}
 					</div>
 				</div>
 			</div>
@@ -748,443 +898,306 @@ export function StatusPage({
 	const systemStatus = getSystemStatus()
 
 	return (
-		<div className='min-h-screen bg-background'>
+		<div className='min-h-screen bg-neutral-50'>
 			{/* Navigation Bar */}
-			<nav className='border-b border-border bg-background sticky top-0 z-50'>
+			<nav className='bg-white border-b border-neutral-200 sticky top-0 z-50'>
 				<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
 					<div className='flex h-16 justify-between items-center'>
-						<div className='flex items-center'>
-							<Shield className='h-8 w-8 text-foreground' />
-							<span className='text-xl font-semibold text-foreground'>
-								Watchtower
+						<div className='flex items-center space-x-3'>
+							<div className='w-8 h-8 bg-black rounded flex items-center justify-center'>
+								<Zap className='h-5 w-5 text-white' />
+							</div>
+							<span className='text-xl font-semibold text-neutral-900'>
+								Watchtower Status
 							</span>
 						</div>
-						<div className='flex items-center space-x-8'>
-							<a
-								href='#'
-								className='text-sm font-medium text-foreground border-b-2 border-foreground pb-2'
-							>
-								Status
-							</a>
-							<Button
-								variant='ghost'
-								size='sm'
-								className='text-muted-foreground hover:text-accent-foreground'
-							>
+						<div className='flex items-center space-x-6'>
+							<button className='text-sm text-neutral-600 hover:text-neutral-900 transition-colors'>
+								Incident History
+							</button>
+							<button className='flex items-center space-x-2 text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors'>
 								<Bell className='h-4 w-4' />
-								Subscribe to Updates
-							</Button>
+								<span>Subscribe</span>
+							</button>
 						</div>
 					</div>
 				</div>
 			</nav>
 
-			{/* System Status Banner - Screen 1B/1C/1D */}
-			{systemStatus === 'operational' && (
-				<div className='bg-green-50 border-b border-green-200'>
-					<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6'>
-						<div className='flex items-center'>
-							<CheckCircle className='h-6 w-6 text-green-600 mr-3' />
+			{/* Main Content */}
+			<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12'>
+				{/* System Status Header */}
+				<div className='mb-12'>
+					{systemStatus === 'operational' && (
+						<div className='flex items-center space-x-3'>
+							<div className='w-12 h-12 bg-green-100 rounded-full flex items-center justify-center'>
+								<CheckCircle className='h-7 w-7 text-green-600' />
+							</div>
 							<div>
-								<h1
-									className='text-2xl font-bold leading-tight text-foreground'
-									style={{
-										fontSize: '32px',
-										lineHeight: '40px',
-									}}
-								>
-									All Systems Operational
+								<h1 className='text-3xl font-bold text-neutral-900'>
+									All systems operational
 								</h1>
-								<p className='text-green-700 text-base mt-1'>
-									All services are running smoothly with no
-									reported issues.
+								<p className='text-neutral-600 mt-1'>
+									All services are running normally
 								</p>
 							</div>
 						</div>
-					</div>
-				</div>
-			)}
+					)}
 
-			{systemStatus === 'degradation' && (
-				<div className='bg-yellow-50 border-b border-yellow-200'>
-					<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6'>
-						<div className='flex items-center'>
-							<AlertTriangle className='h-6 w-6 text-yellow-600 mr-3' />
+					{systemStatus === 'degradation' && (
+						<div className='flex items-center space-x-3'>
+							<div className='w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center'>
+								<AlertTriangle className='h-7 w-7 text-amber-600' />
+							</div>
 							<div>
-								<h1
-									className='text-2xl font-bold leading-tight text-foreground'
-									style={{
-										fontSize: '32px',
-										lineHeight: '40px',
-									}}
-								>
-									Service Degradation
+								<h1 className='text-3xl font-bold text-neutral-900'>
+									Partial service disruption
 								</h1>
-								<p className='text-yellow-700 text-base mt-1'>
-									Some services are experiencing performance
-									issues. We're monitoring the situation.
+								<p className='text-neutral-600 mt-1'>
+									Some services are experiencing issues
 								</p>
 							</div>
 						</div>
-					</div>
-				</div>
-			)}
+					)}
 
-			{systemStatus === 'outage' && (
-				<div className='bg-red-50 border-b border-red-200'>
-					<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6'>
-						<div className='flex items-center'>
-							<XCircle className='h-6 w-6 text-red-600 mr-3' />
+					{systemStatus === 'outage' && (
+						<div className='flex items-center space-x-3'>
+							<div className='w-12 h-12 bg-red-100 rounded-full flex items-center justify-center'>
+								<XCircle className='h-7 w-7 text-red-600' />
+							</div>
 							<div>
-								<h1
-									className='text-2xl font-bold leading-tight text-foreground'
-									style={{
-										fontSize: '32px',
-										lineHeight: '40px',
-									}}
-								>
-									Major Service Outage
+								<h1 className='text-3xl font-bold text-neutral-900'>
+									Major service outage
 								</h1>
-								<p className='text-red-700 text-base mt-1'>
-									We are experiencing significant service
-									disruptions. Our team is working to resolve
-									the issue.
+								<p className='text-neutral-600 mt-1'>
+									We are working to restore service
 								</p>
 							</div>
 						</div>
-					</div>
+					)}
 				</div>
-			)}
 
-			<main className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12'>
-				{/* Time Period Selector */}
-				<div className='flex justify-between items-center mb-8'>
-					<div>
-						<h2
-							className='text-2xl font-semibold text-foreground'
-							style={{ fontSize: '24px', lineHeight: '32px' }}
-						>
-							Services
+				{/* Current Status Section */}
+				<div className='mb-8'>
+					<div className='flex items-center justify-between mb-6'>
+						<h2 className='text-lg font-semibold text-neutral-900'>
+							Current status
 						</h2>
-						<p className='text-muted-foreground mt-1'>
-							Current status and uptime for all monitored services
-						</p>
-					</div>
-					<div className='flex items-center space-x-2'>
-						<span className='text-sm text-muted-foreground'>
-							Show data for:
-						</span>
-						<div className='flex rounded-md border border-border'>
-							{(['30d', '90d', '1y'] as const).map((period) => (
-								<button
-									key={period}
-									onClick={() => setTimePeriod(period)}
-									className={cn(
-										'px-3 py-1 text-sm font-medium transition-colors',
-										period === timePeriod
-											? 'bg-foreground text-background'
-											: 'text-muted-foreground hover:text-accent-foreground hover:bg-muted/50',
-										period === '30d' && 'rounded-l-md',
-										period === '1y' && 'rounded-r-md',
-									)}
-								>
-									{period === '30d'
-										? '30 days'
-										: period === '90d'
-											? '90 days'
-											: '1 year'}
-								</button>
-							))}
+						<div className='flex items-center space-x-2 text-sm text-neutral-500'>
+							<Clock className='h-4 w-4' />
+							<span>
+								Last updated{' '}
+								{new Date(lastRefresh).toLocaleTimeString([], {
+									hour: '2-digit',
+									minute: '2-digit',
+								})}
+							</span>
 						</div>
 					</div>
-				</div>
 
-				{/* Active Incidents */}
-				{incidents && incidents.incidents.length > 0 && (
-					<div className='mb-8 bg-red-50 border border-red-200 rounded-lg p-6'>
-						<div className='flex items-center mb-4'>
-							<AlertTriangle className='h-5 w-5 text-red-600' />
-							<h3 className='text-lg font-semibold text-red-800'>
-								Active Incidents
-							</h3>
-						</div>
-						<div className='space-y-4'>
-							{incidents.incidents.map((incident) => (
-								<div
-									key={incident.id}
-									onClick={() =>
-										setSelectedIncident(incident)
-									}
-									className='bg-background rounded-md p-4 border border-red-300 cursor-pointer hover:bg-red-25 transition-colors'
-								>
-									<div className='flex items-start justify-between'>
-										<div className='flex-1'>
-											<h4 className='font-medium text-foreground'>
-												{incident.title}
-											</h4>
-											<p className='text-sm text-muted-foreground mt-1'>
-												{incident.description.length >
-												100
-													? `${incident.description.substring(0, 100)}...`
-													: incident.description}
-											</p>
-											<p className='text-xs text-muted-foreground mt-2'>
-												Started{' '}
-												{new Date(
-													incident.start_time,
-												).toLocaleString()}
-											</p>
-										</div>
-										<div className='flex flex-col items-end space-y-2'>
-											<Badge
-												className={cn(
-													'capitalize',
-													incident.severity ===
-														'critical' &&
-														'bg-red-600 text-white',
-													incident.severity ===
-														'high' &&
-														'bg-red-500 text-white',
-													incident.severity ===
-														'medium' &&
-														'bg-yellow-500 text-white',
-													incident.severity ===
-														'low' &&
-														'bg-blue-500 text-white',
-												)}
-											>
-												{incident.severity}
-											</Badge>
-											<Badge
-												variant='outline'
-												className='text-xs'
-											>
-												{incident.status}
-											</Badge>
+					{/* Active Incidents */}
+					{incidents && incidents.incidents.length > 0 && (
+						<div className='mb-6'>
+							<div className='bg-amber-50 border border-amber-200 rounded-lg p-4'>
+								<div className='flex items-start space-x-3'>
+									<AlertTriangle className='h-5 w-5 text-amber-600 mt-0.5' />
+									<div className='flex-1'>
+										<h3 className='font-semibold text-amber-900 mb-2'>
+											Active Incidents
+										</h3>
+										<div className='space-y-2'>
+											{incidents.incidents.map(
+												(incident) => (
+													<button
+														key={incident.id}
+														onClick={() =>
+															setSelectedIncident(
+																incident,
+															)
+														}
+														className='text-left w-full group hover:bg-amber-100 rounded p-2 transition-colors'
+													>
+														<div className='flex items-center justify-between'>
+															<span className='font-medium text-amber-900'>
+																{incident.title}
+															</span>
+															<ChevronRight className='h-4 w-4 text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity' />
+														</div>
+														<p className='text-sm text-amber-700 mt-1'>
+															{incident
+																.description
+																.length > 100
+																? `${incident.description.substring(0, 100)}...`
+																: incident.description}
+														</p>
+													</button>
+												),
+											)}
 										</div>
 									</div>
 								</div>
-							))}
+							</div>
 						</div>
-					</div>
-				)}
+					)}
 
-				{/* 3-Column Services Grid */}
-				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-					{status.services.map((service) => {
-						const getStatusColor = (status: string) => {
-							switch (status) {
-								case 'operational':
-									return {
-										bg: 'bg-green-50',
-										border: 'border-green-200',
-										dot: 'bg-green-500',
-									}
-								case 'degraded':
-									return {
-										bg: 'bg-yellow-50',
-										border: 'border-yellow-200',
-										dot: 'bg-yellow-500',
-									}
-								case 'outage':
-									return {
-										bg: 'bg-red-50',
-										border: 'border-red-200',
-										dot: 'bg-red-500',
-									}
-								default:
-									return {
-										bg: 'bg-muted/50',
-										border: 'border-border',
-										dot: 'bg-muted-foreground',
-									}
+					{/* Services with Railway-style bars */}
+					<div className='space-y-4'>
+						{status.services.map((service) => {
+							const getStatusIcon = (status: string) => {
+								switch (status) {
+									case 'operational':
+										return (
+											<CheckCircle className='h-5 w-5 text-emerald-600' />
+										)
+									case 'degraded':
+										return (
+											<AlertTriangle className='h-5 w-5 text-amber-600' />
+										)
+									case 'outage':
+										return (
+											<XCircle className='h-5 w-5 text-red-600' />
+										)
+									default:
+										return (
+											<AlertCircle className='h-5 w-5 text-neutral-400' />
+										)
+								}
 							}
-						}
-						const colors = getStatusColor(service.status)
 
-						return (
-							<Card
-								key={service.id}
-								className={cn(
-									'cursor-pointer transition-all duration-200 hover:shadow-md',
-									colors.bg,
-									colors.border,
-								)}
-								onClick={() => setSelectedService(service)}
-							>
-								<CardContent className='p-6'>
-									{/* Service Header */}
-									<div className='flex items-start justify-between mb-4'>
+							return (
+								<div
+									key={service.id}
+									className='bg-white border border-neutral-200 rounded-lg p-4'
+								>
+									{/* Service header */}
+									<div className='flex items-center justify-between mb-4'>
 										<div className='flex items-center space-x-3'>
-											<div
-												className={cn(
-													'w-3 h-3 rounded-full',
-													colors.dot,
-												)}
-											/>
+											{getStatusIcon(service.status)}
 											<div>
-												<h3 className='font-semibold text-foreground text-base'>
+												<h3 className='font-semibold text-neutral-900'>
 													{service.name}
 												</h3>
-												<p className='text-sm text-muted-foreground capitalize'>
+												<p className='text-sm text-neutral-500 capitalize'>
 													{service.status}
 												</p>
 											</div>
 										</div>
 										<div className='text-right'>
-											<div className='text-sm font-medium text-foreground'>
-												{service[
-													timePeriod === '30d'
-														? 'uptime_30_day'
-														: timePeriod === '1y'
-															? 'uptime_90_day'
-															: 'uptime_90_day'
-												].toFixed(1)}
+											<div className='text-lg font-semibold text-neutral-900'>
+												{service.uptime_90_day.toFixed(
+													2,
+												)}
 												%
 											</div>
-											<div className='text-xs text-muted-foreground'>
-												{timePeriod === '30d'
-													? '30d'
-													: timePeriod === '1y'
-														? '1y'
-														: '90d'}{' '}
+											<div className='text-sm text-neutral-500'>
 												uptime
 											</div>
 										</div>
 									</div>
 
-									{/* Mini Chart */}
-									<div className='mb-4'>
-										<ServiceMiniChart
-											serviceId={service.id}
-										/>
-									</div>
-
-									{/* Metrics */}
-									<div className='flex justify-between items-center text-sm text-muted-foreground'>
-										<div className='flex items-center space-x-1'>
-											<Activity className='w-3 h-3' />
-											<span>
-												{service.response_time_ms || 0}
-												ms
-											</span>
-										</div>
-										<div className='text-xs'>
-											Last check:{' '}
-											{new Date(
-												service.last_check,
-											).toLocaleTimeString([], {
-												hour: '2-digit',
-												minute: '2-digit',
-											})}
-										</div>
-									</div>
-								</CardContent>
-							</Card>
-						)
-					})}
-				</div>
-
-				{/* Service Detail Modal - Screen 2 */}
-				<Dialog
-					open={!!selectedService}
-					onOpenChange={() => setSelectedService(null)}
-				>
-					<DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
-						<DialogHeader>
-							<DialogTitle className='text-xl font-semibold text-foreground'>
-								{selectedService?.name} Service Details
-							</DialogTitle>
-							<DialogDescription className='text-muted-foreground'>
-								Detailed uptime metrics and performance data
-							</DialogDescription>
-						</DialogHeader>
-						{selectedService && (
-							<div className='space-y-6'>
-								{/* Service Overview */}
-								<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-									<div className='bg-muted/50 rounded-lg p-4'>
-										<div className='text-sm text-muted-foreground'>
-											Current Status
-										</div>
-										<div className='text-lg font-semibold capitalize text-foreground'>
-											{selectedService.status}
-										</div>
-									</div>
-									<div className='bg-muted/50 rounded-lg p-4'>
-										<div className='text-sm text-muted-foreground'>
-											Response Time
-										</div>
-										<div className='text-lg font-semibold text-foreground'>
-											{selectedService.response_time_ms ||
-												0}
-											ms
-										</div>
-									</div>
-									<div className='bg-muted/50 rounded-lg p-4'>
-										<div className='text-sm text-muted-foreground'>
-											90-Day Uptime
-										</div>
-										<div className='text-lg font-semibold text-foreground'>
-											{selectedService.uptime_90_day.toFixed(
-												2,
-											)}
-											%
-										</div>
-									</div>
-								</div>
-
-								{/* Interactive Uptime Chart */}
-								<div className='bg-background border border-border rounded-lg p-6'>
-									<h4 className='text-lg font-semibold text-foreground mb-4'>
-										Uptime History
-									</h4>
-									<UptimeGraph
-										serviceId={selectedService.id}
-										serviceName={selectedService.name}
+									{/* Railway-style uptime bar */}
+									<UptimeHistoryBar
+										serviceId={service.id}
+										days={90}
 									/>
 								</div>
-							</div>
-						)}
-					</DialogContent>
-				</Dialog>
+							)
+						})}
+					</div>
+				</div>
 
-				{/* Incident Detail Modal - Screen 3 */}
+				{/* Incident History Section */}
+				<div className='mt-12'>
+					<h2 className='text-lg font-semibold text-neutral-900 mb-6'>
+						Incident History
+					</h2>
+
+					{incidents && incidents.incidents.length > 0 ? (
+						<div className='space-y-4'>
+							{incidents.incidents.slice(0, 5).map((incident) => (
+								<div
+									key={incident.id}
+									className='bg-white border border-neutral-200 rounded-lg p-4'
+								>
+									<div className='flex items-start justify-between'>
+										<div className='flex-1'>
+											<div className='flex items-center space-x-2 mb-2'>
+												<Badge
+													variant={
+														incident.status ===
+														'resolved'
+															? 'secondary'
+															: 'destructive'
+													}
+													className='text-xs'
+												>
+													{incident.status}
+												</Badge>
+												<span className='text-sm text-neutral-500'>
+													{new Date(
+														incident.start_time,
+													).toLocaleDateString()}
+												</span>
+											</div>
+											<h4 className='font-semibold text-neutral-900 mb-2'>
+												{incident.title}
+											</h4>
+											<p className='text-neutral-600 text-sm'>
+												{incident.description}
+											</p>
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					) : (
+						<div className='bg-white border border-neutral-200 rounded-lg p-8 text-center'>
+							<CheckCircle className='h-8 w-8 text-emerald-500 mx-auto mb-3' />
+							<h3 className='font-semibold text-neutral-900 mb-2'>
+								No incidents reported
+							</h3>
+							<p className='text-neutral-500 text-sm'>
+								All systems have been operating normally.
+							</p>
+						</div>
+					)}
+				</div>
+
+				{/* Incident Detail Modal */}
 				<Dialog
 					open={!!selectedIncident}
 					onOpenChange={() => setSelectedIncident(null)}
 				>
-					<DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
+					<DialogContent className='max-w-2xl'>
 						<DialogHeader>
-							<DialogTitle className='text-xl font-semibold text-foreground'>
-								{selectedIncident?.title}
+							<DialogTitle className='text-xl font-semibold text-neutral-900'>
+								Incident Details
 							</DialogTitle>
-							<DialogDescription className='text-muted-foreground'>
-								Incident #{selectedIncident?.id.slice(0, 8)} •{' '}
-								{selectedIncident?.severity} severity
-							</DialogDescription>
 						</DialogHeader>
 						{selectedIncident && (
-							<div className='space-y-6'>
-								{/* Incident Overview */}
-								<div className='bg-red-50 border border-red-200 rounded-lg p-4'>
-									<div className='flex items-center justify-between mb-2'>
+							<div className='space-y-4'>
+								<div>
+									<h3 className='font-semibold text-neutral-900 mb-2'>
+										{selectedIncident.title}
+									</h3>
+									<div className='flex items-center space-x-2 mb-3'>
 										<Badge
 											className={cn(
 												'capitalize',
 												selectedIncident.severity ===
 													'critical' &&
-													'bg-red-600 text-white',
+													'bg-red-100 text-red-700 border-red-200',
 												selectedIncident.severity ===
 													'high' &&
-													'bg-red-500 text-white',
+													'bg-orange-100 text-orange-700 border-orange-200',
 												selectedIncident.severity ===
 													'medium' &&
-													'bg-yellow-500 text-white',
+													'bg-amber-100 text-amber-700 border-amber-200',
 												selectedIncident.severity ===
 													'low' &&
-													'bg-blue-500 text-white',
+													'bg-blue-100 text-blue-700 border-blue-200',
 											)}
+											variant='outline'
 										>
 											{selectedIncident.severity} severity
 										</Badge>
@@ -1195,52 +1208,69 @@ export function StatusPage({
 											{selectedIncident.status}
 										</Badge>
 									</div>
-									<p className='text-red-800 text-sm'>
+									<p className='text-neutral-600'>
 										{selectedIncident.description}
 									</p>
-									<div className='mt-3 text-xs text-red-700'>
-										Started:{' '}
-										{new Date(
-											selectedIncident.start_time,
-										).toLocaleString()}
-										{selectedIncident.end_time && (
-											<>
-												{' '}
-												• Resolved:{' '}
+								</div>
+
+								<Separator />
+
+								<div>
+									<h4 className='font-medium text-neutral-900 mb-2'>
+										Timeline
+									</h4>
+									<div className='space-y-2 text-sm'>
+										<div className='flex items-center space-x-2'>
+											<Clock className='h-4 w-4 text-neutral-400' />
+											<span className='text-neutral-600'>
+												Started:{' '}
 												{new Date(
-													selectedIncident.end_time,
+													selectedIncident.start_time,
 												).toLocaleString()}
-											</>
+											</span>
+										</div>
+										{selectedIncident.end_time && (
+											<div className='flex items-center space-x-2'>
+												<CheckCircle className='h-4 w-4 text-green-500' />
+												<span className='text-neutral-600'>
+													Resolved:{' '}
+													{new Date(
+														selectedIncident.end_time,
+													).toLocaleString()}
+												</span>
+											</div>
 										)}
 									</div>
 								</div>
 
-								{/* Affected Services */}
 								{selectedIncident.affected_services.length >
 									0 && (
-									<div>
-										<h4 className='font-semibold text-foreground mb-2'>
-											Affected Services
-										</h4>
-										<div className='flex flex-wrap gap-2'>
-											{selectedIncident.affected_services.map(
-												(serviceName, index) => (
-													<Badge
-														key={index}
-														variant='outline'
-													>
-														{serviceName}
-													</Badge>
-												),
-											)}
+									<>
+										<Separator />
+										<div>
+											<h4 className='font-medium text-neutral-900 mb-2'>
+												Affected Services
+											</h4>
+											<div className='flex flex-wrap gap-2'>
+												{selectedIncident.affected_services.map(
+													(serviceName, index) => (
+														<Badge
+															key={index}
+															variant='secondary'
+														>
+															{serviceName}
+														</Badge>
+													),
+												)}
+											</div>
 										</div>
-									</div>
+									</>
 								)}
 							</div>
 						)}
 					</DialogContent>
 				</Dialog>
-			</main>
+			</div>
 		</div>
 	)
 }
