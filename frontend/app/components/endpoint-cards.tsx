@@ -11,17 +11,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '~/components/ui/select'
-import { cn } from '~/lib/utils'
 import {
-	Search,
-	CheckCircle2,
-	XCircle,
-	Edit,
-	Trash2,
-	Play,
-	Pause,
-	Activity,
-} from 'lucide-react'
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '~/components/ui/tooltip'
+import { cn } from '~/lib/utils'
+import { Search, Activity } from 'lucide-react'
+import { UptimeSparkline } from '~/components/uptime-sparkline'
 
 export interface Endpoint {
 	id: string
@@ -35,21 +33,20 @@ export interface Endpoint {
 	created_at: string
 	updated_at: string
 	description?: string
+	status?: 'operational' | 'degraded' | 'outage' | 'unknown'
+	recent_checks?: {
+		timestamp: string
+		success: boolean
+		response_time_ms?: number
+	}[]
 }
 
 interface EndpointCardsProps {
 	data: Endpoint[]
 	isLoading?: boolean
-	onToggleEndpoint: (endpoint: Endpoint) => void
-	onDeleteEndpoint: (endpoint: Endpoint) => void
 }
 
-export function EndpointCards({
-	data,
-	isLoading = false,
-	onToggleEndpoint,
-	onDeleteEndpoint,
-}: EndpointCardsProps) {
+export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 	const navigate = useNavigate()
 	const [globalFilter, setGlobalFilter] = useState('')
 	const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -78,11 +75,6 @@ export function EndpointCards({
 
 	const handleCardClick = (endpoint: Endpoint) => {
 		navigate(`/admin/endpoints/${endpoint.id}`)
-	}
-
-	const handleActionClick = (e: React.MouseEvent, action: () => void) => {
-		e.stopPropagation() // Prevent card click when clicking action buttons
-		action()
 	}
 
 	// Empty state component
@@ -164,154 +156,106 @@ export function EndpointCards({
 					<EmptyState />
 				) : (
 					filteredEndpoints.map((endpoint) => {
-						const getStatusColor = (enabled: boolean) => {
-							return enabled
-								? {
-										bg: 'bg-green-50',
-										border: 'border-green-200',
-										dot: 'bg-green-500',
+						const getStatusColor = (endpoint: Endpoint) => {
+							// If disabled, always show gray
+							if (!endpoint.enabled) {
+								return {
+									bg: 'bg-gray-50 dark:bg-gray-950/20',
+									border: 'border-gray-200 dark:border-gray-800',
+									sparklineColor: '#9ca3af',
+								}
+							}
+
+							// Check actual status if available
+							switch (endpoint.status) {
+								case 'operational':
+									return {
+										bg: 'bg-green-50 dark:bg-green-950/20',
+										border: 'border-green-200 dark:border-green-800',
+										sparklineColor: '#10b981',
 									}
-								: {
-										bg: 'bg-red-50',
-										border: 'border-red-200',
-										dot: 'bg-red-500',
+								case 'degraded':
+									return {
+										bg: 'bg-yellow-50 dark:bg-yellow-950/20',
+										border: 'border-yellow-200 dark:border-yellow-800',
+										sparklineColor: '#f59e0b',
 									}
+								case 'outage':
+									return {
+										bg: 'bg-red-50 dark:bg-red-950/20',
+										border: 'border-red-200 dark:border-red-800',
+										sparklineColor: '#ef4444',
+									}
+								default:
+									// Default to green if enabled but status unknown
+									return {
+										bg: 'bg-green-50 dark:bg-green-950/20',
+										border: 'border-green-200 dark:border-green-800',
+										sparklineColor: '#10b981',
+									}
+							}
 						}
-						const colors = getStatusColor(endpoint.enabled)
+						const colors = getStatusColor(endpoint)
 
 						return (
 							<Card
 								key={endpoint.id}
 								className={cn(
+									'p-0',
 									'cursor-pointer transition-all duration-200 hover:shadow-md',
 									colors.bg,
 									colors.border,
 								)}
 								onClick={() => handleCardClick(endpoint)}
 							>
-								<CardContent className='p-6'>
-									{/* Endpoint Header */}
-									<div className='flex items-start justify-between mb-4'>
-										<div className='flex items-center space-x-3 flex-1 min-w-0'>
-											<div
-												className={cn(
-													'w-3 h-3 rounded-full flex-shrink-0',
-													colors.dot,
-												)}
-											/>
-											<div className='min-w-0 flex-1'>
-												<h3 className='font-semibold text-foreground text-base truncate'>
-													{endpoint.name}
-												</h3>
-												<p className='text-sm text-muted-foreground capitalize'>
-													{endpoint.enabled
-														? 'Active'
-														: 'Disabled'}
+								<CardContent className='p-4'>
+									{/* Minimal Header */}
+									<div className='flex items-center justify-between mb-2'>
+										<h3 className='font-semibold text-foreground text-base truncate'>
+											{endpoint.name}
+										</h3>
+										<Badge
+											variant={
+												endpoint.enabled
+													? 'default'
+													: 'secondary'
+											}
+											className='text-xs'
+										>
+											{endpoint.enabled
+												? 'Active'
+												: 'Inactive'}
+										</Badge>
+									</div>
+
+									{/* URL with ellipsis and tooltip */}
+									<TooltipProvider>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<div className='text-xs text-muted-foreground truncate mb-3'>
+													{endpoint.url}
+												</div>
+											</TooltipTrigger>
+											<TooltipContent>
+												<p className='font-mono text-xs'>
+													{endpoint.url}
 												</p>
-											</div>
-										</div>
-										<div className='flex items-center gap-1 flex-shrink-0'>
-											<Button
-												variant='ghost'
-												size='sm'
-												className='h-8 w-8 p-0'
-												onClick={(e) =>
-													handleActionClick(e, () =>
-														navigate(
-															`/admin/endpoints/${endpoint.id}/edit`,
-														),
-													)
-												}
-											>
-												<Edit className='h-4 w-4' />
-											</Button>
-											<Button
-												variant='ghost'
-												size='sm'
-												className='h-8 w-8 p-0'
-												onClick={(e) =>
-													handleActionClick(e, () =>
-														onToggleEndpoint(
-															endpoint,
-														),
-													)
-												}
-											>
-												{endpoint.enabled ? (
-													<Pause className='h-4 w-4' />
-												) : (
-													<Play className='h-4 w-4' />
-												)}
-											</Button>
-											<Button
-												variant='ghost'
-												size='sm'
-												className='h-8 w-8 p-0 text-destructive hover:text-destructive'
-												onClick={(e) =>
-													handleActionClick(e, () =>
-														onDeleteEndpoint(
-															endpoint,
-														),
-													)
-												}
-											>
-												<Trash2 className='h-4 w-4' />
-											</Button>
-										</div>
-									</div>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
 
-									{/* URL and Method */}
-									<div className='space-y-2 mb-4'>
-										<div className='font-mono text-sm bg-muted/50 px-2 py-1 rounded truncate'>
-											{endpoint.url}
-										</div>
-										<div className='flex items-center justify-between'>
-											<Badge
-												variant='outline'
-												className='font-mono text-xs font-semibold'
-											>
-												{endpoint.method}
-											</Badge>
-											<Badge
-												variant={
-													endpoint.enabled
-														? 'default'
-														: 'secondary'
-												}
-												className='gap-1.5'
-											>
-												{endpoint.enabled ? (
-													<CheckCircle2 className='h-3 w-3' />
-												) : (
-													<XCircle className='h-3 w-3' />
-												)}
-												{endpoint.enabled
-													? 'Active'
-													: 'Disabled'}
-											</Badge>
-										</div>
-									</div>
-
-									{/* Description */}
-									{endpoint.description && (
-										<div className='mb-4'>
-											<p className='text-sm text-muted-foreground line-clamp-2'>
-												{endpoint.description}
-											</p>
-										</div>
-									)}
-
-									{/* Metrics */}
-									<div className='flex justify-between items-center text-sm text-muted-foreground'>
-										<div className='flex items-center space-x-1'>
-											<span>
-												Status:{' '}
-												{endpoint.expected_status_code}
-											</span>
-										</div>
-										<div className='text-xs'>
-											{endpoint.timeout_seconds}s timeout
-										</div>
+									{/* Uptime Graph */}
+									<div className='h-16'>
+										<UptimeSparkline
+											data={endpoint.recent_checks?.map(
+												(check) => ({
+													value: check.success
+														? 100
+														: 0,
+												}),
+											)}
+											color={colors.sparklineColor}
+										/>
 									</div>
 								</CardContent>
 							</Card>

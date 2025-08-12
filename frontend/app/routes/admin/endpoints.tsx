@@ -47,14 +47,71 @@ export async function clientLoader() {
 	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 	try {
-		const response = await fetch(`${API_BASE_URL}/api/v1/admin/endpoints`, {
-			method: 'GET',
-			credentials: 'include',
-			headers: { 'Content-Type': 'application/json' },
-		})
+		// Fetch endpoints and monitoring logs in parallel
+		const [endpointsRes, logsRes] = await Promise.all([
+			fetch(`${API_BASE_URL}/api/v1/admin/endpoints`, {
+				method: 'GET',
+				credentials: 'include',
+				headers: { 'Content-Type': 'application/json' },
+			}),
+			fetch(
+				`${API_BASE_URL}/api/v1/admin/monitoring-logs?hours=24&limit=500`,
+				{
+					method: 'GET',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+				},
+			),
+		])
 
-		if (response.ok) {
-			return await response.json()
+		if (endpointsRes.ok) {
+			const data = await endpointsRes.json()
+			const logs = logsRes.ok ? await logsRes.json() : { logs: [] }
+
+			// Enhance endpoints with status and recent checks
+			const enhancedEndpoints = data.endpoints.map(
+				(endpoint: Endpoint) => {
+					// Get logs for this endpoint
+					const endpointLogs =
+						logs.logs
+							?.filter(
+								(log: any) => log.endpoint_id === endpoint.id,
+							)
+							.slice(0, 24) || [] // Get last 24 checks
+
+					// Calculate status based on recent checks
+					const recentFailures = endpointLogs
+						.slice(0, 5)
+						.filter((log: any) => !log.success).length
+					let status:
+						| 'operational'
+						| 'degraded'
+						| 'outage'
+						| 'unknown' = 'unknown'
+
+					if (endpointLogs.length > 0) {
+						if (recentFailures === 0) {
+							status = 'operational'
+						} else if (recentFailures < 3) {
+							status = 'degraded'
+						} else {
+							status = 'outage'
+						}
+					}
+
+					return {
+						...endpoint,
+						status,
+						recent_checks: endpointLogs.map((log: any) => ({
+							timestamp: log.checked_at,
+							success: log.success,
+							response_time_ms: log.response_time_ms,
+						})),
+					}
+				},
+			)
+
+			return { endpoints: enhancedEndpoints, total: data.total }
 		}
 
 		return { endpoints: [], total: 0 }
@@ -79,18 +136,71 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 	const refreshEndpoints = async () => {
 		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 		try {
-			const response = await fetch(
-				`${API_BASE_URL}/api/v1/admin/endpoints`,
-				{
+			const [endpointsRes, logsRes] = await Promise.all([
+				fetch(`${API_BASE_URL}/api/v1/admin/endpoints`, {
 					method: 'GET',
 					credentials: 'include',
 					headers: { 'Content-Type': 'application/json' },
-				},
-			)
+				}),
+				fetch(
+					`${API_BASE_URL}/api/v1/admin/monitoring-logs?hours=24&limit=500`,
+					{
+						method: 'GET',
+						credentials: 'include',
+						headers: { 'Content-Type': 'application/json' },
+					},
+				),
+			])
 
-			if (response.ok) {
-				const data = await response.json()
-				setEndpoints(data.endpoints || [])
+			if (endpointsRes.ok) {
+				const data = await endpointsRes.json()
+				const logs = logsRes.ok ? await logsRes.json() : { logs: [] }
+
+				// Enhance endpoints with status and recent checks
+				const enhancedEndpoints = data.endpoints.map(
+					(endpoint: Endpoint) => {
+						// Get logs for this endpoint
+						const endpointLogs =
+							logs.logs
+								?.filter(
+									(log: any) =>
+										log.endpoint_id === endpoint.id,
+								)
+								.slice(0, 24) || []
+
+						// Calculate status based on recent checks
+						const recentFailures = endpointLogs
+							.slice(0, 5)
+							.filter((log: any) => !log.success).length
+						let status:
+							| 'operational'
+							| 'degraded'
+							| 'outage'
+							| 'unknown' = 'unknown'
+
+						if (endpointLogs.length > 0) {
+							if (recentFailures === 0) {
+								status = 'operational'
+							} else if (recentFailures < 3) {
+								status = 'degraded'
+							} else {
+								status = 'outage'
+							}
+						}
+
+						return {
+							...endpoint,
+							status,
+							recent_checks: endpointLogs.map((log: any) => ({
+								timestamp: log.checked_at,
+								success: log.success,
+								response_time_ms: log.response_time_ms,
+							})),
+						}
+					},
+				)
+
+				setEndpoints(enhancedEndpoints || [])
 				setTotal(data.total || 0)
 			}
 		} catch (error) {
@@ -237,13 +347,6 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 							<EndpointCards
 								data={endpoints}
 								isLoading={isLoading}
-								onToggleEndpoint={(endpoint) => {
-									toggleEndpoint(endpoint)
-								}}
-								onDeleteEndpoint={(endpoint) => {
-									setEndpointToDelete(endpoint)
-									setDeleteDialogOpen(true)
-								}}
 							/>
 						)}
 					</CardContent>

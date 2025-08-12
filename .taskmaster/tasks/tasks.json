@@ -1522,11 +1522,68 @@
 						"testStrategy": "Test real-time updates work correctly across all components via SSE, verify SSE reconnection handles network issues gracefully, validate fallback polling activates when needed, ensure Railway-style visual feedback is consistent"
 					}
 				]
+			},
+			{
+				"id": 39,
+				"title": "Minimize Endpoint Cards UI in Admin Route",
+				"description": "Redesign endpoint cards in the /admin/endpoints route to display minimal information with only name, status badge, URL with ellipsis, and add centered uptime line graphs while preserving status-based border and background colors.",
+				"details": "Update the endpoint cards component in the admin endpoints route to create a more minimal, data-focused design. Reduce card content to display only: endpoint name as primary text, active/inactive status badge with appropriate styling, endpoint URL with text ellipsis for long URLs, and a centered uptime line graph showing recent performance trends. Maintain the existing color-coded border and background system that reflects uptime/downtime status for quick visual assessment. Implement responsive design to ensure cards work well on different screen sizes. Use existing UI components and maintain consistency with the overall admin interface design patterns. Consider using a lightweight charting library or SVG-based solution for the uptime graphs to minimize performance impact.",
+				"testStrategy": "Verify endpoint cards render with only the specified minimal elements (name, badge, URL with ellipsis, uptime graph). Test that uptime line graphs display accurate data and update in real-time. Validate that status-based border and background colors are preserved and correctly reflect endpoint health. Test responsive behavior across different screen sizes to ensure cards maintain readability. Verify URL ellipsis functionality works correctly for long endpoint URLs. Test that the overall admin interface performance is not negatively impacted by the uptime graphs.",
+				"status": "done",
+				"dependencies": [32],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Identify and analyze current endpoint cards component",
+						"description": "Locate the existing endpoint cards component in the admin endpoints route, analyze its current structure, styling, and data flow to understand what needs to be modified",
+						"dependencies": [],
+						"details": "Find the endpoint cards component file in the admin endpoints route, examine its current props, styling classes, data rendering logic, and identify all UI elements that need to be removed or modified. Document the current component structure and dependencies.",
+						"status": "done",
+						"testStrategy": "Verify the correct component file is identified and current functionality is properly documented"
+					},
+					{
+						"id": 2,
+						"title": "Implement minimal card layout with name, status badge, and URL with ellipsis",
+						"description": "Redesign the endpoint card component to display only the essential information: endpoint name, status badge, and URL with text ellipsis for overflow",
+						"dependencies": ["39.1"],
+						"details": "Remove all non-essential UI elements from the card component. Implement clean layout showing endpoint name as primary text, styled active/inactive status badge, and URL with CSS text-overflow ellipsis. Ensure proper spacing and typography hierarchy while maintaining readability.",
+						"status": "done",
+						"testStrategy": "Verify cards display only the three specified elements with proper ellipsis behavior for long URLs and correct status badge styling"
+					},
+					{
+						"id": 3,
+						"title": "Preserve status-based color system for borders and backgrounds",
+						"description": "Maintain the existing color-coded border and background system that reflects endpoint uptime/downtime status while applying it to the new minimal design",
+						"dependencies": ["39.2"],
+						"details": "Identify current color coding logic for endpoint status (uptime/downtime indicators). Apply these same color schemes to the redesigned minimal cards, ensuring borders and backgrounds still provide quick visual assessment of endpoint health status.",
+						"status": "done",
+						"testStrategy": "Test that different endpoint statuses display correct border and background colors consistent with the existing color system"
+					},
+					{
+						"id": 4,
+						"title": "Research and select lightweight charting solution for uptime graphs",
+						"description": "Evaluate and choose an appropriate lightweight charting library or SVG-based solution for displaying uptime line graphs with minimal performance impact",
+						"dependencies": ["39.1"],
+						"details": "Research charting options including lightweight libraries (Chart.js, Recharts, D3 minimal builds) and pure SVG solutions. Consider bundle size, performance impact, customization capabilities, and compatibility with the existing tech stack. Make recommendation and prepare implementation plan.",
+						"status": "done",
+						"testStrategy": "Verify chosen solution meets performance requirements and can render the required uptime line graph format"
+					},
+					{
+						"id": 5,
+						"title": "Implement centered uptime line graphs and responsive design",
+						"description": "Add centered uptime line graphs to each endpoint card showing recent performance trends and ensure responsive design works across different screen sizes",
+						"dependencies": ["39.3", "39.4"],
+						"details": "Integrate the selected charting solution to display uptime line graphs in the center of each card. Connect to uptime data source, implement graph rendering with appropriate styling to match the minimal design. Add responsive breakpoints to ensure cards and graphs work well on mobile, tablet, and desktop screens.",
+						"status": "done",
+						"testStrategy": "Test that uptime graphs display accurate data, are properly centered, and cards maintain usability across all screen sizes with responsive breakpoints working correctly"
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-10T19:02:07.714Z",
+			"updated": "2025-08-12T16:29:00.378Z",
 			"description": "Tasks for master context"
 		}
 	}
