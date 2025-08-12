@@ -181,7 +181,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 		<div className='min-h-screen bg-background'>
 			{/* Top Header Bar */}
 			<header className='sticky top-0 z-30 h-16 bg-card border-b border-border'>
-				<div className='w-full h-full max-w-[94rem] mx-auto px-6'>
+				<div className='w-full h-full max-w-7xl mx-auto px-6'>
 					<div className='flex h-full items-center justify-between'>
 						{/* Left - Logo and Mobile Menu */}
 						<div className='flex items-center gap-4'>
@@ -212,10 +212,19 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 						{/* Right - Header Actions */}
 						<div className='flex items-center gap-3'>
-							<Button size='sm' variant='ghost'>
-								<HomeIcon className='h-4 w-4' />
-								Dashboard
-							</Button>
+							{navigation.map((item) => {
+								const Icon = item.icon
+								const active = isActive(item.href)
+
+								return (
+									<Link to={item.href} key={item.href}>
+										<Button size='sm' variant='ghost'>
+											<Icon className='h-4 w-4' />
+											{item.name}
+										</Button>
+									</Link>
+								)
+							})}
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button size='sm' variant='ghost'>
@@ -246,7 +255,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 			{/* Breadcrumb Bar */}
 			<div className='h-16 bg-card border-b border-border hidden lg:block'>
-				<div className='w-full h-full max-w-[94rem] mx-auto flex items-center justify-between px-6 py-3'>
+				<div className='w-full h-full max-w-7xl mx-auto flex items-center justify-between px-6 py-3'>
 					<div className='text-sm text-muted-foreground'>
 						{getBreadcrumbs(location.pathname).map(
 							(segment, index) => (
@@ -301,43 +310,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			</div>
 
 			{/* Layout Container */}
-			<div className='max-w-[94rem] mx-auto flex'>
-				{/* Desktop Sidebar */}
-				<aside className='hidden lg:block w-80 shrink-0'>
-					<div className='sticky top-[128px] h-[calc(100vh-128px)] pl-6 py-6'>
-						{/* Navigation */}
-						<nav className='space-y-1'>
-							{navigation.map((item) => {
-								const Icon = item.icon
-								const active = isActive(item.href)
-
-								return (
-									<Link
-										key={item.name}
-										to={item.href}
-										className={cn(
-											'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ease-out',
-											active
-												? 'bg-primary text-primary-foreground shadow-sm'
-												: 'text-foreground hover:bg-accent hover:text-accent-foreground',
-										)}
-									>
-										<Icon
-											className={cn(
-												'h-5 w-5',
-												active
-													? 'text-white'
-													: 'text-muted-foreground',
-											)}
-										/>
-										<span>{item.name}</span>
-									</Link>
-								)
-							})}
-						</nav>
-					</div>
-				</aside>
-
+			<div className='max-w-7xl mx-auto flex'>
 				{/* Main Content Area */}
 				<main className='flex-1 min-w-0'>
 					<div className='px-6 py-6'>
