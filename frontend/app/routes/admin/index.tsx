@@ -441,7 +441,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 			</PageContent>
 
 			{/* Quick Stats */}
-			<aside className='w-88 rounded-xl space-y-4'>
+			<aside className='w-80 space-y-4'>
 				<Card>
 					<CardContent>
 						<div className='flex items-center gap-4'>
@@ -467,7 +467,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 							</div>
 							<div className='flex flex-col'>
 								<p className='text-sm font-normal'>
-									Recent Failures (last 24 hours)
+									Recent Failures
 								</p>
 								<p className='typography-h4'>
 									{recentFailures}
@@ -487,31 +487,6 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 									Open Incidents
 								</p>
 								<p className='typography-h4'>{openIncidents}</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								<GlobeIcon className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
-									System Status
-								</p>
-								<Badge
-									variant={
-										openIncidents === 0
-											? 'outline'
-											: 'destructive'
-									}
-								>
-									{openIncidents === 0
-										? 'Operational'
-										: 'Issues'}
-								</Badge>
 							</div>
 						</div>
 					</CardContent>

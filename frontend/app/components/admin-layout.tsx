@@ -181,7 +181,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 		<div className='min-h-screen bg-background'>
 			{/* Top Header Bar */}
 			<header className='sticky top-0 z-30 h-16 bg-card border-b border-border'>
-				<div className='w-full h-full max-w-7xl mx-auto px-6'>
+				<div className='w-full h-full max-w-6xl mx-auto px-6'>
 					<div className='flex h-full items-center justify-between'>
 						{/* Left - Logo and Mobile Menu */}
 						<div className='flex items-center gap-4'>
@@ -217,8 +217,16 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 								const active = isActive(item.href)
 
 								return (
-									<Link to={item.href} key={item.href}>
-										<Button size='sm' variant='ghost'>
+									<Link key={item.href} to={item.href}>
+										<Button
+											className='cursor-pointer'
+											size='sm'
+											variant={
+												location.pathname === item.href
+													? 'default'
+													: 'ghost'
+											}
+										>
 											<Icon className='h-4 w-4' />
 											{item.name}
 										</Button>
@@ -227,9 +235,12 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 							})}
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
-									<Button size='sm' variant='ghost'>
+									<Button
+										className='cursor-pointer rounded-full'
+										size='sm'
+										variant='secondary'
+									>
 										<UserIcon className='h-4 w-4' />
-										Account
 									</Button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
@@ -255,7 +266,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 			{/* Breadcrumb Bar */}
 			<div className='h-16 bg-card border-b border-border hidden lg:block'>
-				<div className='w-full h-full max-w-7xl mx-auto flex items-center justify-between px-6 py-3'>
+				<div className='w-full h-full max-w-6xl mx-auto flex items-center justify-between px-6 py-3'>
 					<div className='text-sm text-muted-foreground'>
 						{getBreadcrumbs(location.pathname).map(
 							(segment, index) => (
@@ -310,7 +321,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			</div>
 
 			{/* Layout Container */}
-			<div className='max-w-7xl mx-auto flex'>
+			<div className='max-w-6xl mx-auto flex'>
 				{/* Main Content Area */}
 				<main className='flex-1 min-w-0'>
 					<div className='px-6 py-6'>

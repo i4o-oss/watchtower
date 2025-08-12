@@ -103,13 +103,13 @@ interface IncidentsResponse {
 function LoadingShimmer() {
 	return (
 		<div className='animate-pulse space-y-4'>
-			<div className='bg-muted rounded-md h-4 w-3/4'></div>
-			<div className='bg-muted rounded-md h-3 w-1/2'></div>
-			<div className='bg-muted rounded-md h-16 w-full'></div>
+			<div className='bg-muted rounded-md h-4 w-3/4' />
+			<div className='bg-muted rounded-md h-3 w-1/2' />
+			<div className='bg-muted rounded-md h-16 w-full' />
 			<div className='flex justify-between'>
-				<div className='bg-muted rounded-md h-3 w-16'></div>
-				<div className='bg-muted rounded-md h-3 w-16'></div>
-				<div className='bg-muted rounded-md h-3 w-16'></div>
+				<div className='bg-muted rounded-md h-3 w-16' />
+				<div className='bg-muted rounded-md h-3 w-16' />
+				<div className='bg-muted rounded-md h-3 w-16' />
 			</div>
 		</div>
 	)
@@ -119,7 +119,10 @@ function LoadingShimmer() {
 function UptimeHistoryBar({
 	serviceId,
 	days = 90,
-}: { serviceId: string; days?: number }) {
+}: {
+	serviceId: string
+	days?: number
+}) {
 	const [historyData, setHistoryData] = useState<any[]>([])
 	const [incidents, setIncidents] = useState<any[]>([])
 	const [loading, setLoading] = useState(true)
@@ -228,7 +231,7 @@ function UptimeHistoryBar({
 	if (loading) {
 		return (
 			<div className='flex justify-between items-center'>
-				<div className='h-12 bg-neutral-100 rounded flex-1 animate-pulse'></div>
+				<div className='h-12 bg-neutral-100 rounded flex-1 animate-pulse' />
 			</div>
 		)
 	}
@@ -333,7 +336,7 @@ function ServiceMiniChart({ serviceId }: { serviceId: string }) {
 	}, [serviceId])
 
 	if (loading) {
-		return <div className='h-12 bg-muted animate-pulse rounded'></div>
+		return <div className='h-12 bg-muted animate-pulse rounded' />
 	}
 
 	return (
@@ -745,33 +748,31 @@ export function StatusPage({
 										: incident,
 								),
 							}
-						} else {
-							// Add new incident if it should be visible (open or investigating)
-							if (
-								updatedIncident.status === 'open' ||
-								updatedIncident.status === 'investigating'
-							) {
-								return {
-									...prev,
-									incidents: [
-										...prev.incidents,
-										{
-											id: updatedIncident.id,
-											title: updatedIncident.title,
-											description:
-												updatedIncident.description,
-											status: updatedIncident.status,
-											severity: updatedIncident.severity,
-											start_time:
-												updatedIncident.start_time,
-											end_time: updatedIncident.end_time,
-											affected_services: [],
-										},
-									],
-								}
-							}
-							return prev
 						}
+						// Add new incident if it should be visible (open or investigating)
+						if (
+							updatedIncident.status === 'open' ||
+							updatedIncident.status === 'investigating'
+						) {
+							return {
+								...prev,
+								incidents: [
+									...prev.incidents,
+									{
+										id: updatedIncident.id,
+										title: updatedIncident.title,
+										description:
+											updatedIncident.description,
+										status: updatedIncident.status,
+										severity: updatedIncident.severity,
+										start_time: updatedIncident.start_time,
+										end_time: updatedIncident.end_time,
+										affected_services: [],
+									},
+								],
+							}
+						}
+						return prev
 					})
 				} catch (error) {
 					console.error(
@@ -818,7 +819,7 @@ export function StatusPage({
 			<div className='min-h-screen bg-neutral-50'>
 				{/* Navigation Bar */}
 				<nav className='bg-white border-b border-neutral-200'>
-					<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
+					<div className='mx-auto max-w-5xl px-4 sm:px-6 lg:px-8'>
 						<div className='flex h-16 justify-between items-center'>
 							<div className='flex items-center space-x-3'>
 								<div className='w-8 h-8 bg-black rounded flex items-center justify-center'>
@@ -833,7 +834,7 @@ export function StatusPage({
 				</nav>
 
 				{/* Loading Content */}
-				<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12'>
+				<div className='mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12'>
 					<div className='animate-pulse'>
 						<div className='h-8 bg-neutral-200 rounded w-1/4 mb-8'></div>
 						<div className='space-y-4'>
@@ -901,7 +902,7 @@ export function StatusPage({
 		<div className='min-h-screen bg-neutral-50'>
 			{/* Navigation Bar */}
 			<nav className='bg-white border-b border-neutral-200 sticky top-0 z-50'>
-				<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
+				<div className='mx-auto max-w-5xl px-4 sm:px-6 lg:px-8'>
 					<div className='flex h-16 justify-between items-center'>
 						<div className='flex items-center space-x-3'>
 							<div className='w-8 h-8 bg-black rounded flex items-center justify-center'>
@@ -925,7 +926,7 @@ export function StatusPage({
 			</nav>
 
 			{/* Main Content */}
-			<div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12'>
+			<div className='mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12'>
 				{/* System Status Header */}
 				<div className='mb-12'>
 					{systemStatus === 'operational' && (
