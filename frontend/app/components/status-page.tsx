@@ -913,13 +913,14 @@ export function StatusPage({
 							</span>
 						</div>
 						<div className='flex items-center space-x-6'>
-							<button className='text-sm text-neutral-600 hover:text-neutral-900 transition-colors'>
-								Incident History
-							</button>
-							<button className='flex items-center space-x-2 text-sm bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors'>
+							<Button
+								className='cursor-pointer'
+								size='sm'
+								variant='ghost'
+							>
 								<Bell className='h-4 w-4' />
 								<span>Subscribe</span>
-							</button>
+							</Button>
 						</div>
 					</div>
 				</div>
