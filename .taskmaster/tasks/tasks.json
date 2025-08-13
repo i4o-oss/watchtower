@@ -1636,11 +1636,68 @@
 						"testStrategy": "Test visual consistency across all notification channel tabs. Verify consistent behavior for form validation, loading states, and error handling. Test that all tabs follow the same user interaction patterns and provide equivalent functionality."
 					}
 				]
+			},
+			{
+				"id": 41,
+				"title": "Simplify Admin Endpoint Detail Route UI",
+				"description": "Streamline the /admin/endpoints/[id] route by removing performance metrics and recent activity sections, implementing paginated monitoring logs, and creating a cleaner, more focused interface.",
+				"details": "Refactor the endpoint detail page (/admin/endpoints/[id]) to simplify the interface by removing performance metrics visualizations (charts, graphs, statistics) and recent activity timeline components. Implement paginated monitoring logs with proper pagination controls, search/filter functionality, and efficient data loading using cursor-based or offset-based pagination. Update the page layout to focus on essential endpoint information: basic endpoint configuration details, current status with last check information, and the paginated monitoring logs table. Ensure the monitoring logs display relevant information like timestamp, status code, response time, and error messages in a clean tabular format. Implement proper loading states for pagination and maintain responsive design principles. Update navigation and breadcrumbs to reflect the simplified structure.",
+				"testStrategy": "Verify that performance metrics and recent activity sections are completely removed from the endpoint detail page. Test that monitoring logs pagination works correctly with proper loading states and navigation controls. Validate that essential endpoint information is still displayed prominently and clearly. Test pagination performance with large datasets and verify that search/filtering functionality works as expected. Ensure responsive design works across different screen sizes and that the simplified interface improves page load times.",
+				"status": "done",
+				"dependencies": [32, 5, 20],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Remove Performance Metrics and Recent Activity Sections",
+						"description": "Remove all performance metrics visualizations (charts, graphs, statistics) and recent activity timeline components from the endpoint detail page",
+						"dependencies": [],
+						"details": "Identify and remove performance metrics components including charts, graphs, statistics displays, and recent activity timeline sections from the /admin/endpoints/[id] page. Clean up related imports, state management, and API calls that are no longer needed. Update the page layout to remove these sections while maintaining proper spacing and structure.",
+						"status": "done",
+						"testStrategy": "Verify that all performance metrics visualizations and recent activity sections are completely removed from the endpoint detail page. Ensure no broken imports or unused code remains."
+					},
+					{
+						"id": 2,
+						"title": "Implement Paginated Monitoring Logs Backend Logic",
+						"description": "Create backend API endpoints for paginated monitoring logs with cursor-based or offset-based pagination and filtering capabilities",
+						"dependencies": [],
+						"details": "Implement server-side pagination for monitoring logs using either cursor-based or offset-based pagination. Add query parameters for page size, page number/cursor, and filtering options (date range, status code, response time thresholds). Ensure efficient database queries and proper response formatting with pagination metadata.",
+						"status": "done",
+						"testStrategy": "Test pagination API endpoints with various page sizes and filters. Verify efficient database query performance and proper pagination metadata in responses."
+					},
+					{
+						"id": 3,
+						"title": "Create Monitoring Logs Table Component with Pagination Controls",
+						"description": "Build a clean tabular interface for monitoring logs with pagination controls, search/filter functionality, and proper loading states",
+						"dependencies": ["41.2"],
+						"details": "Create a responsive table component to display monitoring logs with columns for timestamp, status code, response time, and error messages. Implement pagination controls (previous/next buttons, page numbers) and search/filter inputs for date range and status filtering. Add loading states for initial load and pagination transitions.",
+						"status": "done",
+						"testStrategy": "Verify monitoring logs table displays data correctly with proper sorting and filtering. Test pagination controls work smoothly with appropriate loading states and handle edge cases like empty results."
+					},
+					{
+						"id": 4,
+						"title": "Redesign Page Layout for Essential Information Focus",
+						"description": "Update the page layout to prominently display essential endpoint information including configuration details and current status",
+						"dependencies": ["41.1"],
+						"details": "Restructure the page layout to focus on essential endpoint information: basic endpoint configuration (name, URL, method, headers), current status with last check timestamp, and health status indicators. Organize information in a clean, scannable format with proper visual hierarchy and responsive design principles.",
+						"status": "done",
+						"testStrategy": "Validate that essential endpoint information is prominently displayed and easily accessible. Test responsive design across different screen sizes and ensure proper visual hierarchy."
+					},
+					{
+						"id": 5,
+						"title": "Update Navigation and Integrate Components",
+						"description": "Update navigation breadcrumbs and integrate all simplified components into the final endpoint detail page",
+						"dependencies": ["41.3", "41.4"],
+						"details": "Update breadcrumb navigation to reflect the simplified page structure. Integrate the monitoring logs table with the redesigned layout. Ensure all components work together cohesively with consistent styling and proper state management. Test the complete user experience flow from endpoint list to simplified detail page.",
+						"status": "done",
+						"testStrategy": "Test complete navigation flow and verify all integrated components work together seamlessly. Validate breadcrumb navigation updates correctly and the overall user experience is improved and more focused."
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-13T07:48:05.794Z",
+			"updated": "2025-08-13T19:11:08.620Z",
 			"description": "Tasks for master context"
 		}
 	}
