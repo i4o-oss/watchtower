@@ -1750,11 +1750,68 @@
 						"testStrategy": "Comprehensive testing of monitoring functionality through endpoint details pages. Verify all documentation is accurate and no references to /admin/monitoring remain"
 					}
 				]
+			},
+			{
+				"id": 43,
+				"title": "Revamp /admin/endpoints/new Route UI for Design Consistency",
+				"description": "Redesign the endpoint creation form UI to match the visual design and layout patterns established in other admin routes, ensuring consistent navigation, styling, and user experience across all administrative interfaces.",
+				"status": "done",
+				"dependencies": [31, 32],
+				"priority": "medium",
+				"details": "Update the /admin/endpoints/new route to align with the unified admin design system established in tasks 31 and 32. Replace the current custom max-width container layout with the same PageHeader and PageContent components used in /admin and /admin/endpoints routes. Apply the standardized techy white and dark green color palette using Tailwind CSS custom theme variables. Restructure the form layout to match the multi-step creation flow pattern from the endpoint management system, ensuring consistent spacing, typography, and component styling using Shadcn UI components (Card, Button, Input, Select, Textarea). Implement proper form validation with consistent error messaging patterns and loading states that match other admin interfaces. Add proper responsive behavior that works seamlessly with the admin layout system. Ensure the form submission flow integrates properly with React Router v7 navigation patterns, including proper success/error state handling and redirect behavior consistent with other admin CRUD operations. Update any custom styling to use the established design tokens and component variants rather than one-off styles.",
+				"testStrategy": "Verify the /admin/endpoints/new route uses the same PageHeader and PageContent layout components as /admin and /admin/endpoints routes. Test that all form components use consistent Shadcn UI styling and the established color palette. Validate that form validation patterns match those used in other admin forms with consistent error messaging and loading states. Test responsive behavior across all screen sizes to ensure it works properly with the admin layout system. Verify React Router v7 navigation flow works correctly including form submission, success states, and error handling. Compare the visual design side-by-side with /admin and /admin/endpoints routes to ensure consistent spacing, typography, and component styling. Test form functionality to ensure the redesign doesn't break existing endpoint creation capabilities.",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Replace Custom Layout with PageHeader and PageContent Components",
+						"description": "Update the /admin/endpoints/new route to use the same PageHeader and PageContent layout components used in /admin and /admin/endpoints routes instead of the current custom max-width container layout.",
+						"status": "done",
+						"dependencies": [],
+						"details": "Remove the current custom max-width container layout and replace it with the PageHeader and PageContent components that provide consistent layout structure across admin routes. Import these components from the established admin layout system and configure them appropriately for the endpoint creation form. Ensure proper spacing and responsive behavior matches other admin routes.",
+						"testStrategy": "Verify the route uses the same PageHeader and PageContent layout components as other admin routes. Test that the layout structure and spacing matches /admin and /admin/endpoints routes exactly."
+					},
+					{
+						"id": 2,
+						"title": "Apply Consistent Color Palette and Design Tokens",
+						"description": "Update all styling to use the standardized techy white and dark green color palette using Tailwind CSS custom theme variables established in the design system.",
+						"status": "done",
+						"dependencies": [1],
+						"details": "Replace any custom colors or one-off styling with the established design tokens and CSS variables. Apply the techy white and dark green color palette consistently across all form elements, buttons, and UI components. Ensure proper contrast ratios and accessibility standards are maintained.",
+						"testStrategy": "Test that all visual elements use the correct color palette and match the established design system. Verify accessibility compliance with proper contrast ratios."
+					},
+					{
+						"id": 3,
+						"title": "Restructure Form Layout with Shadcn UI Components",
+						"description": "Redesign the endpoint creation form to use consistent Shadcn UI components (Card, Button, Input, Select, Textarea) and implement the multi-step creation flow pattern from the endpoint management system.",
+						"status": "done",
+						"dependencies": [2],
+						"details": "Replace existing form components with Shadcn UI equivalents ensuring consistent spacing, typography, and component styling. Implement a multi-step form flow similar to the endpoint management system with proper step indicators and navigation. Structure the form using Card components for logical grouping of fields.",
+						"testStrategy": "Verify all form components use Shadcn UI styling and display consistent spacing and typography. Test multi-step flow navigation works correctly with proper step indicators."
+					},
+					{
+						"id": 4,
+						"title": "Implement Consistent Form Validation and Error Handling",
+						"description": "Update form validation to match the patterns established in other admin interfaces with consistent error messaging, loading states, and user feedback.",
+						"status": "done",
+						"dependencies": [3],
+						"details": "Implement form validation patterns that match those used in the endpoint management system. Ensure error messages display consistently with proper styling and positioning. Add loading states during form submission that match the established design patterns from other admin CRUD operations.",
+						"testStrategy": "Test form validation displays consistent error messages and styling. Verify loading states during submission match other admin interfaces and handle all error scenarios appropriately."
+					},
+					{
+						"id": 5,
+						"title": "Integrate React Router v7 Navigation and Submission Flow",
+						"description": "Update the form submission flow to integrate properly with React Router v7 navigation patterns, including success/error state handling and redirect behavior consistent with other admin CRUD operations.",
+						"status": "done",
+						"dependencies": [4],
+						"details": "Implement proper form submission handling using React Router v7 navigation patterns. Configure success redirects to match other admin CRUD operations (likely to endpoint detail or list view). Ensure error handling integrates with the routing system and provides appropriate user feedback while maintaining navigation state.",
+						"testStrategy": "Test form submission success scenarios redirect appropriately using React Router v7 navigation. Verify error handling maintains proper navigation state and provides consistent user feedback patterns."
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-13T19:59:56.661Z",
+			"updated": "2025-08-13T21:17:52.762Z",
 			"description": "Tasks for master context"
 		}
 	}

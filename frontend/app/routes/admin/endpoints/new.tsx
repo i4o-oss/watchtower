@@ -24,10 +24,12 @@ import { Alert, AlertDescription } from '~/components/ui/alert'
 import { LazyJsonEditor as JsonEditor } from '~/components/lazy-json-editor'
 import { ButtonLoadingSkeleton } from '~/lib/lazy'
 import { useSuccessToast, useErrorToast } from '~/components/toast'
+import { PageHeader } from '~/components/page-header'
+import { PageContent } from '~/components/page-content'
 import { requireAuth } from '~/lib/auth'
 import { getApiErrorMessage } from '~/lib/validation'
 import { validators, combineValidators, FieldError } from '~/lib/form-utils'
-import { ArrowLeft, Plus, Check, Zap, Settings, Globe } from 'lucide-react'
+import { Check, Zap, Settings, Globe } from 'lucide-react'
 import type { Route } from './+types/new'
 
 export function meta({}: Route.MetaArgs) {
@@ -152,56 +154,16 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 	})
 
 	return (
-		<div className='max-w-4xl mx-auto space-y-8'>
-			{/* Header */}
-			<div className='space-y-6'>
-				<div className='flex items-center gap-3'>
-					<Link to='/admin/endpoints'>
-						<Button variant='ghost' size='sm' className='gap-2'>
-							<ArrowLeft className='h-4 w-4' />
-							Back to Endpoints
-						</Button>
-					</Link>
-				</div>
+		<main className='flex flex-col gap-6'>
+			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
+				<PageHeader
+					title='New Endpoint'
+					description='Create a new monitoring endpoint to track your services'
+				/>
 
-				<div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
-					<div className='space-y-2'>
-						<h1 className='text-4xl font-bold tracking-tight flex items-center gap-3'>
-							<div className='flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10'>
-								<Plus className='h-6 w-6 text-primary' />
-							</div>
-							New Endpoint
-						</h1>
-						<p className='text-xl text-muted-foreground'>
-							Create a new monitoring endpoint to track your
-							services
-						</p>
-					</div>
-				</div>
-			</div>
-
-			{/* Form */}
-			<div className='grid gap-8 lg:grid-cols-3'>
-				{/* Main Form */}
-				<div className='lg:col-span-2'>
-					<Card className='border-0 shadow-lg'>
-						<CardHeader className='pb-8'>
-							<div className='flex items-center gap-3'>
-								<div className='flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10'>
-									<Settings className='h-5 w-5 text-primary' />
-								</div>
-								<div>
-									<CardTitle className='text-2xl'>
-										Endpoint Configuration
-									</CardTitle>
-									<CardDescription className='text-base'>
-										Configure your endpoint monitoring
-										settings and preferences
-									</CardDescription>
-								</div>
-							</div>
-						</CardHeader>
-						<CardContent className='space-y-8'>
+				<CardContent className='p-6'>
+					<div className='w-full'>
+						<div className='space-y-8'>
 							<form
 								onSubmit={(e) => {
 									e.preventDefault()
@@ -695,64 +657,10 @@ export default function NewEndpoint({}: Route.ComponentProps) {
 									</Button>
 								</div>
 							</form>
-						</CardContent>
-					</Card>
-				</div>
-
-				{/* Sidebar */}
-				<div className='space-y-6'>
-					<Card className='border-0 shadow-sm'>
-						<CardHeader>
-							<CardTitle className='text-lg'>
-								Quick Tips
-							</CardTitle>
-						</CardHeader>
-						<CardContent className='space-y-4'>
-							<div className='space-y-3'>
-								<div className='flex items-start gap-3'>
-									<div className='w-2 h-2 rounded-full bg-primary mt-2' />
-									<div>
-										<p className='font-medium'>
-											Choose meaningful names
-										</p>
-										<p className='text-sm text-muted-foreground'>
-											Use descriptive names that clearly
-											identify the service being
-											monitored.
-										</p>
-									</div>
-								</div>
-								<div className='flex items-start gap-3'>
-									<div className='w-2 h-2 rounded-full bg-primary mt-2' />
-									<div>
-										<p className='font-medium'>
-											Set appropriate intervals
-										</p>
-										<p className='text-sm text-muted-foreground'>
-											Balance monitoring frequency with
-											server load. Start with 5-minute
-											intervals.
-										</p>
-									</div>
-								</div>
-								<div className='flex items-start gap-3'>
-									<div className='w-2 h-2 rounded-full bg-primary mt-2' />
-									<div>
-										<p className='font-medium'>
-											Test your endpoint
-										</p>
-										<p className='text-sm text-muted-foreground'>
-											After creation, verify the endpoint
-											is working correctly by checking the
-											monitoring logs.
-										</p>
-									</div>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-				</div>
-			</div>
-		</div>
+						</div>
+					</div>
+				</CardContent>
+			</PageContent>
+		</main>
 	)
 }
