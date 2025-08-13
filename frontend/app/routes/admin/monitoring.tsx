@@ -32,7 +32,7 @@ import {
 import type { Route } from './+types/monitoring'
 import { Separator } from '~/components/ui/separator'
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
 	return [
 		{ title: 'Monitoring Logs - Admin - Watchtower' },
 		{ name: 'description', content: 'View and filter monitoring logs' },
@@ -248,7 +248,63 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 	const totalFailures = filteredLogs.filter((l: any) => !l.success).length
 
 	return (
-		<main className='flex-1 flex flex-col xl:flex-row gap-6'>
+		<main className='flex flex-col gap-6'>
+			{/* Quick Stats Sidebar */}
+			{filteredLogs.length > 0 && (
+				<section className='grid grid-cols-1 xl:grid-cols-3 gap-6'>
+					<Card>
+						<CardContent>
+							<div className='flex items-center gap-4'>
+								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+									<TrendingUp className='h-7 w-7' />
+								</div>
+								<div className='flex flex-col'>
+									<p className='text-sm font-normal'>
+										Success Rate
+									</p>
+									<p className='typography-h4'>
+										{successRate}%
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardContent>
+							<div className='flex items-center gap-4'>
+								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+									<Activity className='h-7 w-7' />
+								</div>
+								<div className='flex flex-col'>
+									<p className='text-sm font-normal'>
+										Avg Response Time
+									</p>
+									<p className='typography-h4'>
+										{avgResponseTime}ms
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardContent>
+							<div className='flex items-center gap-4'>
+								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+									<TrendingDown className='h-7 w-7' />
+								</div>
+								<div className='flex flex-col'>
+									<p className='text-sm font-normal'>
+										Total Failures
+									</p>
+									<p className='typography-h4 text-destructive'>
+										{totalFailures}
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				</section>
+			)}
 			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
 				<PageHeader
 					title='Monitoring Logs'
@@ -464,87 +520,6 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 					)}
 				</CardContent>
 			</PageContent>
-
-			{/* Quick Stats Sidebar */}
-			{filteredLogs.length > 0 && (
-				<aside className='w-88 rounded-xl space-y-4'>
-					<Card>
-						<CardContent>
-							<div className='flex items-center gap-4'>
-								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<TrendingUp className='h-7 w-7' />
-								</div>
-								<div className='flex flex-col'>
-									<p className='text-sm font-normal'>
-										Success Rate
-									</p>
-									<p className='typography-h4'>
-										{successRate}%
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-					<Card>
-						<CardContent>
-							<div className='flex items-center gap-4'>
-								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<Activity className='h-7 w-7' />
-								</div>
-								<div className='flex flex-col'>
-									<p className='text-sm font-normal'>
-										Avg Response Time
-									</p>
-									<p className='typography-h4'>
-										{avgResponseTime}ms
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-					<Card>
-						<CardContent>
-							<div className='flex items-center gap-4'>
-								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<TrendingDown className='h-7 w-7' />
-								</div>
-								<div className='flex flex-col'>
-									<p className='text-sm font-normal'>
-										Total Failures
-									</p>
-									<p className='typography-h4 text-destructive'>
-										{totalFailures}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-					<Card>
-						<CardContent>
-							<div className='flex flex-col gap-2'>
-								<p className='text-sm font-normal text-muted-foreground'>
-									Time Range
-								</p>
-								<Badge variant='outline' className='w-fit'>
-									{timeRange === '1' && 'Last Hour'}
-									{timeRange === '6' && 'Last 6 Hours'}
-									{timeRange === '24' && 'Last 24 Hours'}
-									{timeRange === '168' && 'Last Week'}
-									{timeRange === '720' && 'Last 30 Days'}
-								</Badge>
-								<p className='text-xs text-muted-foreground'>
-									{
-										filteredLogs.filter(
-											(l: any) => l.success,
-										).length
-									}{' '}
-									successful
-								</p>
-							</div>
-						</CardContent>
-					</Card>
-				</aside>
-			)}
 		</main>
 	)
 }
