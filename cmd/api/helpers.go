@@ -100,6 +100,17 @@ func parseTimeHoursParam(r *http.Request) int {
 	return hours
 }
 
+// parsePageParam extracts and validates page parameter
+func parsePageParam(r *http.Request) int {
+	page := 1
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+	return page
+}
+
 // parseLimitParam extracts and validates limit parameter with custom max
 func parseLimitParam(r *http.Request, defaultLimit, maxLimit int) int {
 	limit := defaultLimit

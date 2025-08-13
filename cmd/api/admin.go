@@ -340,9 +340,11 @@ func (app *Application) getEndpointLogs(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Parse pagination parameters
-	limit := parseLimitParam(r, constants.DefaultLimit, constants.MaxLogsLimit)
+	page := parsePageParam(r)
+	limit := parseLimitParam(r, 50, constants.MaxLogsLimit) // Default to 50 logs per page
 
-	logs, err := app.db.GetMonitoringLogs(endpointID, limit)
+	// Get paginated logs with total count
+	logs, total, err := app.db.GetMonitoringLogsWithPagination(page, limit, 0, &endpointID, nil)
 	if err != nil {
 		app.logger.Error("Error getting endpoint logs", "err", err.Error())
 		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
@@ -351,8 +353,8 @@ func (app *Application) getEndpointLogs(w http.ResponseWriter, r *http.Request) 
 
 	response := MonitoringLogsResponse{
 		Logs:  logs,
-		Total: len(logs),
-		Page:  1,
+		Total: int(total),
+		Page:  page,
 		Limit: limit,
 	}
 
