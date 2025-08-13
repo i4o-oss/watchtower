@@ -222,9 +222,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 											className='cursor-pointer'
 											size='sm'
 											variant={
-												location.pathname === item.href
-													? 'default'
-													: 'ghost'
+												active ? 'default' : 'ghost'
 											}
 										>
 											<Icon className='h-4 w-4' />
