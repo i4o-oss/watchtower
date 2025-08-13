@@ -255,6 +255,7 @@ function UptimeHistoryBar({
 					}
 
 					return (
+						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 						<div key={index} className='relative group'>
 							{/* Main status bar */}
 							<div
@@ -267,7 +268,7 @@ function UptimeHistoryBar({
 							{/* Incident marker */}
 							{day.hasIncident && (
 								<div className='absolute -top-1 left-1/2 transform -translate-x-1/2'>
-									<div className='w-2 h-2 bg-amber-400 rounded-full border border-white'></div>
+									<div className='w-2 h-2 bg-amber-400 rounded-full border border-white' />
 								</div>
 							)}
 
@@ -456,7 +457,7 @@ function UptimeGraph({
 			<div className='flex justify-between items-center'>
 				<div className='flex space-x-1 bg-neutral-100 rounded-lg p-1'>
 					{(['30d', '90d', '1y'] as const).map((period) => (
-						<button
+						<Button
 							key={period}
 							onClick={() => setSelectedPeriod(period)}
 							className={cn(
@@ -471,7 +472,7 @@ function UptimeGraph({
 								: period === '90d'
 									? '90 days'
 									: '1 year'}
-						</button>
+						</Button>
 					))}
 				</div>
 			</div>
@@ -510,6 +511,7 @@ function UptimeGraph({
 							.filter((d) => d.incidents > 0)
 							.map((incident, i) => (
 								<ReferenceArea
+									// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 									key={i}
 									x1={incident.day - 0.5}
 									x2={incident.day + 0.5}
@@ -836,19 +838,20 @@ export function StatusPage({
 				{/* Loading Content */}
 				<div className='mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12'>
 					<div className='animate-pulse'>
-						<div className='h-8 bg-neutral-200 rounded w-1/4 mb-8'></div>
+						<div className='h-8 bg-neutral-200 rounded w-1/4 mb-8' />
 						<div className='space-y-4'>
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div
+									// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 									key={i}
 									className='bg-white rounded-lg p-6 border border-neutral-200'
 								>
 									<div className='flex items-center justify-between'>
 										<div className='space-y-2'>
-											<div className='h-4 bg-neutral-200 rounded w-32'></div>
-											<div className='h-3 bg-neutral-100 rounded w-20'></div>
+											<div className='h-4 bg-neutral-200 rounded w-32' />
+											<div className='h-3 bg-neutral-100 rounded w-20' />
 										</div>
-										<div className='h-8 bg-neutral-200 rounded w-16'></div>
+										<div className='h-8 bg-neutral-200 rounded w-16' />
 									</div>
 								</div>
 							))}
@@ -1010,7 +1013,7 @@ export function StatusPage({
 										<div className='space-y-2'>
 											{incidents.incidents.map(
 												(incident) => (
-													<button
+													<Button
 														key={incident.id}
 														onClick={() =>
 															setSelectedIncident(
@@ -1032,7 +1035,7 @@ export function StatusPage({
 																? `${incident.description.substring(0, 100)}...`
 																: incident.description}
 														</p>
-													</button>
+													</Button>
 												),
 											)}
 										</div>
@@ -1256,6 +1259,7 @@ export function StatusPage({
 											<div className='flex flex-wrap gap-2'>
 												{selectedIncident.affected_services.map(
 													(serviceName, index) => (
+														// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 														<Badge
 															key={index}
 															variant='secondary'

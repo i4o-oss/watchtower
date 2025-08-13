@@ -98,12 +98,12 @@ export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 	// Loading shimmer component
 	const LoadingShimmer = () => (
 		<div className='animate-pulse space-y-4 p-6'>
-			<div className='bg-muted rounded-md h-4 w-3/4'></div>
-			<div className='bg-muted rounded-md h-3 w-1/2'></div>
-			<div className='bg-muted rounded-md h-16 w-full'></div>
+			<div className='bg-muted rounded-md h-4 w-3/4' />
+			<div className='bg-muted rounded-md h-3 w-1/2' />
+			<div className='bg-muted rounded-md h-16 w-full' />
 			<div className='flex justify-between'>
-				<div className='bg-muted rounded-md h-3 w-16'></div>
-				<div className='bg-muted rounded-md h-3 w-16'></div>
+				<div className='bg-muted rounded-md h-3 w-16' />
+				<div className='bg-muted rounded-md h-3 w-16' />
 			</div>
 		</div>
 	)
@@ -148,6 +148,7 @@ export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 				{isLoading ? (
 					// Loading state
 					Array.from({ length: 6 }).map((_, i) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 						<Card key={i}>
 							<LoadingShimmer />
 						</Card>

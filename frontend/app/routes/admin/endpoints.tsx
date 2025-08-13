@@ -34,7 +34,7 @@ import { EndpointCards, type Endpoint } from '~/components/endpoint-cards'
 import type { Route } from './+types/endpoints'
 import { Separator } from '~/components/ui/separator'
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
 	return [
 		{ title: 'Endpoints - Admin - Watchtower' },
 		{ name: 'description', content: 'Manage monitoring endpoints' },
