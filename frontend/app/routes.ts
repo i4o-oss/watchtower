@@ -5,7 +5,6 @@ export default [
 	route('login', 'routes/login.tsx'),
 	route('register', 'routes/register.tsx'),
 	route('forgot-password', 'routes/forgot-password.tsx'),
-	route('dashboard', 'routes/dashboard.tsx'),
 	route('admin', 'routes/admin.tsx', [
 		index('routes/admin/index.tsx'),
 		route('endpoints', 'routes/admin/endpoints.tsx'),

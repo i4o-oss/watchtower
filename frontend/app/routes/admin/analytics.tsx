@@ -896,15 +896,6 @@ export default function AdminAnalytics({ loaderData }: Route.ComponentProps) {
 									Incident Analytics
 								</Button>
 							</Link>
-							<Link to='/admin/monitoring'>
-								<Button
-									variant='outline'
-									className='bg-white/50'
-								>
-									<Clock className='h-4 w-4' />
-									Real-time Monitoring
-								</Button>
-							</Link>
 							<Link to='/admin/endpoints'>
 								<Button
 									variant='outline'
