@@ -71,7 +71,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 				headers: { 'Content-Type': 'application/json' },
 			}),
 			fetch(
-				`${API_BASE_URL}/api/v1/admin/endpoints/${id}/logs?page=1&limit=50`,
+				`${API_BASE_URL}/api/v1/admin/endpoints/${id}/logs?page=1&limit=20`,
 				{
 					method: 'GET',
 					credentials: 'include',
@@ -87,7 +87,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 		const endpoint = await endpointRes.json()
 		const logs = logsRes.ok
 			? await logsRes.json()
-			: { logs: [], total: 0, page: 1, limit: 50 }
+			: { logs: [], total: 0, page: 1, limit: 20 }
 
 		return { endpoint, logs }
 	} catch (error) {
@@ -114,7 +114,7 @@ export default function EndpointDetail({
 
 		try {
 			const response = await fetch(
-				`${API_BASE_URL}/api/v1/admin/endpoints/${params.id}/logs?page=${page}&limit=50`,
+				`${API_BASE_URL}/api/v1/admin/endpoints/${params.id}/logs?page=${page}&limit=20`,
 				{
 					method: 'GET',
 					credentials: 'include',
@@ -195,14 +195,6 @@ export default function EndpointDetail({
 		} catch (error) {
 			console.error('Error toggling endpoint:', error)
 		}
-	}
-
-	const getStatusBadge = (success: boolean) => {
-		return (
-			<Badge variant={success ? 'default' : 'destructive'}>
-				{success ? 'Success' : 'Failed'}
-			</Badge>
-		)
 	}
 
 	// Calculate endpoint health metrics
@@ -534,44 +526,53 @@ export default function EndpointDetail({
 								</p>
 							) : (
 								<>
-									<div className='space-y-3'>
+									<div className='space-y-2'>
 										{logs.logs.map((log: any) => (
 											<div
 												key={log.id}
-												className='flex items-center justify-between p-3 border rounded-lg'
+												className='flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors'
 											>
-												<div className='flex items-center gap-3'>
-													{getStatusBadge(
-														log.success,
-													)}
-													<div>
-														<p className='text-sm font-medium'>
+												<div className='flex items-center gap-3 min-w-0'>
+													<Badge
+														variant={
+															log.success
+																? 'default'
+																: 'destructive'
+														}
+														className='shrink-0'
+													>
+														{log.success
+															? 'OK'
+															: 'FAIL'}
+													</Badge>
+													<div className='min-w-0 flex-1'>
+														<p className='text-sm'>
 															{new Date(
 																log.timestamp,
 															).toLocaleString()}
 														</p>
 														{!log.success &&
 															log.error && (
-																<p className='text-sm text-destructive'>
+																<p className='text-xs text-destructive truncate'>
 																	{log.error}
 																</p>
 															)}
 													</div>
 												</div>
-												<div className='text-right text-sm text-muted-foreground'>
-													{log.status_code && (
-														<p>
-															Status:{' '}
-															{log.status_code}
-														</p>
-													)}
-													{log.response_time_ms && (
-														<p>
+												<div className='flex items-center gap-3 text-sm text-muted-foreground shrink-0'>
+													{log.response_time_ms !==
+														null && (
+														<span>
 															{
 																log.response_time_ms
 															}
 															ms
-														</p>
+														</span>
+													)}
+													{log.status_code && (
+														<span className='font-mono'>
+															{log.status_code}
+														</span>
 													)}
 												</div>
 											</div>

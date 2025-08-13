@@ -341,7 +341,7 @@ func (app *Application) getEndpointLogs(w http.ResponseWriter, r *http.Request) 
 
 	// Parse pagination parameters
 	page := parsePageParam(r)
-	limit := parseLimitParam(r, 50, constants.MaxLogsLimit) // Default to 50 logs per page
+	limit := parseLimitParam(r, 20, constants.MaxLogsLimit) // Default to 20 logs per page for better performance
 
 	// Get paginated logs with total count
 	logs, total, err := app.db.GetMonitoringLogsWithPagination(page, limit, 0, &endpointID, nil)
