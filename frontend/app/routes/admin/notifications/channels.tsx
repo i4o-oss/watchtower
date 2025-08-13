@@ -31,7 +31,6 @@ import {
 	Eye,
 	EyeOff,
 	Shield,
-	Server,
 	AlertCircle,
 	CheckCircle2,
 	Clock,
@@ -96,42 +95,17 @@ interface SlackFormData {
 	username: string
 }
 
+interface DiscordFormData {
+	enabled: boolean
+	webhook_url: string
+	username: string
+}
+
 interface WebhookFormData {
 	enabled: boolean
 	webhook_url: string
 	headers: string
 }
-
-const emailProviders = [
-	{
-		name: 'Gmail',
-		smtp_host: 'smtp.gmail.com',
-		smtp_port: 587,
-		security: 'TLS',
-		note: 'Use App Password instead of regular password',
-	},
-	{
-		name: 'Outlook/Hotmail',
-		smtp_host: 'smtp-mail.outlook.com',
-		smtp_port: 587,
-		security: 'TLS',
-		note: 'Modern authentication supported',
-	},
-	{
-		name: 'Yahoo',
-		smtp_host: 'smtp.mail.yahoo.com',
-		smtp_port: 587,
-		security: 'TLS',
-		note: 'App Password required',
-	},
-	{
-		name: 'Custom SMTP',
-		smtp_host: '',
-		smtp_port: 587,
-		security: 'TLS',
-		note: 'Enter your own SMTP settings',
-	},
-]
 
 export default function NotificationChannels({
 	loaderData,
@@ -145,7 +119,6 @@ export default function NotificationChannels({
 	const [showWebhookUrl, setShowWebhookUrl] = useState<
 		Record<string, boolean>
 	>({})
-	const [selectedProvider, setSelectedProvider] = useState(emailProviders[0])
 	const successToast = useSuccessToast()
 	const errorToast = useErrorToast()
 
@@ -153,8 +126,8 @@ export default function NotificationChannels({
 	const emailForm = useForm({
 		defaultValues: {
 			enabled: false,
-			smtp_host: selectedProvider.smtp_host,
-			smtp_port: selectedProvider.smtp_port,
+			smtp_host: '',
+			smtp_port: 587,
 			username: '',
 			password: '',
 			from_email: '',
@@ -182,6 +155,18 @@ export default function NotificationChannels({
 		} as SlackFormData,
 		onSubmit: async ({ value }) => {
 			await saveChannelConfiguration('slack', value)
+		},
+	})
+
+	// Discord Form
+	const discordForm = useForm({
+		defaultValues: {
+			enabled: false,
+			webhook_url: '',
+			username: 'Watchtower',
+		} as DiscordFormData,
+		onSubmit: async ({ value }) => {
+			await saveChannelConfiguration('discord', value)
 		},
 	})
 
@@ -304,12 +289,6 @@ export default function NotificationChannels({
 		}
 	}
 
-	// Update form when provider changes
-	useEffect(() => {
-		emailForm.setFieldValue('smtp_host', selectedProvider.smtp_host)
-		emailForm.setFieldValue('smtp_port', selectedProvider.smtp_port)
-	}, [selectedProvider])
-
 	return (
 		<div className='space-y-6'>
 			<div className='flex items-center gap-4'>
@@ -332,7 +311,7 @@ export default function NotificationChannels({
 				<CardContent className='p-0'>
 					<Tabs value={activeTab} onValueChange={setActiveTab}>
 						<div className='border-b bg-muted/30'>
-							<TabsList className='grid w-full grid-cols-3 h-auto bg-transparent p-0'>
+							<TabsList className='grid w-full grid-cols-4 h-auto bg-transparent p-0'>
 								<TabsTrigger
 									value='email'
 									className='flex items-center gap-3 py-4 px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500'
@@ -356,6 +335,22 @@ export default function NotificationChannels({
 									</div>
 									<div className='text-left'>
 										<div className='font-medium'>Slack</div>
+										<div className='text-xs text-muted-foreground'>
+											Webhook Integration
+										</div>
+									</div>
+								</TabsTrigger>
+								<TabsTrigger
+									value='discord'
+									className='flex items-center gap-3 py-4 px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500'
+								>
+									<div className='p-2 rounded-lg bg-purple-100'>
+										<MessageSquare className='h-4 w-4 text-purple-600' />
+									</div>
+									<div className='text-left'>
+										<div className='font-medium'>
+											Discord
+										</div>
 										<div className='text-xs text-muted-foreground'>
 											Webhook Integration
 										</div>
@@ -430,74 +425,6 @@ export default function NotificationChannels({
 									</Button>
 								</div>
 							</div>
-
-							{/* Provider Selection */}
-							<Card>
-								<CardHeader className='pb-4'>
-									<CardTitle className='text-lg'>
-										Provider Selection
-									</CardTitle>
-									<CardDescription>
-										Choose your email provider for
-										pre-filled settings
-									</CardDescription>
-								</CardHeader>
-								<CardContent>
-									<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-										{emailProviders.map((provider) => (
-											<Card
-												key={provider.name}
-												className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-													selectedProvider.name ===
-													provider.name
-														? 'ring-2 ring-blue-500 shadow-md'
-														: 'hover:ring-1 hover:ring-border'
-												}`}
-												onClick={() =>
-													setSelectedProvider(
-														provider,
-													)
-												}
-											>
-												<CardContent className='p-4'>
-													<div className='flex items-center gap-3 mb-2'>
-														<div className='p-1 rounded bg-blue-100'>
-															<Server className='h-4 w-4 text-blue-600' />
-														</div>
-														<span className='font-medium'>
-															{provider.name}
-														</span>
-													</div>
-													<div className='space-y-1 text-sm text-muted-foreground'>
-														{provider.smtp_host && (
-															<p>
-																Port:{' '}
-																{
-																	provider.smtp_port
-																}
-															</p>
-														)}
-														<Badge
-															variant='outline'
-															className='text-xs'
-														>
-															{provider.security}
-														</Badge>
-													</div>
-												</CardContent>
-											</Card>
-										))}
-									</div>
-									{selectedProvider.note && (
-										<div className='mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2'>
-											<AlertCircle className='h-4 w-4 text-blue-600 mt-0.5' />
-											<p className='text-sm text-blue-800'>
-												{selectedProvider.note}
-											</p>
-										</div>
-									)}
-								</CardContent>
-							</Card>
 
 							<form
 								onSubmit={(e) => {
@@ -734,18 +661,19 @@ export default function NotificationChannels({
 											</div>
 											<ul className='text-sm text-green-700 space-y-1'>
 												<li>
-													• TLS/SSL encryption is
-													automatically enabled for
-													port 587/465
+													• Port 587 with STARTTLS is
+													recommended
 												</li>
 												<li>
-													• Use App Passwords instead
-													of regular passwords when
-													available
+													• Port 465 for SSL/TLS, Port
+													25 for unencrypted (not
+													recommended)
 												</li>
 												<li>
-													• Verify your SMTP provider
-													supports authenticated SMTP
+													• Use App Passwords for
+													Gmail, Yahoo, and other
+													providers when 2FA is
+													enabled
 												</li>
 											</ul>
 										</div>
@@ -1263,6 +1191,348 @@ export default function NotificationChannels({
 											<ButtonLoadingSkeleton />
 										)}
 										{slackForm.state.isSubmitting
+											? 'Saving...'
+											: 'Save Configuration'}
+									</Button>
+									<Button variant='outline' type='button'>
+										Reset to Defaults
+									</Button>
+								</div>
+							</form>
+						</TabsContent>
+
+						{/* Discord Configuration */}
+						<TabsContent value='discord' className='space-y-6 p-6'>
+							<div className='flex items-center justify-between'>
+								<div className='space-y-1'>
+									<h3 className='text-xl font-semibold'>
+										Discord Integration
+									</h3>
+									<p className='text-muted-foreground'>
+										Connect Discord for instant team
+										notifications
+									</p>
+								</div>
+								<div className='flex items-center gap-2'>
+									{testStatus.discord === 'success' && (
+										<Badge
+											variant='default'
+											className='bg-green-100 text-green-800 border-green-200'
+										>
+											<CheckCircle2 className='h-3 w-3 mr-1' />
+											Test Passed
+										</Badge>
+									)}
+									{testStatus.discord === 'error' && (
+										<Badge variant='destructive'>
+											<AlertCircle className='h-3 w-3 mr-1' />
+											Test Failed
+										</Badge>
+									)}
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => testChannel('discord')}
+										disabled={
+											testStatus.discord === 'testing'
+										}
+									>
+										{testStatus.discord === 'testing' ? (
+											<>
+												<ButtonLoadingSkeleton />
+												Testing...
+											</>
+										) : (
+											<>
+												<TestTube className='h-4 w-4' />
+												Test Message
+											</>
+										)}
+									</Button>
+								</div>
+							</div>
+
+							{/* Setup Instructions */}
+							<Card>
+								<CardHeader>
+									<CardTitle className='text-lg'>
+										Webhook Setup
+									</CardTitle>
+									<CardDescription>
+										Follow these steps to create a Discord
+										webhook
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<div className='space-y-4'>
+										<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+											<div className='flex items-start gap-3'>
+												<div className='w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-sm font-medium text-purple-600'>
+													1
+												</div>
+												<div>
+													<h4 className='font-medium'>
+														Open Server Settings
+													</h4>
+													<p className='text-sm text-muted-foreground'>
+														Right-click your server
+														and select Server
+														Settings
+													</p>
+												</div>
+											</div>
+											<div className='flex items-start gap-3'>
+												<div className='w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-sm font-medium text-purple-600'>
+													2
+												</div>
+												<div>
+													<h4 className='font-medium'>
+														Create Webhook
+													</h4>
+													<p className='text-sm text-muted-foreground'>
+														Go to Integrations →
+														Webhooks → New Webhook
+													</p>
+												</div>
+											</div>
+											<div className='flex items-start gap-3'>
+												<div className='w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-sm font-medium text-purple-600'>
+													3
+												</div>
+												<div>
+													<h4 className='font-medium'>
+														Copy URL
+													</h4>
+													<p className='text-sm text-muted-foreground'>
+														Copy the webhook URL and
+														paste it below
+													</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+
+							<form
+								onSubmit={(e) => {
+									e.preventDefault()
+									discordForm.handleSubmit()
+								}}
+								className='space-y-6'
+							>
+								<discordForm.Field
+									name='enabled'
+									children={(field) => (
+										<div className='flex items-center space-x-3'>
+											<Switch
+												id='discord-enabled'
+												checked={field.state.value}
+												onCheckedChange={(checked) =>
+													field.handleChange(checked)
+												}
+											/>
+											<Label
+												htmlFor='discord-enabled'
+												className='text-base font-medium'
+											>
+												Enable Discord Notifications
+											</Label>
+										</div>
+									)}
+								/>
+
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											Webhook Configuration
+										</CardTitle>
+										<CardDescription>
+											Enter your Discord webhook details
+										</CardDescription>
+									</CardHeader>
+									<CardContent className='space-y-4'>
+										<discordForm.Field
+											name='webhook_url'
+											validators={{
+												onChange: combineValidators(
+													validators.required,
+													validators.url,
+												),
+											}}
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='discord-webhook'>
+														Webhook URL *
+													</Label>
+													<div className='relative'>
+														<Input
+															id='discord-webhook'
+															type={
+																showWebhookUrl.discord
+																	? 'text'
+																	: 'password'
+															}
+															value={
+																field.state
+																	.value
+															}
+															onChange={(e) =>
+																field.handleChange(
+																	e.target
+																		.value,
+																)
+															}
+															onBlur={
+																field.handleBlur
+															}
+															placeholder='https://discord.com/api/webhooks/...'
+															className='pr-10'
+														/>
+														<Button
+															type='button'
+															variant='ghost'
+															size='sm'
+															className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+															onClick={() =>
+																setShowWebhookUrl(
+																	(prev) => ({
+																		...prev,
+																		discord:
+																			!prev.discord,
+																	}),
+																)
+															}
+														>
+															{showWebhookUrl.discord ? (
+																<EyeOff className='h-4 w-4' />
+															) : (
+																<Eye className='h-4 w-4' />
+															)}
+														</Button>
+													</div>
+													<FieldError
+														errors={
+															field.state.meta
+																.errors
+														}
+													/>
+												</div>
+											)}
+										/>
+
+										<discordForm.Field
+											name='username'
+											children={(field) => (
+												<div className='space-y-2'>
+													<Label htmlFor='discord-username'>
+														Bot Username
+													</Label>
+													<Input
+														id='discord-username'
+														value={
+															field.state.value
+														}
+														onChange={(e) =>
+															field.handleChange(
+																e.target.value,
+															)
+														}
+														onBlur={
+															field.handleBlur
+														}
+														placeholder='Watchtower'
+													/>
+													<p className='text-xs text-muted-foreground'>
+														How the bot appears in
+														Discord (optional)
+													</p>
+												</div>
+											)}
+										/>
+									</CardContent>
+								</Card>
+
+								{/* Message Preview */}
+								<Card>
+									<CardHeader>
+										<CardTitle className='text-lg'>
+											Message Preview
+										</CardTitle>
+										<CardDescription>
+											Preview how notifications appear in
+											Discord
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										<div className='p-4 bg-[#36393f] rounded-lg text-white font-sans text-sm'>
+											<div className='flex items-start gap-3'>
+												<div className='w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold'>
+													W
+												</div>
+												<div className='flex-1'>
+													<div className='flex items-center gap-2 mb-1'>
+														<span className='font-semibold'>
+															Watchtower
+														</span>
+														<span className='text-[#72767d] text-xs'>
+															BOT
+														</span>
+														<span className='text-[#72767d] text-xs'>
+															Today at 12:34 PM
+														</span>
+													</div>
+													<div className='bg-[#2f3136] border-l-4 border-red-500 rounded p-3 space-y-2'>
+														<div className='font-semibold text-base'>
+															🔴 Service Down: API
+															Endpoint
+														</div>
+														<div className='text-[#dcddde] text-sm'>
+															The monitored
+															endpoint is not
+															responding
+														</div>
+														<div className='space-y-1 text-xs'>
+															<div>
+																<span className='text-[#8e9297]'>
+																	URL:
+																</span>{' '}
+																<span className='text-[#00b0f4]'>
+																	https://api.example.com/health
+																</span>
+															</div>
+															<div>
+																<span className='text-[#8e9297]'>
+																	Severity:
+																</span>{' '}
+																<span className='text-orange-400'>
+																	High
+																</span>
+															</div>
+														</div>
+														<div className='text-[#72767d] text-xs pt-2'>
+															Watchtower •
+															Monitoring Alert
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+
+								<div className='flex items-center gap-3 pt-4'>
+									<Button
+										type='submit'
+										disabled={
+											discordForm.state.isSubmitting
+										}
+										className='px-6'
+									>
+										{discordForm.state.isSubmitting && (
+											<ButtonLoadingSkeleton />
+										)}
+										{discordForm.state.isSubmitting
 											? 'Saving...'
 											: 'Save Configuration'}
 									</Button>

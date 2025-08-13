@@ -12,7 +12,6 @@ import { PageHeader } from '~/components/page-header'
 import { PageContent } from '~/components/page-content'
 import {
 	Plus,
-	Settings,
 	Mail,
 	MessageSquare,
 	Webhook,
@@ -21,21 +20,11 @@ import {
 	TestTube,
 	Edit,
 	ToggleLeft,
-	TrendingUp,
 	AlertCircle,
 	CheckCircle2,
-	ChevronDown,
-	Bell,
 } from 'lucide-react'
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu'
 import { requireAuth } from '~/lib/auth'
 import type { Route } from './+types/notifications'
-import { Separator } from '~/components/ui/separator'
 
 export function meta({}: Route.MetaArgs) {
 	return [
@@ -113,7 +102,7 @@ export default function AdminNotifications({
 			icon: Mail,
 			description: 'SMTP email notifications',
 			color: 'blue',
-			difficulty: 'Medium',
+			difficulty: 'Easy',
 		},
 		{
 			type: 'slack',
@@ -137,7 +126,7 @@ export default function AdminNotifications({
 			icon: Webhook,
 			description: 'Generic HTTP webhooks',
 			color: 'orange',
-			difficulty: 'Hard',
+			difficulty: 'Medium',
 		},
 	]
 
@@ -248,117 +237,94 @@ export default function AdminNotifications({
 
 	// Dashboard State with channels
 	return (
-		<main className='flex-1 flex flex-col xl:flex-row gap-6'>
+		<main className='flex-1 flex flex-col'>
 			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
 				<PageHeader
 					title='Notification Channels'
 					description='Manage and monitor your notification delivery channels'
 				>
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button size='sm'>
-								<Plus className='h-4 w-4' />
-								Add Channel
-								<ChevronDown className='h-4 w-4 ml-2' />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align='end' className='w-48'>
-							{channelTypes.map((channel) => {
-								const Icon = channel.icon
-								return (
-									<DropdownMenuItem
-										key={channel.type}
-										asChild
-									>
-										<Link to='/admin/notifications/channels'>
-											<Icon className='h-4 w-4' />
-											{channel.name}
-										</Link>
-									</DropdownMenuItem>
-								)
-							})}
-						</DropdownMenuContent>
-					</DropdownMenu>
+					<Link to='/admin/notifications/channels'>
+						<Button size='sm'>
+							<Plus className='h-4 w-4' />
+							Configure Channels
+						</Button>
+					</Link>
 				</PageHeader>
 
 				<CardContent className='p-6 gap-0 flex flex-col'>
-					{/* Delivery Statistics */}
-					<Card className='rounded-none shadow-none border-none'>
-						<CardHeader className='bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20'>
-							<div className='flex items-center justify-between'>
-								<div>
-									<CardTitle className='text-lg'>
-										Delivery Statistics
-									</CardTitle>
-									<CardDescription>
-										Overall notification delivery
-										performance
-									</CardDescription>
-								</div>
-								<TrendingUp className='h-5 w-5 text-green-600' />
-							</div>
-						</CardHeader>
-						<CardContent className='pt-6'>
-							<div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-								<div className='space-y-2'>
-									<div className='flex items-center gap-2'>
-										<CheckCircle2 className='h-4 w-4 text-green-600' />
-										<span className='text-sm font-medium text-muted-foreground'>
+					{/* Stats Cards */}
+					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+						<Card>
+							<CardContent className='p-4'>
+								<div className='flex items-center justify-between'>
+									<div>
+										<p className='text-sm font-medium text-muted-foreground'>
 											Success Rate
-										</span>
+										</p>
+										<p className='text-2xl font-bold text-green-600'>
+											{stats.deliveryRate}%
+										</p>
 									</div>
-									<p className='text-2xl font-bold text-green-600'>
-										{stats.deliveryRate}%
-									</p>
+									<CheckCircle2 className='h-8 w-8 text-green-600 opacity-20' />
 								</div>
+							</CardContent>
+						</Card>
 
-								<div className='space-y-2'>
-									<div className='flex items-center gap-2'>
-										<Activity className='h-4 w-4 text-blue-600' />
-										<span className='text-sm font-medium text-muted-foreground'>
+						<Card>
+							<CardContent className='p-4'>
+								<div className='flex items-center justify-between'>
+									<div>
+										<p className='text-sm font-medium text-muted-foreground'>
 											Total Sent
-										</span>
+										</p>
+										<p className='text-2xl font-bold'>
+											{stats.totalDeliveries.toLocaleString()}
+										</p>
 									</div>
-									<p className='text-2xl font-bold'>
-										{stats.totalDeliveries.toLocaleString()}
-									</p>
+									<Activity className='h-8 w-8 text-blue-600 opacity-20' />
 								</div>
+							</CardContent>
+						</Card>
 
-								<div className='space-y-2'>
-									<div className='flex items-center gap-2'>
-										<AlertCircle className='h-4 w-4 text-red-600' />
-										<span className='text-sm font-medium text-muted-foreground'>
+						<Card>
+							<CardContent className='p-4'>
+								<div className='flex items-center justify-between'>
+									<div>
+										<p className='text-sm font-medium text-muted-foreground'>
 											Failed
-										</span>
+										</p>
+										<p className='text-2xl font-bold text-red-600'>
+											{stats.failedDeliveries}
+										</p>
 									</div>
-									<p className='text-2xl font-bold text-red-600'>
-										{stats.failedDeliveries}
-									</p>
+									<AlertCircle className='h-8 w-8 text-red-600 opacity-20' />
 								</div>
+							</CardContent>
+						</Card>
 
-								<div className='space-y-2'>
-									<div className='flex items-center gap-2'>
-										<Clock className='h-4 w-4 text-muted-foreground' />
-										<span className='text-sm font-medium text-muted-foreground'>
+						<Card>
+							<CardContent className='p-4'>
+								<div className='flex items-center justify-between'>
+									<div>
+										<p className='text-sm font-medium text-muted-foreground'>
 											Last Delivery
-										</span>
+										</p>
+										<p className='text-sm font-medium'>
+											{stats.lastDelivery
+												? new Date(
+														stats.lastDelivery,
+													).toLocaleString()
+												: 'Never'}
+										</p>
 									</div>
-									<p className='text-sm font-medium'>
-										{stats.lastDelivery
-											? new Date(
-													stats.lastDelivery,
-												).toLocaleString()
-											: 'Never'}
-									</p>
+									<Clock className='h-8 w-8 text-muted-foreground opacity-20' />
 								</div>
-							</div>
-						</CardContent>
-					</Card>
-
-					<Separator className='my-6' />
+							</CardContent>
+						</Card>
+					</div>
 
 					{/* Channel Cards Grid */}
-					<div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
+					<div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6'>
 						{channels.map((channel: any) => {
 							const channelType = channelTypes.find(
 								(ct) => ct.type === channel.type,
@@ -481,10 +447,8 @@ export default function AdminNotifications({
 						})}
 					</div>
 
-					<Separator className='my-6' />
-
 					{/* Channel Health Overview */}
-					<Card className='rounded-none shadow-none border-none'>
+					<Card>
 						<CardHeader>
 							<CardTitle>Channel Health</CardTitle>
 							<CardDescription>
@@ -549,80 +513,6 @@ export default function AdminNotifications({
 					</Card>
 				</CardContent>
 			</PageContent>
-
-			{/* Quick Stats Sidebar */}
-			<aside className='w-88 rounded-xl space-y-4'>
-				<Card>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								<Bell className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
-									Total Channels
-								</p>
-								<p className='typography-h4'>{total}</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								<CheckCircle2 className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
-									Delivery Rate
-								</p>
-								<p className='typography-h4'>
-									{stats.deliveryRate}%
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								<Activity className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
-									Total Sent
-								</p>
-								<p className='typography-h4'>
-									{stats.totalDeliveries.toLocaleString()}
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardContent>
-						<div className='flex flex-col gap-2'>
-							<p className='text-sm font-normal text-muted-foreground'>
-								Last Delivery
-							</p>
-							<Badge variant='outline' className='w-fit'>
-								{stats.lastDelivery
-									? new Date(
-											stats.lastDelivery,
-										).toLocaleString()
-									: 'Never'}
-							</Badge>
-							{stats.failedDeliveries > 0 && (
-								<p className='text-xs text-destructive'>
-									{stats.failedDeliveries} failed
-								</p>
-							)}
-						</div>
-					</CardContent>
-				</Card>
-			</aside>
 		</main>
 	)
 }

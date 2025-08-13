@@ -1579,11 +1579,68 @@
 						"testStrategy": "Test that uptime graphs display accurate data, are properly centered, and cards maintain usability across all screen sizes with responsive breakpoints working correctly"
 					}
 				]
+			},
+			{
+				"id": 40,
+				"title": "Simplify Notification Settings UI with SMTP-only Email and Discord Integration",
+				"description": "Streamline notification configuration by removing provider-specific email setup (Gmail, Outlook, Yahoo) in favor of SMTP-only configuration, add Discord webhook tab with setup instructions, and ensure consistent UI patterns across all notification channels.",
+				"details": "Refactor the notification channel configuration UI to simplify email setup by removing Gmail, Outlook, and Yahoo provider-specific configurations and keeping only generic SMTP settings (host, port, username, password, TLS/SSL options). Add a new Discord tab alongside existing Email, Slack, and Webhook tabs with form fields for Discord webhook URL, channel configuration, and message formatting options. Update the notification channel forms to use consistent styling, validation patterns, and error handling across all tabs. Implement Discord webhook testing functionality similar to existing channel test capabilities. Ensure all notification channel tabs follow the same UI component structure with proper form validation, loading states, and success/error feedback. Update notification templates to include Discord-specific message formatting options with Discord markdown support.",
+				"testStrategy": "Test that email configuration form only shows SMTP fields without provider-specific options and accepts valid SMTP server configurations. Verify Discord tab renders with proper webhook URL validation and connection testing functionality. Validate that all notification channel tabs (Email, Slack, Discord, Webhook) use consistent styling, validation patterns, and user feedback mechanisms. Test form submission and validation for all notification types with both valid and invalid configurations. Verify Discord webhook integration sends test messages successfully and displays appropriate success/error states.",
+				"status": "done",
+				"dependencies": [26, 35],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Remove Provider-Specific Email Configurations and Implement SMTP-Only Setup",
+						"description": "Refactor the email notification channel configuration to remove Gmail, Outlook, and Yahoo provider-specific options and replace with generic SMTP configuration fields.",
+						"dependencies": [],
+						"details": "Remove provider-specific authentication flows and UI components from the email configuration form. Replace with generic SMTP fields: host, port, username, password, TLS/SSL toggle, and sender name/email. Update the email configuration schema and validation to only accept SMTP parameters. Ensure backward compatibility by migrating existing provider configurations to equivalent SMTP settings where possible.",
+						"status": "done",
+						"testStrategy": "Test that email configuration form only displays SMTP fields without provider dropdowns. Verify SMTP connection testing works with various mail servers. Test form validation for required SMTP fields and proper error handling for invalid configurations."
+					},
+					{
+						"id": 2,
+						"title": "Create Discord Notification Channel Tab and Form Components",
+						"description": "Add a new Discord tab to the notification channels interface with form fields for Discord webhook configuration and message formatting options.",
+						"dependencies": ["40.1"],
+						"details": "Create Discord tab component alongside existing Email, Slack, and Webhook tabs. Implement form fields for Discord webhook URL, channel selection, username override, avatar URL, and message formatting options. Add Discord-specific validation for webhook URL format and required fields. Include setup instructions and help text for obtaining Discord webhook URLs.",
+						"status": "done",
+						"testStrategy": "Test Discord tab renders correctly in notification channels interface. Verify form validation for Discord webhook URL format and required fields. Test that Discord-specific configuration options are properly captured and saved."
+					},
+					{
+						"id": 3,
+						"title": "Implement Discord Message Formatting and Template Support",
+						"description": "Add Discord-specific message formatting capabilities with support for Discord markdown and embed formatting in notification templates.",
+						"dependencies": ["40.2"],
+						"details": "Extend notification template system to support Discord markdown syntax (bold, italic, code blocks, mentions). Implement Discord embed support for rich message formatting with fields, colors, and thumbnails. Add template variables specific to Discord formatting. Create preview functionality for Discord message formatting in the template editor.",
+						"status": "done",
+						"testStrategy": "Test Discord markdown rendering in message templates. Verify Discord embed formatting displays correctly in preview and actual Discord delivery. Test template variables resolve properly in Discord messages."
+					},
+					{
+						"id": 4,
+						"title": "Add Discord Webhook Testing and Validation Functionality",
+						"description": "Implement Discord webhook connection testing similar to existing notification channel test capabilities with proper error handling and feedback.",
+						"dependencies": ["40.2", "40.3"],
+						"details": "Create Discord webhook testing function that sends test messages to validate configuration. Implement proper error handling for Discord API responses including rate limiting, invalid webhooks, and network errors. Add real-time feedback for test results with success/failure states. Include Discord-specific error messages and troubleshooting guidance.",
+						"status": "done",
+						"testStrategy": "Test Discord webhook connectivity validation with valid and invalid webhook URLs. Verify proper error handling for Discord API rate limits and authentication failures. Test real-time feedback display for test message delivery."
+					},
+					{
+						"id": 5,
+						"title": "Standardize UI Components and Styling Across All Notification Channel Tabs",
+						"description": "Ensure consistent styling, validation patterns, loading states, and error handling across Email, Slack, Discord, and Webhook notification channel tabs.",
+						"dependencies": ["40.1", "40.2", "40.4"],
+						"details": "Audit all notification channel tabs for consistent component structure and styling patterns. Standardize form validation messages, loading spinners, success/error feedback, and button styles across all tabs. Implement consistent spacing, typography, and color schemes using existing design system. Ensure all tabs follow the same interaction patterns for testing, saving, and error display.",
+						"status": "done",
+						"testStrategy": "Test visual consistency across all notification channel tabs. Verify consistent behavior for form validation, loading states, and error handling. Test that all tabs follow the same user interaction patterns and provide equivalent functionality."
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-12T16:29:00.378Z",
+			"updated": "2025-08-13T07:48:05.794Z",
 			"description": "Tasks for master context"
 		}
 	}
