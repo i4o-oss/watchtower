@@ -264,7 +264,59 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	).length
 
 	return (
-		<main className='flex-1 flex flex-col xl:flex-row gap-6'>
+		<main className='flex flex-col gap-6'>
+			{/* Quick Stats */}
+			<section className='grid grid-cols-1 xl:grid-cols-3 gap-6'>
+				<Card>
+					<CardContent>
+						<div className='flex items-center gap-4'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+								<GlobeIcon className='h-7 w-7' />
+							</div>
+							<div className='flex flex-col'>
+								<p className='text-sm font-normal'>
+									Total Endpoints
+								</p>
+								<p className='typography-h4'>
+									{endpoints.total}
+								</p>
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardContent>
+						<div className='flex items-center gap-4'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+								<CircleXIcon className='h-7 w-7' />
+							</div>
+							<div className='flex flex-col'>
+								<p className='text-sm font-normal'>
+									Recent Failures
+								</p>
+								<p className='typography-h4'>
+									{recentFailures}
+								</p>
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardContent>
+						<div className='flex items-center gap-4'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+								<AlertTriangleIcon className='h-7 w-7' />
+							</div>
+							<div className='flex flex-col'>
+								<p className='text-sm font-normal'>
+									Open Incidents
+								</p>
+								<p className='typography-h4'>{openIncidents}</p>
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+			</section>
 			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
 				<PageHeader
 					title='Dashboard'
@@ -439,59 +491,6 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</Card>
 				</CardContent>
 			</PageContent>
-
-			{/* Quick Stats */}
-			<aside className='w-80 space-y-4'>
-				<Card>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								<GlobeIcon className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
-									Total Endpoints
-								</p>
-								<p className='typography-h4'>
-									{endpoints.total}
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								<CircleXIcon className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
-									Recent Failures
-								</p>
-								<p className='typography-h4'>
-									{recentFailures}
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								<AlertTriangleIcon className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
-									Open Incidents
-								</p>
-								<p className='typography-h4'>{openIncidents}</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-			</aside>
 		</main>
 	)
 }
