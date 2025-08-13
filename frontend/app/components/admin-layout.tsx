@@ -10,11 +10,17 @@ import {
 	AlertTriangle,
 	BarChart3,
 	Bell,
+	BookOpenIcon,
 	ChevronDown,
+	ExternalLinkIcon,
+	GithubIcon,
 	Globe,
 	HomeIcon,
+	InfoIcon,
+	LogOutIcon,
 	Menu,
 	Settings,
+	SettingsIcon,
 	User,
 	UserIcon,
 	X,
@@ -37,12 +43,6 @@ interface AdminLayoutProps {
 }
 
 const navigation = [
-	{
-		name: 'Dashboard',
-		href: '/admin',
-		icon: HomeIcon,
-		description: 'Overview and quick stats',
-	},
 	{
 		name: 'Endpoints',
 		href: '/admin/endpoints',
@@ -181,7 +181,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 		<div className='min-h-screen bg-background'>
 			{/* Top Header Bar */}
 			<header className='sticky top-0 z-30 h-16 bg-card border-b border-border'>
-				<div className='w-full h-full max-w-6xl mx-auto px-6'>
+				<div className='w-full h-full max-w-5xl mx-auto px-6'>
 					<div className='flex h-full items-center justify-between'>
 						{/* Left - Logo and Mobile Menu */}
 						<div className='flex items-center gap-4'>
@@ -236,7 +236,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
-										className='cursor-pointer rounded-full'
+										className='w-8 h-8 cursor-pointer rounded-full'
 										size='sm'
 										variant='secondary'
 									>
@@ -245,17 +245,56 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
 									align='end'
-									className='w-48'
+									className='w-64'
 								>
 									<DropdownMenuLabel>
 										My Account
 									</DropdownMenuLabel>
 									<DropdownMenuSeparator />
-									<DropdownMenuItem>Profile</DropdownMenuItem>
-									<DropdownMenuItem>Billing</DropdownMenuItem>
-									<DropdownMenuItem>Team</DropdownMenuItem>
+									<DropdownMenuItem className='cursor-pointer'>
+										<SettingsIcon className='h-4 w-4' />
+										Settings
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
 									<DropdownMenuItem>
-										Subscription
+										<a
+											className='w-full flex items-center justify-between'
+											href='https://github.com/i4o-oss/watchtower'
+											rel='noopener noreferrer'
+											target='_blank'
+										>
+											<span className='flex items-center gap-2'>
+												<BookOpenIcon className='h-4 w-4' />
+												Docs
+											</span>
+											<ExternalLinkIcon className='h-4 w-4' />
+										</a>
+									</DropdownMenuItem>
+									<DropdownMenuItem>
+										<a
+											className='w-full flex items-center justify-between'
+											href='https://github.com/i4o-oss/watchtower'
+											rel='noopener noreferrer'
+											target='_blank'
+										>
+											<span className='flex items-center gap-2'>
+												<GithubIcon className='h-4 w-4' />
+												Github
+											</span>
+											<ExternalLinkIcon className='h-4 w-4' />
+										</a>
+									</DropdownMenuItem>
+									<DropdownMenuItem className='flex justify-between cursor-pointer'>
+										<span className='flex items-center gap-2'>
+											<InfoIcon className='h-4 w-4' />
+											About
+										</span>
+										<span className='text-xs'>v0.1.0</span>
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem className='cursor-pointer'>
+										<LogOutIcon className='h-4 w-4' />
+										Logout
 									</DropdownMenuItem>
 								</DropdownMenuContent>
 							</DropdownMenu>
@@ -266,7 +305,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 			{/* Breadcrumb Bar */}
 			<div className='h-16 bg-card border-b border-border hidden lg:block'>
-				<div className='w-full h-full max-w-6xl mx-auto flex items-center justify-between px-6 py-3'>
+				<div className='w-full h-full max-w-5xl mx-auto flex items-center justify-between px-6 py-3'>
 					<div className='text-sm text-muted-foreground'>
 						{getBreadcrumbs(location.pathname).map(
 							(segment, index) => (
@@ -321,7 +360,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			</div>
 
 			{/* Layout Container */}
-			<div className='max-w-6xl mx-auto flex'>
+			<div className='max-w-5xl mx-auto flex'>
 				{/* Main Content Area */}
 				<main className='flex-1 min-w-0'>
 					<div className='px-6 py-6'>
@@ -334,6 +373,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 								<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
 									{Array.from({ length: 6 }).map((_, i) => (
 										<Skeleton
+											// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 											key={i}
 											className='h-32 w-full'
 										/>
