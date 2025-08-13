@@ -12,7 +12,6 @@ export default [
 		route('endpoints/new', 'routes/admin/endpoints/new.tsx'),
 		route('endpoints/:id', 'routes/admin/endpoints/[id].tsx'),
 		route('endpoints/:id/edit', 'routes/admin/endpoints/[id].edit.tsx'),
-		route('monitoring', 'routes/admin/monitoring.tsx'),
 		route('analytics', 'routes/admin/analytics.tsx'),
 		route('analytics/logs', 'routes/admin/analytics/logs.tsx'),
 		route('analytics/incidents', 'routes/admin/analytics/incidents.tsx'),

@@ -540,7 +540,7 @@ interface ServiceStatus {
 
 1. **Dashboard Components**:
    - `app/routes/admin/index.tsx`: Main dashboard overview
-   - `app/routes/admin/monitoring.tsx`: Detailed monitoring analytics
+   - `app/routes/admin/endpoints/[id].tsx`: Individual endpoint monitoring details
    - `app/components/admin-layout.tsx`: Consistent admin interface layout
    - Chart components for trend visualization
    - Data tables with sorting, filtering, and pagination

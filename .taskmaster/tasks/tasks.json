@@ -1693,11 +1693,68 @@
 						"testStrategy": "Test complete navigation flow and verify all integrated components work together seamlessly. Validate breadcrumb navigation updates correctly and the overall user experience is improved and more focused."
 					}
 				]
+			},
+			{
+				"id": 42,
+				"title": "Remove Dedicated Admin Monitoring Route and Cleanup",
+				"description": "Remove the dedicated /admin/monitoring route since monitoring logs are now integrated into endpoint details pages, and perform comprehensive cleanup of all related code, routes, and references.",
+				"details": "Remove the /admin/monitoring route from both frontend routing configuration and backend API endpoints. Delete the monitoring route component file and any associated UI components that were specific to the standalone monitoring page. Clean up backend route handlers for /admin/monitoring endpoints including any middleware, controllers, and database queries specific to this route. Update navigation menus and sidebar links to remove references to the monitoring route. Remove any breadcrumb references, internal links, or redirects that point to /admin/monitoring. Audit and clean up any unused CSS classes, TypeScript interfaces, or utility functions that were only used by the monitoring route. Update any documentation or configuration files that reference the monitoring route. Ensure no broken links or 404 errors are introduced by the removal. Verify that all monitoring functionality is properly accessible through the endpoint details pages and no functionality is lost.",
+				"testStrategy": "Verify that /admin/monitoring route returns 404 and is no longer accessible. Test that all navigation links and menus no longer contain references to the monitoring route. Confirm that monitoring logs are still accessible and functional through endpoint detail pages. Test that no JavaScript errors or broken imports exist after component removal. Verify that all monitoring functionality (viewing logs, filtering, pagination) works correctly in the endpoint details context. Run full application tests to ensure no regressions were introduced. Check that no dead code or unused imports remain in the codebase.",
+				"status": "done",
+				"dependencies": [41, 39],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Remove Frontend Monitoring Route Configuration",
+						"description": "Remove the /admin/monitoring route from frontend routing configuration and delete associated React components",
+						"dependencies": [],
+						"details": "Delete the monitoring route component file and remove route definition from React Router configuration. Clean up any imports, lazy loading configurations, and route guards specific to the monitoring page. Remove any associated UI components that were only used by the standalone monitoring page.",
+						"status": "done",
+						"testStrategy": "Verify that navigating to /admin/monitoring returns a 404 error and that the React app builds without errors after removing the components"
+					},
+					{
+						"id": 2,
+						"title": "Remove Backend API Endpoints and Controllers",
+						"description": "Clean up backend route handlers, controllers, and middleware for /admin/monitoring endpoints",
+						"dependencies": [],
+						"details": "Remove HTTP route handlers for /admin/monitoring endpoints from the Go backend. Delete associated controller functions, middleware, and any database queries that were specific to the monitoring route. Clean up imports and dependencies in affected files.",
+						"status": "done",
+						"testStrategy": "Verify that GET/POST requests to /admin/monitoring endpoints return 404 errors and that the backend compiles without errors after cleanup"
+					},
+					{
+						"id": 3,
+						"title": "Update Navigation and UI References",
+						"description": "Remove all navigation menu items, sidebar links, and UI references to the monitoring route",
+						"dependencies": ["42.1"],
+						"details": "Update navigation components to remove monitoring route links from menus and sidebars. Remove any breadcrumb configurations that reference the monitoring page. Clean up any internal navigation logic or conditional rendering based on monitoring route access.",
+						"status": "done",
+						"testStrategy": "Test all navigation menus and verify no links to /admin/monitoring exist. Verify breadcrumb navigation works correctly without monitoring references"
+					},
+					{
+						"id": 4,
+						"title": "Clean Up Unused Code and Dependencies",
+						"description": "Remove unused CSS classes, TypeScript interfaces, and utility functions that were specific to the monitoring route",
+						"dependencies": ["42.1", "42.2"],
+						"details": "Audit and remove CSS classes that were only used by the monitoring page components. Delete TypeScript interfaces, types, and utility functions that were specific to the standalone monitoring functionality. Clean up any unused imports or dependencies in the codebase.",
+						"status": "done",
+						"testStrategy": "Run code analysis tools to verify no dead code remains. Verify TypeScript compilation passes and CSS builds without unused class warnings"
+					},
+					{
+						"id": 5,
+						"title": "Verify Monitoring Integration and Update Documentation",
+						"description": "Ensure monitoring functionality works through endpoint details pages and update any documentation references",
+						"dependencies": ["42.1", "42.2", "42.3", "42.4"],
+						"details": "Test that all monitoring logs and functionality are properly accessible through the endpoint details pages. Update any configuration files, documentation, or README files that reference the removed monitoring route. Verify no broken internal links or redirects exist.",
+						"status": "done",
+						"testStrategy": "Comprehensive testing of monitoring functionality through endpoint details pages. Verify all documentation is accurate and no references to /admin/monitoring remain"
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-13T19:11:08.620Z",
+			"updated": "2025-08-13T19:59:56.661Z",
 			"description": "Tasks for master context"
 		}
 	}

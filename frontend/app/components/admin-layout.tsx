@@ -50,12 +50,6 @@ const navigation = [
 		description: 'Manage monitoring endpoints',
 	},
 	{
-		name: 'Monitoring',
-		href: '/admin/monitoring',
-		icon: BarChart3,
-		description: 'View logs and analytics',
-	},
-	{
 		name: 'Incidents',
 		href: '/admin/incidents',
 		icon: AlertTriangle,
@@ -72,7 +66,6 @@ const navigation = [
 const breadcrumbMap: Record<string, string> = {
 	admin: 'Dashboard',
 	endpoints: 'Endpoints',
-	monitoring: 'Monitoring',
 	incidents: 'Incidents',
 	notifications: 'Notifications',
 	channels: 'Channels',

@@ -257,13 +257,12 @@ This document provides UI/UX focused feature specifications for product designer
    - Confirm operation → Progress indicator → Results summary
 
 
-### Feature 5: Monitoring Analytics Dashboard
-**Goal**: Data visualization and analysis interface for monitoring logs and performance metrics
+### Feature 5: Integrated Monitoring Analytics
+**Goal**: Monitoring logs and analytics integrated into endpoint details pages and admin dashboard
 
 **API Relationships**:
-- `GET /api/v1/admin/monitoring/logs` - Historical monitoring data
-- `GET /api/v1/admin/monitoring/stats` - Aggregate statistics
-- `GET /api/v1/admin/monitoring/performance` - Performance metrics
+- `GET /api/v1/admin/monitoring-logs` - Aggregated monitoring data for analytics
+- `GET /api/v1/admin/endpoints/{id}/logs` - Individual endpoint monitoring logs
 - `GET /api/v1/admin/endpoints` - Endpoint reference data
 
 **Implemented Feature Components**:
