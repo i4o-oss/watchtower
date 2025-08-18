@@ -109,42 +109,34 @@ export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 	)
 
 	return (
-		<div className='space-y-6'>
+		<div className='divide-y divide-border'>
 			{/* Filters and Controls */}
-			<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-				<div className='flex flex-1 items-center gap-4'>
-					<div className='relative flex-1 max-w-sm'>
-						<Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-						<Input
-							placeholder='Search endpoints...'
-							value={globalFilter}
-							onChange={(event) =>
-								setGlobalFilter(event.target.value)
-							}
-							className='pl-10'
-						/>
-					</div>
-					<Select
-						value={statusFilter}
-						onValueChange={setStatusFilter}
-					>
-						<SelectTrigger className='w-36'>
-							<SelectValue placeholder='All Status' />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value='all'>All Status</SelectItem>
-							<SelectItem value='active'>Active</SelectItem>
-							<SelectItem value='disabled'>Disabled</SelectItem>
-						</SelectContent>
-					</Select>
+			<div className='flex flex-col px-6 py-4 gap-4 sm:flex-row sm:items-center sm:justify-between'>
+				<div className='relative flex-1 max-w-sm'>
+					<Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+					<Input
+						placeholder='Search endpoints...'
+						value={globalFilter}
+						onChange={(event) =>
+							setGlobalFilter(event.target.value)
+						}
+						className='pl-10 rounded'
+					/>
 				</div>
-				<div className='text-sm text-muted-foreground'>
-					{filteredEndpoints.length} of {data.length} endpoint(s)
-				</div>
+				<Select value={statusFilter} onValueChange={setStatusFilter}>
+					<SelectTrigger className='w-36 rounded'>
+						<SelectValue placeholder='All Status' />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value='all'>All Status</SelectItem>
+						<SelectItem value='active'>Active</SelectItem>
+						<SelectItem value='disabled'>Disabled</SelectItem>
+					</SelectContent>
+				</Select>
 			</div>
 
 			{/* Endpoint Cards Grid */}
-			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+			<div className='grid grid-cols-1'>
 				{isLoading ? (
 					// Loading state
 					Array.from({ length: 6 }).map((_, i) => (
@@ -202,8 +194,8 @@ export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 							<Card
 								key={endpoint.id}
 								className={cn(
-									'p-0',
-									'cursor-pointer transition-all duration-200 hover:shadow-md',
+									'p-0 rounded-none',
+									'cursor-pointer transition-all duration-200',
 									colors.bg,
 									colors.border,
 								)}

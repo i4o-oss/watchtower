@@ -241,10 +241,10 @@ export default function EndpointDetail({
 	const healthMetrics = calculateHealthMetrics()
 
 	return (
-		<main className='flex flex-col gap-6'>
+		<main className='flex flex-col gap-4'>
 			{/* Quick Stats - Similar to /admin route */}
-			<section className='grid grid-cols-1 xl:grid-cols-3 gap-6'>
-				<Card>
+			<section className='grid grid-cols-1 xl:grid-cols-3 gap-4'>
+				<Card className='rounded shadow-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>
 							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
@@ -261,7 +261,7 @@ export default function EndpointDetail({
 						</div>
 					</CardContent>
 				</Card>
-				<Card>
+				<Card className='rounded shadow-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>
 							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
@@ -278,7 +278,7 @@ export default function EndpointDetail({
 						</div>
 					</CardContent>
 				</Card>
-				<Card>
+				<Card className='rounded shadow-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>
 							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
@@ -299,18 +299,18 @@ export default function EndpointDetail({
 				</Card>
 			</section>
 
-			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
+			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
 				<PageHeader
 					title={endpoint.name}
-					description={`Monitoring endpoint configuration and logs${
+					description={`${
 						healthMetrics.lastCheck
-							? ` • Last checked ${healthMetrics.lastCheck.toLocaleString()}`
+							? `Last checked ${healthMetrics.lastCheck.toLocaleString()}`
 							: ''
 					}`}
 				>
 					<div className='flex flex-wrap items-center gap-2'>
 						<Button
-							className='cursor-pointer gap-2'
+							className='cursor-pointer gap-2 rounded'
 							variant='outline'
 							size='sm'
 							onClick={toggleEndpoint}
@@ -331,7 +331,7 @@ export default function EndpointDetail({
 							<Button
 								variant='outline'
 								size='sm'
-								className='cursor-pointer gap-2'
+								className='cursor-pointer gap-2 rounded'
 							>
 								<Edit3 className='h-4 w-4' />
 								Edit
@@ -342,7 +342,7 @@ export default function EndpointDetail({
 								<Button
 									variant='destructive'
 									size='sm'
-									className='cursor-pointer gap-2'
+									className='cursor-pointer gap-2 rounded'
 								>
 									<Trash2 className='h-4 w-4' />
 									Delete
@@ -380,16 +380,10 @@ export default function EndpointDetail({
 					</div>
 				</PageHeader>
 
-				<CardContent className='p-0 gap-0 flex flex-col'>
+				<CardContent className='p-0 gap-4 flex flex-col'>
 					{/* Configuration Details */}
-					<Card className='rounded-none shadow-none border-none'>
-						<CardHeader>
-							<CardTitle>Configuration Details</CardTitle>
-							<CardDescription>
-								Endpoint monitoring settings
-							</CardDescription>
-						</CardHeader>
-						<CardContent className='space-y-4'>
+					<Card className='rounded-none shadow-none border-none p-0 gap-0'>
+						<CardContent className='space-y-4 py-6'>
 							<div>
 								<h4 className='font-medium mb-2'>URL</h4>
 								<p className='font-mono text-sm bg-muted px-3 py-2 rounded'>
@@ -490,12 +484,14 @@ export default function EndpointDetail({
 							</div>
 						</CardContent>
 					</Card>
+				</CardContent>
+			</PageContent>
 
-					<Separator />
-
+			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
+				<CardContent className='p-0 gap-4 flex flex-col'>
 					{/* Monitoring Logs with Pagination */}
-					<Card className='rounded-none shadow-none border-none'>
-						<CardHeader className='flex flex-row items-center justify-between'>
+					<Card className='rounded-none shadow-none border-none p-0 gap-0'>
+						<CardHeader className='flex flex-row items-center justify-between border-b border-border py-6'>
 							<div>
 								<CardTitle>Monitoring Logs</CardTitle>
 								<CardDescription>
@@ -507,13 +503,13 @@ export default function EndpointDetail({
 								variant='outline'
 								size='sm'
 								onClick={() => fetchLogs(currentPage)}
-								className='gap-2'
+								className='gap-2 rounded'
 							>
 								<RefreshCw className='h-4 w-4' />
 								Refresh
 							</Button>
 						</CardHeader>
-						<CardContent>
+						<CardContent className='p-0'>
 							{isLoadingLogs ? (
 								<div className='flex justify-center py-8'>
 									<div className='text-muted-foreground'>
@@ -526,11 +522,11 @@ export default function EndpointDetail({
 								</p>
 							) : (
 								<>
-									<div className='space-y-2'>
+									<div className='divide-y divide-border'>
 										{logs.logs.map((log: any) => (
 											<div
 												key={log.id}
-												className='flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors'
+												className='flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors'
 											>
 												<div className='flex items-center gap-3 min-w-0'>
 													<Badge
@@ -539,7 +535,7 @@ export default function EndpointDetail({
 																? 'default'
 																: 'destructive'
 														}
-														className='shrink-0'
+														className='shrink-0 rounded'
 													>
 														{log.success
 															? 'OK'
@@ -581,8 +577,8 @@ export default function EndpointDetail({
 
 									{/* Pagination */}
 									{totalPages > 1 && (
-										<div className='mt-6'>
-											<Pagination>
+										<div className='flex items-center justify-end px-6 py-4 border-t border-border'>
+											<Pagination className='flex justify-end'>
 												<PaginationContent>
 													<PaginationItem>
 														<PaginationPrevious
@@ -613,7 +609,7 @@ export default function EndpointDetail({
 																currentPage ===
 																1
 															}
-															className='cursor-pointer'
+															className='cursor-pointer rounded'
 														>
 															1
 														</PaginationLink>
@@ -656,7 +652,7 @@ export default function EndpointDetail({
 																		currentPage ===
 																		page
 																	}
-																	className='cursor-pointer'
+																	className='cursor-pointer rounded'
 																>
 																	{page}
 																</PaginationLink>
@@ -685,7 +681,7 @@ export default function EndpointDetail({
 																	currentPage ===
 																	totalPages
 																}
-																className='cursor-pointer'
+																className='cursor-pointer rounded'
 															>
 																{totalPages}
 															</PaginationLink>
@@ -705,8 +701,8 @@ export default function EndpointDetail({
 															className={
 																currentPage ===
 																totalPages
-																	? 'pointer-events-none opacity-50'
-																	: 'cursor-pointer'
+																	? 'pointer-events-none opacity-50 rounded'
+																	: 'cursor-pointer rounded'
 															}
 														/>
 													</PaginationItem>

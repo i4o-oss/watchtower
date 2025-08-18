@@ -173,8 +173,8 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 	return (
 		<div className='min-h-screen bg-background'>
 			{/* Top Header Bar */}
-			<header className='sticky top-0 z-30 h-16 bg-card border-b border-border'>
-				<div className='w-full h-full max-w-5xl mx-auto px-6'>
+			<header className='sticky top-4 z-30 h-16 bg-card'>
+				<div className='w-full h-full max-w-5xl mx-auto px-6 border border-border rounded'>
 					<div className='flex h-full items-center justify-between'>
 						{/* Left - Logo and Mobile Menu */}
 						<div className='flex items-center gap-4'>
@@ -295,8 +295,8 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			</header>
 
 			{/* Breadcrumb Bar */}
-			<div className='h-16 bg-card border-b border-border hidden lg:block'>
-				<div className='w-full h-full max-w-5xl mx-auto flex items-center justify-between px-6 py-3'>
+			<div className='h-16 bg-card mt-8'>
+				<div className='w-full h-full max-w-5xl mx-auto flex items-center justify-between px-6 py-3 rounded border border-border'>
 					<div className='text-sm text-muted-foreground'>
 						{getBreadcrumbs(location.pathname).map(
 							(segment, index) => (
@@ -330,7 +330,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 					</div>
 					<div className='flex items-center gap-2'>
 						<Badge
-							className='px-4 py-2'
+							className='px-4 py-2 rounded'
 							variant={
 								incidents.length === 0
 									? 'outline'
@@ -354,9 +354,9 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			<div className='max-w-5xl mx-auto flex'>
 				{/* Main Content Area */}
 				<main className='flex-1 min-w-0'>
-					<div className='px-6 py-6'>
+					<div className='px-0 py-4'>
 						{isLoading ? (
-							<div className='space-y-6'>
+							<div className='space-y-4'>
 								<div className='space-y-2'>
 									<Skeleton className='h-8 w-64' />
 									<Skeleton className='h-4 w-96' />

@@ -326,20 +326,20 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 	return (
 		<>
 			<main className='flex-1 flex flex-col xl:flex-row gap-6'>
-				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
+				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
 					<PageHeader
 						title='Endpoints'
 						description='Manage and monitor your service endpoints'
 					>
 						<Link to='/admin/endpoints/new'>
-							<Button size='sm'>
+							<Button className='rounded' size='sm'>
 								<Plus className='h-4 w-4' />
 								Add Endpoint
 							</Button>
 						</Link>
 					</PageHeader>
 
-					<CardContent className='p-6'>
+					<CardContent className='p-0'>
 						{/* Endpoint Cards */}
 						{endpoints.length === 0 ? (
 							<EmptyState />
