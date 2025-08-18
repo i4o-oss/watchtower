@@ -201,7 +201,7 @@ export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 								)}
 								onClick={() => handleCardClick(endpoint)}
 							>
-								<CardContent className='p-4'>
+								<CardContent className='px-6 py-4'>
 									{/* Minimal Header */}
 									<div className='flex items-center justify-between mb-2'>
 										<h3 className='font-semibold text-foreground text-base truncate'>
@@ -213,7 +213,7 @@ export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 													? 'default'
 													: 'secondary'
 											}
-											className='text-xs'
+											className='text-xs rounded'
 										>
 											{endpoint.enabled
 												? 'Active'
