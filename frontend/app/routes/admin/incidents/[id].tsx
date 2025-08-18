@@ -42,6 +42,8 @@ import {
 } from '~/components/ui/dialog'
 import { useSSE } from '~/hooks/useSSE'
 import { useSuccessToast, useErrorToast } from '~/components/toast'
+import { PageHeader } from '~/components/page-header'
+import { PageContent } from '~/components/page-content'
 import { requireAuth } from '~/lib/auth'
 import type { Route } from './+types/[id]'
 
@@ -354,749 +356,906 @@ export default function IncidentDetail({
 		}))
 	}
 
+	// Calculate key metrics for stats section
+	const affectedServices = getAffectedEndpoints().length
+	const resolutionTime =
+		incident.end_time && incident.created_at
+			? Math.round(
+					(new Date(incident.end_time).getTime() -
+						new Date(incident.created_at).getTime()) /
+						(1000 * 60),
+				)
+			: null
+	const timeElapsed = Math.round(
+		(new Date().getTime() - new Date(incident.created_at).getTime()) /
+			(1000 * 60),
+	)
+
 	return (
-		<div className='space-y-8'>
-			{/* Header Section */}
-			<div className='flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6'>
-				<div className='space-y-2'>
-					<div className='flex items-center gap-3 mb-2'>
-						<h1 className='text-3xl font-bold tracking-tight'>
-							{incident.title}
-						</h1>
-						{getStatusBadge(incident.status)}
-						{getSeverityBadge(incident.severity)}
-					</div>
-					<p className='text-lg text-muted-foreground'>
-						Incident started {getTimeElapsed(incident.created_at)} •
-						{getAffectedEndpoints().length > 0
-							? ` ${getAffectedEndpoints().length} service${getAffectedEndpoints().length !== 1 ? 's' : ''} affected`
-							: ' No services specified'}
-					</p>
-				</div>
-				<div className='flex gap-3'>
-					<Link to='/admin/incidents'>
-						<Button variant='outline' size='lg'>
-							← Back to Incidents
-						</Button>
-					</Link>
-					<Dialog
-						open={isPublicMessageDialogOpen}
-						onOpenChange={setIsPublicMessageDialogOpen}
-					>
-						<DialogTrigger asChild>
-							<Button size='lg'>📢 Post Update</Button>
-						</DialogTrigger>
-						<DialogContent className='max-w-md'>
-							<DialogHeader>
-								<DialogTitle>Post Public Update</DialogTitle>
-								<DialogDescription>
-									Share an update with your users on the
-									status page
-								</DialogDescription>
-							</DialogHeader>
-							<div className='space-y-4'>
-								<div className='space-y-2'>
-									<Label htmlFor='public_message'>
-										Message
-									</Label>
-									<Textarea
-										id='public_message'
-										value={publicMessage}
-										onChange={(e) =>
-											setPublicMessage(e.target.value)
-										}
-										placeholder='We are actively investigating this issue and will provide updates as we learn more...'
-										rows={4}
-									/>
+		<>
+			<main className='flex flex-col gap-6'>
+				{/* Quick Stats Section - Similar to other admin routes */}
+				<section className='grid grid-cols-1 xl:grid-cols-3 gap-6'>
+					<Card>
+						<CardContent>
+							<div className='flex items-center gap-4'>
+								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+									{incident.status === 'resolved' ? (
+										<span className='text-2xl'>✅</span>
+									) : incident.severity === 'critical' ? (
+										<span className='text-2xl'>🚨</span>
+									) : (
+										<span className='text-2xl'>⚠️</span>
+									)}
+								</div>
+								<div className='flex flex-col'>
+									<p className='text-sm font-normal'>
+										Status
+									</p>
+									<p className='typography-h4 capitalize'>
+										{incident.status}
+									</p>
 								</div>
 							</div>
-							<DialogFooter>
-								<Button
-									variant='outline'
-									onClick={() =>
-										setIsPublicMessageDialogOpen(false)
-									}
-								>
-									Cancel
-								</Button>
-								<Button
-									onClick={handlePublicMessageUpdate}
-									disabled={!publicMessage.trim()}
-								>
-									Publish Update
-								</Button>
-							</DialogFooter>
-						</DialogContent>
-					</Dialog>
-					<AlertDialog>
-						<AlertDialogTrigger asChild>
-							<Button variant='destructive' size='lg'>
-								🗑️ Delete
-							</Button>
-						</AlertDialogTrigger>
-						<AlertDialogContent>
-							<AlertDialogHeader>
-								<AlertDialogTitle>
-									Delete Incident
-								</AlertDialogTitle>
-								<AlertDialogDescription>
-									Are you sure you want to permanently delete
-									this incident? This action cannot be undone
-									and will remove all associated timeline
-									data.
-								</AlertDialogDescription>
-							</AlertDialogHeader>
-							<AlertDialogFooter>
-								<AlertDialogCancel>Cancel</AlertDialogCancel>
-								<AlertDialogAction
-									onClick={handleDelete}
-									disabled={isDeleting}
-									className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-								>
-									{isDeleting
-										? 'Deleting...'
-										: 'Delete Incident'}
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
-				</div>
-			</div>
-
-			<Tabs defaultValue='overview' className='space-y-6'>
-				<TabsList className='grid w-full grid-cols-3'>
-					<TabsTrigger
-						value='overview'
-						className='flex items-center gap-2'
-					>
-						📋 Overview
-					</TabsTrigger>
-					<TabsTrigger
-						value='timeline'
-						className='flex items-center gap-2'
-					>
-						⏱️ Timeline
-					</TabsTrigger>
-					<TabsTrigger
-						value='communication'
-						className='flex items-center gap-2'
-					>
-						📢 Public Preview
-					</TabsTrigger>
-				</TabsList>
-
-				<TabsContent value='overview' className='space-y-6'>
-					<div className='grid gap-6 lg:grid-cols-3'>
-						{/* Main Incident Details */}
-						<div className='lg:col-span-2 space-y-6'>
-							<Card>
-								<CardHeader>
-									<CardTitle className='flex items-center gap-2'>
-										📝 Incident Information
-									</CardTitle>
-								</CardHeader>
-								<CardContent className='space-y-6'>
-									{incident.description && (
-										<div>
-											<h4 className='font-medium mb-3'>
-												Description
-											</h4>
-											<div className='bg-muted p-4 rounded-lg whitespace-pre-wrap text-sm leading-relaxed'>
-												{incident.description}
-											</div>
-										</div>
-									)}
-
-									<div className='grid grid-cols-2 md:grid-cols-3 gap-6'>
-										<div>
-											<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-												Status
-											</h4>
-											<div className='flex items-center gap-2'>
-												{getStatusBadge(
-													incident.status,
-												)}
-											</div>
-										</div>
-										<div>
-											<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-												Severity
-											</h4>
-											<div>
-												{getSeverityBadge(
-													incident.severity,
-												)}
-											</div>
-										</div>
-										<div>
-											<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-												Created
-											</h4>
-											<p className='text-sm'>
-												{new Date(
-													incident.created_at,
-												).toLocaleString()}
-											</p>
-										</div>
-										{incident.end_time && (
-											<div>
-												<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-													Resolved
-												</h4>
-												<p className='text-sm'>
-													{new Date(
-														incident.end_time,
-													).toLocaleString()}
-												</p>
-											</div>
-										)}
-										{incident.created_by && (
-											<div>
-												<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-													Reporter
-												</h4>
-												<p className='text-sm'>
-													User #{incident.created_by}
-												</p>
-											</div>
-										)}
-									</div>
-								</CardContent>
-							</Card>
-
-							{/* Impact Assessment */}
-							<Card>
-								<CardHeader>
-									<CardTitle className='flex items-center gap-2'>
-										🎯 Impact Assessment
-									</CardTitle>
-									<CardDescription>
-										Services and endpoints affected by this
-										incident
-									</CardDescription>
-								</CardHeader>
-								<CardContent>
-									{getAffectedEndpoints().length > 0 ? (
-										<div className='space-y-3'>
-											{getAffectedEndpoints().map(
-												(endpoint: any) => (
-													<div
-														key={endpoint.id}
-														className='flex items-center justify-between p-3 border rounded-lg'
-													>
-														<div className='flex-1'>
-															<div className='font-medium'>
-																{endpoint.name}
-															</div>
-															<div className='text-sm text-muted-foreground'>
-																{endpoint.url}
-															</div>
-														</div>
-														<div className='flex items-center gap-2'>
-															<Badge
-																variant={
-																	endpoint.status ===
-																	'up'
-																		? 'secondary'
-																		: 'destructive'
-																}
-																className='text-xs'
-															>
-																{endpoint.status ||
-																	'Unknown'}
-															</Badge>
-														</div>
-													</div>
-												),
-											)}
-										</div>
-									) : (
-										<div className='text-center py-8'>
-											<div className='w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3'>
-												<span className='text-xl'>
-													📊
-												</span>
-											</div>
-											<p className='text-muted-foreground'>
-												No specific services were
-												identified as affected by this
-												incident
-											</p>
-										</div>
-									)}
-								</CardContent>
-							</Card>
-						</div>
-
-						{/* Sidebar Actions */}
-						<div className='space-y-6'>
-							{/* Quick Status Updates */}
-							<Card>
-								<CardHeader>
-									<CardTitle className='flex items-center gap-2'>
-										⚡ Quick Actions
-									</CardTitle>
-								</CardHeader>
-								<CardContent className='space-y-3'>
-									{getStatusProgressSteps().map((step) => (
-										<Button
-											key={step.name}
-											variant={
-												step.current
-													? 'default'
-													: step.completed
-														? 'secondary'
-														: 'outline'
-											}
-											className={`w-full justify-start ${step.current ? 'ring-2 ring-primary' : ''}`}
-											onClick={() => {
-												setNewStatus(step.name)
-												handleStatusUpdate()
-											}}
-											disabled={
-												step.completed &&
-												step.name !== 'resolved'
-											}
-										>
-											<span>
-												{step.completed ? '✅' : '⭕'}
-											</span>
-											<span className='capitalize'>
-												{step.name.replace('_', ' ')}
-											</span>
-										</Button>
-									))}
-
-									<Separator className='my-4' />
-
-									<div className='space-y-3'>
-										<Button
-											variant='outline'
-											className='w-full'
-											onClick={() =>
-												setIsPublicMessageDialogOpen(
-													true,
-												)
-											}
-										>
-											📢 Post Public Update
-										</Button>
-
-										{incident.status === 'resolved' && (
-											<Button
-												variant='outline'
-												className='w-full'
-												onClick={() => {
-													setNewStatus('open')
-													handleStatusUpdate()
-												}}
-											>
-												🔄 Reopen Incident
-											</Button>
-										)}
-									</div>
-								</CardContent>
-							</Card>
-
-							{/* Status Timeline */}
-							<Card>
-								<CardHeader>
-									<CardTitle className='flex items-center gap-2'>
-										📅 Key Timestamps
-									</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<div className='space-y-4 text-sm'>
-										<div className='flex justify-between items-center'>
-											<span className='text-muted-foreground'>
-												Created
-											</span>
-											<span className='font-mono'>
-												{new Date(
-													incident.created_at,
-												).toLocaleString()}
-											</span>
-										</div>
-
-										{incident.updated_at &&
-											incident.updated_at !==
-												incident.created_at && (
-												<div className='flex justify-between items-center'>
-													<span className='text-muted-foreground'>
-														Last Updated
-													</span>
-													<span className='font-mono'>
-														{new Date(
-															incident.updated_at,
-														).toLocaleString()}
-													</span>
-												</div>
-											)}
-
-										{incident.end_time && (
-											<div className='flex justify-between items-center'>
-												<span className='text-muted-foreground'>
-													Resolved
-												</span>
-												<span className='font-mono'>
-													{new Date(
-														incident.end_time,
-													).toLocaleString()}
-												</span>
-											</div>
-										)}
-
-										{incident.end_time &&
-											incident.created_at && (
-												<>
-													<Separator />
-													<div className='flex justify-between items-center'>
-														<span className='text-muted-foreground'>
-															Total Duration
-														</span>
-														<span className='font-medium'>
-															{Math.round(
-																(new Date(
-																	incident.end_time,
-																).getTime() -
-																	new Date(
-																		incident.created_at,
-																	).getTime()) /
-																	(1000 * 60),
-															)}{' '}
-															minutes
-														</span>
-													</div>
-												</>
-											)}
-									</div>
-								</CardContent>
-							</Card>
-						</div>
-					</div>
-				</TabsContent>
-
-				<TabsContent value='timeline' className='space-y-6'>
+						</CardContent>
+					</Card>
 					<Card>
-						<CardHeader>
-							<CardTitle className='flex items-center gap-2'>
-								⏱️ Incident Timeline
-							</CardTitle>
-							<CardDescription>
-								Chronological sequence of status updates and
-								communications
-							</CardDescription>
-						</CardHeader>
 						<CardContent>
-							<div className='space-y-6'>
-								{/* Status Update Form */}
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
-											Add Timeline Entry
-										</CardTitle>
-									</CardHeader>
-									<CardContent className='space-y-4'>
-										<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-											<div className='space-y-2'>
-												<Label htmlFor='status'>
-													Update Status
-												</Label>
-												<Select
-													value={newStatus}
-													onValueChange={setNewStatus}
-												>
-													<SelectTrigger>
-														<SelectValue />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value='open'>
-															Open
-														</SelectItem>
-														<SelectItem value='investigating'>
-															Investigating
-														</SelectItem>
-														<SelectItem value='identified'>
-															Identified
-														</SelectItem>
-														<SelectItem value='monitoring'>
-															Monitoring
-														</SelectItem>
-														<SelectItem value='resolved'>
-															Resolved
-														</SelectItem>
-														<SelectItem value='closed'>
-															Closed
-														</SelectItem>
-													</SelectContent>
-												</Select>
-											</div>
-											<div className='flex items-end'>
-												<Button
-													onClick={handleStatusUpdate}
-													disabled={
-														newStatus ===
-														incident.status
-													}
-													className='w-full'
-												>
-													{isUpdating
-														? 'Updating...'
-														: 'Update Status'}
-												</Button>
-											</div>
-										</div>
+							<div className='flex items-center gap-4'>
+								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+									<span className='text-2xl'>🎯</span>
+								</div>
+								<div className='flex flex-col'>
+									<p className='text-sm font-normal'>
+										Affected Services
+									</p>
+									<p className='typography-h4'>
+										{affectedServices}
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardContent>
+							<div className='flex items-center gap-4'>
+								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+									<span className='text-2xl'>⏱️</span>
+								</div>
+								<div className='flex flex-col'>
+									<p className='text-sm font-normal'>
+										{incident.status === 'resolved'
+											? 'Resolution Time'
+											: 'Time Elapsed'}
+									</p>
+									<p className='typography-h4'>
+										{incident.status === 'resolved' &&
+										resolutionTime
+											? `${resolutionTime}m`
+											: `${timeElapsed}m`}
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				</section>
 
+				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
+					<PageHeader
+						title={incident.title}
+						description={`${incident.severity} severity incident • Started ${getTimeElapsed(incident.created_at)}${getAffectedEndpoints().length > 0 ? ` • ${getAffectedEndpoints().length} service${getAffectedEndpoints().length !== 1 ? 's' : ''} affected` : ' • No services specified'}`}
+					>
+						<div className='flex flex-wrap items-center gap-2'>
+							<Link to='/admin/incidents'>
+								<Button variant='outline' size='sm'>
+									← Back to Incidents
+								</Button>
+							</Link>
+							<Dialog
+								open={isPublicMessageDialogOpen}
+								onOpenChange={setIsPublicMessageDialogOpen}
+							>
+								<DialogTrigger asChild>
+									<Button size='sm'>📢 Post Update</Button>
+								</DialogTrigger>
+								<DialogContent className='max-w-md'>
+									<DialogHeader>
+										<DialogTitle>
+											Post Public Update
+										</DialogTitle>
+										<DialogDescription>
+											Share an update with your users on
+											the status page
+										</DialogDescription>
+									</DialogHeader>
+									<div className='space-y-4'>
 										<div className='space-y-2'>
-											<Label htmlFor='note'>
-												Internal Notes (Optional)
+											<Label htmlFor='public_message'>
+												Message
 											</Label>
 											<Textarea
-												id='note'
-												value={updateNote}
+												id='public_message'
+												value={publicMessage}
 												onChange={(e) =>
-													setUpdateNote(
+													setPublicMessage(
 														e.target.value,
 													)
 												}
-												placeholder='Add internal notes about this status change or investigation progress...'
-												rows={3}
+												placeholder='We are actively investigating this issue and will provide updates as we learn more...'
+												rows={4}
 											/>
 										</div>
-									</CardContent>
-								</Card>
+									</div>
+									<DialogFooter>
+										<Button
+											variant='outline'
+											onClick={() =>
+												setIsPublicMessageDialogOpen(
+													false,
+												)
+											}
+										>
+											Cancel
+										</Button>
+										<Button
+											onClick={handlePublicMessageUpdate}
+											disabled={!publicMessage.trim()}
+										>
+											Publish Update
+										</Button>
+									</DialogFooter>
+								</DialogContent>
+							</Dialog>
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button variant='destructive' size='sm'>
+										🗑️ Delete
+									</Button>
+								</AlertDialogTrigger>
+								<AlertDialogContent>
+									<AlertDialogHeader>
+										<AlertDialogTitle>
+											Delete Incident
+										</AlertDialogTitle>
+										<AlertDialogDescription>
+											Are you sure you want to permanently
+											delete this incident? This action
+											cannot be undone and will remove all
+											associated timeline data.
+										</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>
+											Cancel
+										</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={handleDelete}
+											disabled={isDeleting}
+											className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+										>
+											{isDeleting
+												? 'Deleting...'
+												: 'Delete Incident'}
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
+						</div>
+					</PageHeader>
 
-								{/* Timeline Display */}
-								<div className='relative'>
-									<div className='absolute left-4 top-0 bottom-0 w-0.5 bg-border'></div>
-									<div className='space-y-6'>
-										<div className='flex gap-4'>
-											<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
-												<span className='text-sm'>
-													📅
-												</span>
-											</div>
-											<div className='flex-1 pb-4'>
-												<div className='flex items-center gap-2 mb-1'>
-													<span className='font-medium'>
-														Incident Created
-													</span>
-													<Badge
-														variant='outline'
-														className='text-xs'
-													>
-														{incident.status ===
-														'open'
-															? 'Current'
-															: 'Initial'}
-													</Badge>
-												</div>
-												<p className='text-sm text-muted-foreground'>
-													{new Date(
-														incident.created_at,
-													).toLocaleString()}
-												</p>
-											</div>
-										</div>
+					<Card className='rounded-none shadow-none border-none flex-1'>
+						<CardContent className='p-6 gap-0 flex flex-col h-full'>
+							<Tabs defaultValue='overview' className='space-y-6'>
+								<TabsList className='grid w-full grid-cols-3'>
+									<TabsTrigger
+										value='overview'
+										className='flex items-center gap-2'
+									>
+										📋 Overview
+									</TabsTrigger>
+									<TabsTrigger
+										value='timeline'
+										className='flex items-center gap-2'
+									>
+										⏱️ Timeline
+									</TabsTrigger>
+									<TabsTrigger
+										value='communication'
+										className='flex items-center gap-2'
+									>
+										📢 Public Preview
+									</TabsTrigger>
+								</TabsList>
 
-										{incident.status !== 'open' && (
-											<div className='flex gap-4'>
-												<div className='w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center relative z-10'>
-													<span className='text-sm'>
-														🔍
-													</span>
-												</div>
-												<div className='flex-1 pb-4'>
-													<div className='flex items-center gap-2 mb-1'>
-														<span className='font-medium'>
-															Status Updated to{' '}
-															{incident.status}
-														</span>
-														{incident.status ===
-															incident.status && (
-															<Badge
-																variant='default'
-																className='text-xs'
-															>
-																Current
-															</Badge>
+								<TabsContent
+									value='overview'
+									className='space-y-6'
+								>
+									<div className='grid gap-6 lg:grid-cols-3'>
+										{/* Main Incident Details */}
+										<div className='lg:col-span-2 space-y-6'>
+											<Card>
+												<CardHeader>
+													<CardTitle className='flex items-center gap-2'>
+														📝 Incident Information
+													</CardTitle>
+												</CardHeader>
+												<CardContent className='space-y-6'>
+													{incident.description && (
+														<div>
+															<h4 className='font-medium mb-3'>
+																Description
+															</h4>
+															<div className='bg-muted p-4 rounded-lg whitespace-pre-wrap text-sm leading-relaxed'>
+																{
+																	incident.description
+																}
+															</div>
+														</div>
+													)}
+
+													<div className='grid grid-cols-2 md:grid-cols-3 gap-6'>
+														<div>
+															<h4 className='font-medium text-sm text-muted-foreground mb-1'>
+																Status
+															</h4>
+															<div className='flex items-center gap-2'>
+																{getStatusBadge(
+																	incident.status,
+																)}
+															</div>
+														</div>
+														<div>
+															<h4 className='font-medium text-sm text-muted-foreground mb-1'>
+																Severity
+															</h4>
+															<div>
+																{getSeverityBadge(
+																	incident.severity,
+																)}
+															</div>
+														</div>
+														<div>
+															<h4 className='font-medium text-sm text-muted-foreground mb-1'>
+																Created
+															</h4>
+															<p className='text-sm'>
+																{new Date(
+																	incident.created_at,
+																).toLocaleString()}
+															</p>
+														</div>
+														{incident.end_time && (
+															<div>
+																<h4 className='font-medium text-sm text-muted-foreground mb-1'>
+																	Resolved
+																</h4>
+																<p className='text-sm'>
+																	{new Date(
+																		incident.end_time,
+																	).toLocaleString()}
+																</p>
+															</div>
+														)}
+														{incident.created_by && (
+															<div>
+																<h4 className='font-medium text-sm text-muted-foreground mb-1'>
+																	Reporter
+																</h4>
+																<p className='text-sm'>
+																	User #
+																	{
+																		incident.created_by
+																	}
+																</p>
+															</div>
 														)}
 													</div>
-													<p className='text-sm text-muted-foreground'>
-														{incident.updated_at
-															? new Date(
-																	incident.updated_at,
-																).toLocaleString()
-															: 'Recently updated'}
-													</p>
-												</div>
-											</div>
-										)}
+												</CardContent>
+											</Card>
 
-										{incident.end_time && (
-											<div className='flex gap-4'>
-												<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
-													<span className='text-sm'>
-														✅
-													</span>
-												</div>
-												<div className='flex-1 pb-4'>
-													<div className='flex items-center gap-2 mb-1'>
-														<span className='font-medium'>
-															Incident Resolved
-														</span>
-														<Badge
-															variant='secondary'
-															className='text-xs'
-														>
-															Final
-														</Badge>
-													</div>
-													<p className='text-sm text-muted-foreground'>
-														{new Date(
-															incident.end_time,
-														).toLocaleString()}
-													</p>
-												</div>
-											</div>
-										)}
-									</div>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-				</TabsContent>
-
-				<TabsContent value='communication' className='space-y-6'>
-					<Card>
-						<CardHeader>
-							<CardTitle className='flex items-center gap-2'>
-								👁️ Public Status Page Preview
-							</CardTitle>
-							<CardDescription>
-								How this incident appears to your users on the
-								public status page
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<div className='border rounded-lg p-6 bg-muted/50'>
-								<div className='max-w-2xl mx-auto space-y-4'>
-									<div className='flex items-center justify-between'>
-										<div className='flex items-center gap-3'>
-											{getStatusBadge(incident.status)}
-											{getSeverityBadge(
-												incident.severity,
-											)}
+											{/* Impact Assessment */}
+											<Card>
+												<CardHeader>
+													<CardTitle className='flex items-center gap-2'>
+														🎯 Impact Assessment
+													</CardTitle>
+													<CardDescription>
+														Services and endpoints
+														affected by this
+														incident
+													</CardDescription>
+												</CardHeader>
+												<CardContent>
+													{getAffectedEndpoints()
+														.length > 0 ? (
+														<div className='space-y-3'>
+															{getAffectedEndpoints().map(
+																(
+																	endpoint: any,
+																) => (
+																	<div
+																		key={
+																			endpoint.id
+																		}
+																		className='flex items-center justify-between p-3 border rounded-lg'
+																	>
+																		<div className='flex-1'>
+																			<div className='font-medium'>
+																				{
+																					endpoint.name
+																				}
+																			</div>
+																			<div className='text-sm text-muted-foreground'>
+																				{
+																					endpoint.url
+																				}
+																			</div>
+																		</div>
+																		<div className='flex items-center gap-2'>
+																			<Badge
+																				variant={
+																					endpoint.status ===
+																					'up'
+																						? 'secondary'
+																						: 'destructive'
+																				}
+																				className='text-xs'
+																			>
+																				{endpoint.status ||
+																					'Unknown'}
+																			</Badge>
+																		</div>
+																	</div>
+																),
+															)}
+														</div>
+													) : (
+														<div className='text-center py-8'>
+															<div className='w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3'>
+																<span className='text-xl'>
+																	📊
+																</span>
+															</div>
+															<p className='text-muted-foreground'>
+																No specific
+																services were
+																identified as
+																affected by this
+																incident
+															</p>
+														</div>
+													)}
+												</CardContent>
+											</Card>
 										</div>
-										<span className='text-sm text-muted-foreground'>
-											{getTimeElapsed(
-												incident.created_at,
-											)}
-										</span>
-									</div>
 
-									<h3 className='text-xl font-semibold'>
-										{incident.title}
-									</h3>
+										{/* Sidebar Actions */}
+										<div className='space-y-6'>
+											{/* Quick Status Updates */}
+											<Card>
+												<CardHeader>
+													<CardTitle className='flex items-center gap-2'>
+														⚡ Quick Actions
+													</CardTitle>
+												</CardHeader>
+												<CardContent className='space-y-3'>
+													{getStatusProgressSteps().map(
+														(step) => (
+															<Button
+																key={step.name}
+																variant={
+																	step.current
+																		? 'default'
+																		: step.completed
+																			? 'secondary'
+																			: 'outline'
+																}
+																className={`w-full justify-start ${step.current ? 'ring-2 ring-primary' : ''}`}
+																onClick={() => {
+																	setNewStatus(
+																		step.name,
+																	)
+																	handleStatusUpdate()
+																}}
+																disabled={
+																	step.completed &&
+																	step.name !==
+																		'resolved'
+																}
+															>
+																<span>
+																	{step.completed
+																		? '✅'
+																		: '⭕'}
+																</span>
+																<span className='capitalize'>
+																	{step.name.replace(
+																		'_',
+																		' ',
+																	)}
+																</span>
+															</Button>
+														),
+													)}
 
-									{incident.description && (
-										<p className='text-muted-foreground leading-relaxed'>
-											{
-												incident.description.split(
-													'\n',
-												)[0]
-											}{' '}
-											{/* Show first paragraph only for preview */}
-										</p>
-									)}
+													<Separator className='my-4' />
 
-									{getAffectedEndpoints().length > 0 && (
-										<div className='space-y-2'>
-											<h4 className='font-medium text-sm'>
-												Affected Services:
-											</h4>
-											<div className='flex flex-wrap gap-2'>
-												{getAffectedEndpoints().map(
-													(endpoint: any) => (
-														<Badge
-															key={endpoint.id}
+													<div className='space-y-3'>
+														<Button
 															variant='outline'
-															className='text-xs'
+															className='w-full'
+															onClick={() =>
+																setIsPublicMessageDialogOpen(
+																	true,
+																)
+															}
 														>
-															{endpoint.name}
-														</Badge>
-													),
-												)}
-											</div>
-										</div>
-									)}
-								</div>
-							</div>
-						</CardContent>
-					</Card>
+															📢 Post Public
+															Update
+														</Button>
 
-					<Card>
-						<CardHeader>
-							<CardTitle className='flex items-center gap-2'>
-								📝 Message Templates
-							</CardTitle>
-							<CardDescription>
-								Pre-written templates for common incident
-								communications
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<div className='grid gap-4'>
-								{[
-									{
-										title: 'Service Investigation',
-										template:
-											'We are aware of issues affecting our service and are actively investigating. We will provide updates as more information becomes available.',
-									},
-									{
-										title: 'Issue Identified',
-										template:
-											'We have identified the root cause of the service disruption and are implementing a fix. Expected resolution within the next hour.',
-									},
-									{
-										title: 'Service Restored',
-										template:
-											'The issue has been resolved and all services are now operating normally. We apologize for any inconvenience caused.',
-									},
-								].map((template, index) => (
-									<div
-										key={index}
-										className='border rounded-lg p-4 space-y-2'
-									>
-										<div className='flex items-center justify-between'>
-											<h4 className='font-medium'>
-												{template.title}
-											</h4>
-											<Button
-												variant='outline'
-												size='sm'
-												onClick={() => {
-													setPublicMessage(
-														template.template,
-													)
-													setIsPublicMessageDialogOpen(
-														true,
-													)
-												}}
-											>
-												Use Template
-											</Button>
+														{incident.status ===
+															'resolved' && (
+															<Button
+																variant='outline'
+																className='w-full'
+																onClick={() => {
+																	setNewStatus(
+																		'open',
+																	)
+																	handleStatusUpdate()
+																}}
+															>
+																🔄 Reopen
+																Incident
+															</Button>
+														)}
+													</div>
+												</CardContent>
+											</Card>
+
+											{/* Status Timeline */}
+											<Card>
+												<CardHeader>
+													<CardTitle className='flex items-center gap-2'>
+														📅 Key Timestamps
+													</CardTitle>
+												</CardHeader>
+												<CardContent>
+													<div className='space-y-4 text-sm'>
+														<div className='flex justify-between items-center'>
+															<span className='text-muted-foreground'>
+																Created
+															</span>
+															<span className='font-mono'>
+																{new Date(
+																	incident.created_at,
+																).toLocaleString()}
+															</span>
+														</div>
+
+														{incident.updated_at &&
+															incident.updated_at !==
+																incident.created_at && (
+																<div className='flex justify-between items-center'>
+																	<span className='text-muted-foreground'>
+																		Last
+																		Updated
+																	</span>
+																	<span className='font-mono'>
+																		{new Date(
+																			incident.updated_at,
+																		).toLocaleString()}
+																	</span>
+																</div>
+															)}
+
+														{incident.end_time && (
+															<div className='flex justify-between items-center'>
+																<span className='text-muted-foreground'>
+																	Resolved
+																</span>
+																<span className='font-mono'>
+																	{new Date(
+																		incident.end_time,
+																	).toLocaleString()}
+																</span>
+															</div>
+														)}
+
+														{incident.end_time &&
+															incident.created_at && (
+																<>
+																	<Separator />
+																	<div className='flex justify-between items-center'>
+																		<span className='text-muted-foreground'>
+																			Total
+																			Duration
+																		</span>
+																		<span className='font-medium'>
+																			{Math.round(
+																				(new Date(
+																					incident.end_time,
+																				).getTime() -
+																					new Date(
+																						incident.created_at,
+																					).getTime()) /
+																					(1000 *
+																						60),
+																			)}{' '}
+																			minutes
+																		</span>
+																	</div>
+																</>
+															)}
+													</div>
+												</CardContent>
+											</Card>
 										</div>
-										<p className='text-sm text-muted-foreground'>
-											{template.template}
-										</p>
 									</div>
-								))}
-							</div>
+								</TabsContent>
+
+								<TabsContent
+									value='timeline'
+									className='space-y-6'
+								>
+									<Card>
+										<CardHeader>
+											<CardTitle className='flex items-center gap-2'>
+												⏱️ Incident Timeline
+											</CardTitle>
+											<CardDescription>
+												Chronological sequence of status
+												updates and communications
+											</CardDescription>
+										</CardHeader>
+										<CardContent>
+											<div className='space-y-6'>
+												{/* Status Update Form */}
+												<Card>
+													<CardHeader>
+														<CardTitle className='text-lg'>
+															Add Timeline Entry
+														</CardTitle>
+													</CardHeader>
+													<CardContent className='space-y-4'>
+														<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+															<div className='space-y-2'>
+																<Label htmlFor='status'>
+																	Update
+																	Status
+																</Label>
+																<Select
+																	value={
+																		newStatus
+																	}
+																	onValueChange={
+																		setNewStatus
+																	}
+																>
+																	<SelectTrigger>
+																		<SelectValue />
+																	</SelectTrigger>
+																	<SelectContent>
+																		<SelectItem value='open'>
+																			Open
+																		</SelectItem>
+																		<SelectItem value='investigating'>
+																			Investigating
+																		</SelectItem>
+																		<SelectItem value='identified'>
+																			Identified
+																		</SelectItem>
+																		<SelectItem value='monitoring'>
+																			Monitoring
+																		</SelectItem>
+																		<SelectItem value='resolved'>
+																			Resolved
+																		</SelectItem>
+																		<SelectItem value='closed'>
+																			Closed
+																		</SelectItem>
+																	</SelectContent>
+																</Select>
+															</div>
+															<div className='flex items-end'>
+																<Button
+																	onClick={
+																		handleStatusUpdate
+																	}
+																	disabled={
+																		newStatus ===
+																		incident.status
+																	}
+																	className='w-full'
+																>
+																	{isUpdating
+																		? 'Updating...'
+																		: 'Update Status'}
+																</Button>
+															</div>
+														</div>
+
+														<div className='space-y-2'>
+															<Label htmlFor='note'>
+																Internal Notes
+																(Optional)
+															</Label>
+															<Textarea
+																id='note'
+																value={
+																	updateNote
+																}
+																onChange={(e) =>
+																	setUpdateNote(
+																		e.target
+																			.value,
+																	)
+																}
+																placeholder='Add internal notes about this status change or investigation progress...'
+																rows={3}
+															/>
+														</div>
+													</CardContent>
+												</Card>
+
+												{/* Timeline Display */}
+												<div className='relative'>
+													<div className='absolute left-4 top-0 bottom-0 w-0.5 bg-border'></div>
+													<div className='space-y-6'>
+														<div className='flex gap-4'>
+															<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
+																<span className='text-sm'>
+																	📅
+																</span>
+															</div>
+															<div className='flex-1 pb-4'>
+																<div className='flex items-center gap-2 mb-1'>
+																	<span className='font-medium'>
+																		Incident
+																		Created
+																	</span>
+																	<Badge
+																		variant='outline'
+																		className='text-xs'
+																	>
+																		{incident.status ===
+																		'open'
+																			? 'Current'
+																			: 'Initial'}
+																	</Badge>
+																</div>
+																<p className='text-sm text-muted-foreground'>
+																	{new Date(
+																		incident.created_at,
+																	).toLocaleString()}
+																</p>
+															</div>
+														</div>
+
+														{incident.status !==
+															'open' && (
+															<div className='flex gap-4'>
+																<div className='w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center relative z-10'>
+																	<span className='text-sm'>
+																		🔍
+																	</span>
+																</div>
+																<div className='flex-1 pb-4'>
+																	<div className='flex items-center gap-2 mb-1'>
+																		<span className='font-medium'>
+																			Status
+																			Updated
+																			to{' '}
+																			{
+																				incident.status
+																			}
+																		</span>
+																		{incident.status ===
+																			incident.status && (
+																			<Badge
+																				variant='default'
+																				className='text-xs'
+																			>
+																				Current
+																			</Badge>
+																		)}
+																	</div>
+																	<p className='text-sm text-muted-foreground'>
+																		{incident.updated_at
+																			? new Date(
+																					incident.updated_at,
+																				).toLocaleString()
+																			: 'Recently updated'}
+																	</p>
+																</div>
+															</div>
+														)}
+
+														{incident.end_time && (
+															<div className='flex gap-4'>
+																<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
+																	<span className='text-sm'>
+																		✅
+																	</span>
+																</div>
+																<div className='flex-1 pb-4'>
+																	<div className='flex items-center gap-2 mb-1'>
+																		<span className='font-medium'>
+																			Incident
+																			Resolved
+																		</span>
+																		<Badge
+																			variant='secondary'
+																			className='text-xs'
+																		>
+																			Final
+																		</Badge>
+																	</div>
+																	<p className='text-sm text-muted-foreground'>
+																		{new Date(
+																			incident.end_time,
+																		).toLocaleString()}
+																	</p>
+																</div>
+															</div>
+														)}
+													</div>
+												</div>
+											</div>
+										</CardContent>
+									</Card>
+								</TabsContent>
+
+								<TabsContent
+									value='communication'
+									className='space-y-6'
+								>
+									<Card>
+										<CardHeader>
+											<CardTitle className='flex items-center gap-2'>
+												👁️ Public Status Page Preview
+											</CardTitle>
+											<CardDescription>
+												How this incident appears to
+												your users on the public status
+												page
+											</CardDescription>
+										</CardHeader>
+										<CardContent>
+											<div className='border rounded-lg p-6 bg-muted/50'>
+												<div className='max-w-2xl mx-auto space-y-4'>
+													<div className='flex items-center justify-between'>
+														<div className='flex items-center gap-3'>
+															{getStatusBadge(
+																incident.status,
+															)}
+															{getSeverityBadge(
+																incident.severity,
+															)}
+														</div>
+														<span className='text-sm text-muted-foreground'>
+															{getTimeElapsed(
+																incident.created_at,
+															)}
+														</span>
+													</div>
+
+													<h3 className='text-xl font-semibold'>
+														{incident.title}
+													</h3>
+
+													{incident.description && (
+														<p className='text-muted-foreground leading-relaxed'>
+															{
+																incident.description.split(
+																	'\n',
+																)[0]
+															}{' '}
+															{/* Show first paragraph only for preview */}
+														</p>
+													)}
+
+													{getAffectedEndpoints()
+														.length > 0 && (
+														<div className='space-y-2'>
+															<h4 className='font-medium text-sm'>
+																Affected
+																Services:
+															</h4>
+															<div className='flex flex-wrap gap-2'>
+																{getAffectedEndpoints().map(
+																	(
+																		endpoint: any,
+																	) => (
+																		<Badge
+																			key={
+																				endpoint.id
+																			}
+																			variant='outline'
+																			className='text-xs'
+																		>
+																			{
+																				endpoint.name
+																			}
+																		</Badge>
+																	),
+																)}
+															</div>
+														</div>
+													)}
+												</div>
+											</div>
+										</CardContent>
+									</Card>
+
+									<Card>
+										<CardHeader>
+											<CardTitle className='flex items-center gap-2'>
+												📝 Message Templates
+											</CardTitle>
+											<CardDescription>
+												Pre-written templates for common
+												incident communications
+											</CardDescription>
+										</CardHeader>
+										<CardContent>
+											<div className='grid gap-4'>
+												{[
+													{
+														title: 'Service Investigation',
+														template:
+															'We are aware of issues affecting our service and are actively investigating. We will provide updates as more information becomes available.',
+													},
+													{
+														title: 'Issue Identified',
+														template:
+															'We have identified the root cause of the service disruption and are implementing a fix. Expected resolution within the next hour.',
+													},
+													{
+														title: 'Service Restored',
+														template:
+															'The issue has been resolved and all services are now operating normally. We apologize for any inconvenience caused.',
+													},
+												].map((template, index) => (
+													<div
+														key={index}
+														className='border rounded-lg p-4 space-y-2'
+													>
+														<div className='flex items-center justify-between'>
+															<h4 className='font-medium'>
+																{template.title}
+															</h4>
+															<Button
+																variant='outline'
+																size='sm'
+																onClick={() => {
+																	setPublicMessage(
+																		template.template,
+																	)
+																	setIsPublicMessageDialogOpen(
+																		true,
+																	)
+																}}
+															>
+																Use Template
+															</Button>
+														</div>
+														<p className='text-sm text-muted-foreground'>
+															{template.template}
+														</p>
+													</div>
+												))}
+											</div>
+										</CardContent>
+									</Card>
+								</TabsContent>
+							</Tabs>
 						</CardContent>
 					</Card>
-				</TabsContent>
-			</Tabs>
-		</div>
+				</PageContent>
+			</main>
+		</>
 	)
 }

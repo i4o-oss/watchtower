@@ -11,7 +11,6 @@ import {
 } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
 import { Input } from '~/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import {
 	Select,
 	SelectContent,
@@ -49,7 +48,7 @@ import { requireAuth } from '~/lib/auth'
 import type { Route } from './+types/incidents'
 import { Separator } from '~/components/ui/separator'
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
 	return [
 		{ title: 'Incidents - Admin - Watchtower' },
 		{ name: 'description', content: 'Manage system incidents' },
@@ -82,9 +81,9 @@ export async function clientLoader() {
 export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 	const { incidents: initialIncidents, total } = loaderData
 	const [incidents, setIncidents] = useState(initialIncidents)
-	const [searchTerm, setSearchTerm] = useState('')
-	const [statusFilter, setStatusFilter] = useState('all')
-	const [severityFilter, setSeverityFilter] = useState('all')
+	const [historySearchTerm, setHistorySearchTerm] = useState('')
+	const [historyStatusFilter, setHistoryStatusFilter] = useState('all')
+	const [historySeverityFilter, setHistorySeverityFilter] = useState('all')
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 	const [incidentToDelete, setIncidentToDelete] = useState<any>(null)
 	const navigate = useNavigate()
@@ -143,7 +142,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 		},
 	)
 
-	const { activeIncidents, historyIncidents, filteredIncidents } =
+	const { activeIncidents, historyIncidents, filteredHistoryIncidents } =
 		useMemo(() => {
 			const active = incidents.filter(
 				(incident: any) =>
@@ -153,19 +152,20 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 				['resolved', 'closed'].includes(incident.status),
 			)
 
-			const filtered = incidents.filter((incident: any) => {
+			const filteredHistory = history.filter((incident: any) => {
 				const matchesSearch =
 					incident.title
 						.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
+						.includes(historySearchTerm.toLowerCase()) ||
 					incident.description
 						?.toLowerCase()
-						.includes(searchTerm.toLowerCase())
+						.includes(historySearchTerm.toLowerCase())
 				const matchesStatus =
-					statusFilter === 'all' || incident.status === statusFilter
+					historyStatusFilter === 'all' ||
+					incident.status === historyStatusFilter
 				const matchesSeverity =
-					severityFilter === 'all' ||
-					incident.severity === severityFilter
+					historySeverityFilter === 'all' ||
+					incident.severity === historySeverityFilter
 
 				return matchesSearch && matchesStatus && matchesSeverity
 			})
@@ -173,9 +173,14 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 			return {
 				activeIncidents: active,
 				historyIncidents: history,
-				filteredIncidents: filtered,
+				filteredHistoryIncidents: filteredHistory,
 			}
-		}, [incidents, searchTerm, statusFilter, severityFilter])
+		}, [
+			incidents,
+			historySearchTerm,
+			historyStatusFilter,
+			historySeverityFilter,
+		])
 
 	const handleDelete = async (incident: any) => {
 		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
@@ -311,556 +316,9 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 
 	return (
 		<>
-			<main className='flex-1 flex flex-col xl:flex-row gap-6'>
-				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
-					<PageHeader
-						title='Incident Management'
-						description='Complete lifecycle management for service incidents'
-					>
-						<Link to='/admin/incidents/new'>
-							<Button size='sm'>
-								<Plus className='h-4 w-4' />
-								Create Incident
-							</Button>
-						</Link>
-					</PageHeader>
-
-					<CardContent className='p-6 gap-0 flex flex-col'>
-						<Tabs defaultValue='active' className='space-y-6'>
-							<div className='flex flex-col gap-4'>
-								<TabsList className='grid w-full sm:w-auto grid-cols-2'>
-									<TabsTrigger
-										value='active'
-										className='flex items-center gap-2 px-6'
-									>
-										🔥 Active Incidents
-										{activeIncidents.length > 0 && (
-											<Badge
-												variant='destructive'
-												className='ml-1 px-1.5 py-0.5 text-xs'
-											>
-												{activeIncidents.length}
-											</Badge>
-										)}
-									</TabsTrigger>
-									<TabsTrigger
-										value='history'
-										className='flex items-center gap-2 px-6'
-									>
-										📋 Incident History
-									</TabsTrigger>
-								</TabsList>
-
-								{/* Filters and Controls - matching endpoints table style */}
-								<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-									<div className='flex flex-1 items-center gap-4'>
-										<div className='relative flex-1 max-w-sm'>
-											<Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-											<Input
-												placeholder='Search all columns...'
-												value={searchTerm}
-												onChange={(e) =>
-													setSearchTerm(
-														e.target.value,
-													)
-												}
-												className='pl-10'
-											/>
-										</div>
-										<Select
-											value={statusFilter}
-											onValueChange={setStatusFilter}
-										>
-											<SelectTrigger className='w-36'>
-												<SelectValue placeholder='All Status' />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value='all'>
-													All Status
-												</SelectItem>
-												<SelectItem value='open'>
-													Open
-												</SelectItem>
-												<SelectItem value='investigating'>
-													Investigating
-												</SelectItem>
-												<SelectItem value='identified'>
-													Identified
-												</SelectItem>
-												<SelectItem value='monitoring'>
-													Monitoring
-												</SelectItem>
-												<SelectItem value='resolved'>
-													Resolved
-												</SelectItem>
-											</SelectContent>
-										</Select>
-										<Select
-											value={severityFilter}
-											onValueChange={setSeverityFilter}
-										>
-											<SelectTrigger className='w-36'>
-												<SelectValue placeholder='All Severity' />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value='all'>
-													All Severity
-												</SelectItem>
-												<SelectItem value='critical'>
-													Critical
-												</SelectItem>
-												<SelectItem value='high'>
-													High
-												</SelectItem>
-												<SelectItem value='medium'>
-													Medium
-												</SelectItem>
-												<SelectItem value='low'>
-													Low
-												</SelectItem>
-											</SelectContent>
-										</Select>
-									</div>
-									<div className='flex items-center gap-2'>
-										<Button
-											variant='outline'
-											size='sm'
-											className='gap-2'
-										>
-											<Settings2 className='h-4 w-4' />
-											View
-										</Button>
-										<div className='text-sm text-muted-foreground'>
-											{filteredIncidents.length} of{' '}
-											{total} incident(s)
-										</div>
-									</div>
-								</div>
-							</div>
-
-							<TabsContent value='active' className='space-y-6'>
-								{activeIncidents.length === 0 ? (
-									<Card>
-										<CardContent className='flex flex-col items-center justify-center py-16 text-center'>
-											<div className='w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4'>
-												<span className='text-2xl'>
-													✅
-												</span>
-											</div>
-											<h3 className='text-xl font-semibold mb-2'>
-												All Systems Operational
-											</h3>
-											<p className='text-muted-foreground mb-6 max-w-md'>
-												No active incidents at this
-												time. All monitored services are
-												running smoothly.
-											</p>
-											<Link to='/admin/incidents/new'>
-												<Button>
-													Report New Incident
-												</Button>
-											</Link>
-										</CardContent>
-									</Card>
-								) : (
-									<div className='grid gap-4'>
-										{activeIncidents
-											.filter((incident: any) => {
-												const matchesSearch =
-													searchTerm === '' ||
-													incident.title
-														.toLowerCase()
-														.includes(
-															searchTerm.toLowerCase(),
-														) ||
-													incident.description
-														?.toLowerCase()
-														.includes(
-															searchTerm.toLowerCase(),
-														)
-												const matchesStatus =
-													statusFilter === 'all' ||
-													incident.status ===
-														statusFilter
-												const matchesSeverity =
-													severityFilter === 'all' ||
-													incident.severity ===
-														severityFilter
-												return (
-													matchesSearch &&
-													matchesStatus &&
-													matchesSeverity
-												)
-											})
-											.map((incident: any) => (
-												<Card
-													key={incident.id}
-													className='hover:shadow-md transition-shadow'
-												>
-													<CardContent className='p-6'>
-														<div className='flex items-start justify-between'>
-															<div className='flex-1 space-y-4'>
-																<div className='flex items-start gap-4'>
-																	<div className='flex-1'>
-																		<div className='flex items-center gap-3 mb-2'>
-																			<h3 className='text-xl font-semibold leading-tight'>
-																				{
-																					incident.title
-																				}
-																			</h3>
-																		</div>
-																		<div className='flex items-center gap-3 mb-3'>
-																			{getStatusBadge(
-																				incident.status,
-																			)}
-																			{getSeverityBadge(
-																				incident.severity,
-																			)}
-																			<span className='text-sm text-muted-foreground'>
-																				{getTimeElapsed(
-																					incident.created_at,
-																				)}
-																			</span>
-																			{getAffectedServicesCount(
-																				incident,
-																			) >
-																				0 && (
-																				<Badge
-																					variant='outline'
-																					className='text-xs'
-																				>
-																					{getAffectedServicesCount(
-																						incident,
-																					)}{' '}
-																					service
-																					{getAffectedServicesCount(
-																						incident,
-																					) !==
-																					1
-																						? 's'
-																						: ''}{' '}
-																					affected
-																				</Badge>
-																			)}
-																		</div>
-																		{incident.description && (
-																			<p className='text-muted-foreground leading-relaxed'>
-																				{incident
-																					.description
-																					.length >
-																				200
-																					? `${incident.description.substring(0, 200)}...`
-																					: incident.description}
-																			</p>
-																		)}
-																	</div>
-																</div>
-																<div className='flex gap-2 pt-2'>
-																	<Button
-																		variant='outline'
-																		size='sm'
-																		onClick={() =>
-																			updateIncidentStatus(
-																				incident,
-																				'investigating',
-																			)
-																		}
-																		disabled={
-																			incident.status ===
-																			'investigating'
-																		}
-																	>
-																		🔍
-																		Investigating
-																	</Button>
-																	<Button
-																		variant='outline'
-																		size='sm'
-																		onClick={() =>
-																			updateIncidentStatus(
-																				incident,
-																				'resolved',
-																			)
-																		}
-																	>
-																		✅
-																		Resolve
-																	</Button>
-																	<Link
-																		to={`/admin/incidents/${incident.id}`}
-																	>
-																		<Button
-																			variant='ghost'
-																			size='sm'
-																		>
-																			📝
-																			Details
-																		</Button>
-																	</Link>
-																</div>
-															</div>
-														</div>
-													</CardContent>
-												</Card>
-											))}
-									</div>
-								)}
-							</TabsContent>
-
-							<TabsContent value='history' className='space-y-6'>
-								{historyIncidents.length === 0 ? (
-									<Card>
-										<CardContent className='flex flex-col items-center justify-center py-16 text-center'>
-											<div className='w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4'>
-												<span className='text-2xl'>
-													📋
-												</span>
-											</div>
-											<h3 className='text-xl font-semibold mb-2'>
-												No Incident History
-											</h3>
-											<p className='text-muted-foreground mb-6 max-w-md'>
-												No resolved or closed incidents
-												found. Historical data will
-												appear here once incidents are
-												resolved.
-											</p>
-										</CardContent>
-									</Card>
-								) : (
-									<>
-										<div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-6'>
-											<Card>
-												<CardContent className='p-6 text-center'>
-													<div className='text-2xl font-bold'>
-														{
-															historyIncidents.length
-														}
-													</div>
-													<div className='text-sm text-muted-foreground'>
-														Total Incidents
-													</div>
-												</CardContent>
-											</Card>
-											<Card>
-												<CardContent className='p-6 text-center'>
-													<div className='text-2xl font-bold'>
-														{Math.round(
-															historyIncidents
-																.filter(
-																	(i) =>
-																		i.end_time &&
-																		i.created_at,
-																)
-																.reduce(
-																	(acc, i) =>
-																		acc +
-																		(new Date(
-																			i.end_time,
-																		).getTime() -
-																			new Date(
-																				i.created_at,
-																			).getTime()),
-																	0,
-																) /
-																historyIncidents.filter(
-																	(i) =>
-																		i.end_time &&
-																		i.created_at,
-																).length /
-																(1000 * 60),
-														) || 0}
-														m
-													</div>
-													<div className='text-sm text-muted-foreground'>
-														Avg Resolution Time
-													</div>
-												</CardContent>
-											</Card>
-											<Card>
-												<CardContent className='p-6 text-center'>
-													<div className='text-2xl font-bold'>
-														{
-															historyIncidents.filter(
-																(i) =>
-																	i.severity ===
-																		'critical' ||
-																	i.severity ===
-																		'high',
-															).length
-														}
-													</div>
-													<div className='text-sm text-muted-foreground'>
-														High/Critical Incidents
-													</div>
-												</CardContent>
-											</Card>
-										</div>
-
-										<Card>
-											<CardHeader>
-												<CardTitle>
-													Incident History
-												</CardTitle>
-												<CardDescription>
-													Resolved and closed
-													incidents with resolution
-													analytics
-												</CardDescription>
-											</CardHeader>
-											<CardContent>
-												<div className='space-y-4'>
-													{historyIncidents
-														.filter(
-															(incident: any) => {
-																const matchesSearch =
-																	searchTerm ===
-																		'' ||
-																	incident.title
-																		.toLowerCase()
-																		.includes(
-																			searchTerm.toLowerCase(),
-																		) ||
-																	incident.description
-																		?.toLowerCase()
-																		.includes(
-																			searchTerm.toLowerCase(),
-																		)
-																const matchesStatus =
-																	statusFilter ===
-																		'all' ||
-																	incident.status ===
-																		statusFilter
-																const matchesSeverity =
-																	severityFilter ===
-																		'all' ||
-																	incident.severity ===
-																		severityFilter
-																return (
-																	matchesSearch &&
-																	matchesStatus &&
-																	matchesSeverity
-																)
-															},
-														)
-														.map(
-															(incident: any) => {
-																const resolutionTime =
-																	incident.end_time &&
-																	incident.created_at
-																		? Math.round(
-																				(new Date(
-																					incident.end_time,
-																				).getTime() -
-																					new Date(
-																						incident.created_at,
-																					).getTime()) /
-																					(1000 *
-																						60),
-																			)
-																		: null
-
-																return (
-																	<div
-																		key={
-																			incident.id
-																		}
-																		className='border rounded-lg p-4 hover:bg-muted/50 transition-colors'
-																	>
-																		<div className='flex items-start justify-between'>
-																			<div className='flex-1'>
-																				<div className='flex items-center gap-3 mb-2'>
-																					<h4 className='font-medium'>
-																						{
-																							incident.title
-																						}
-																					</h4>
-																					{getStatusBadge(
-																						incident.status,
-																					)}
-																					{getSeverityBadge(
-																						incident.severity,
-																					)}
-																				</div>
-																				<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground'>
-																					<div>
-																						<span className='font-medium'>
-																							Created:
-																						</span>
-																						<br />
-																						{new Date(
-																							incident.created_at,
-																						).toLocaleDateString()}
-																					</div>
-																					{incident.end_time && (
-																						<div>
-																							<span className='font-medium'>
-																								Resolved:
-																							</span>
-																							<br />
-																							{new Date(
-																								incident.end_time,
-																							).toLocaleDateString()}
-																						</div>
-																					)}
-																					{resolutionTime && (
-																						<div>
-																							<span className='font-medium'>
-																								Duration:
-																							</span>
-																							<br />
-																							{
-																								resolutionTime
-																							}
-																							m
-																						</div>
-																					)}
-																					{getAffectedServicesCount(
-																						incident,
-																					) >
-																						0 && (
-																						<div>
-																							<span className='font-medium'>
-																								Services:
-																							</span>
-																							<br />
-																							{getAffectedServicesCount(
-																								incident,
-																							)}{' '}
-																							affected
-																						</div>
-																					)}
-																				</div>
-																			</div>
-																			<Link
-																				to={`/admin/incidents/${incident.id}`}
-																			>
-																				<Button
-																					variant='ghost'
-																					size='sm'
-																				>
-																					📝
-																					View
-																					Details
-																				</Button>
-																			</Link>
-																		</div>
-																	</div>
-																)
-															},
-														)}
-												</div>
-											</CardContent>
-										</Card>
-									</>
-								)}
-							</TabsContent>
-						</Tabs>
-					</CardContent>
-				</PageContent>
-
-				{/* Quick Stats Sidebar */}
-				<aside className='w-88 rounded-xl space-y-4'>
+			<main className='flex flex-col gap-6'>
+				{/* Quick Stats Section - Similar to /admin/endpoints/[id] pattern */}
+				<section className='grid grid-cols-1 xl:grid-cols-3 gap-6'>
 					<Card>
 						<CardContent>
 							<div className='flex items-center gap-4'>
@@ -910,31 +368,394 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 							</div>
 						</CardContent>
 					</Card>
-					<Card>
-						<CardContent>
-							<div className='flex flex-col gap-2'>
-								<p className='text-sm font-normal text-muted-foreground'>
-									High/Critical
-								</p>
-								<p className='typography-h4'>
-									{criticalIncidents}
-								</p>
-								<Badge
-									variant={
-										criticalIncidents > 0
-											? 'destructive'
-											: 'secondary'
-									}
-									className='w-fit'
-								>
-									{criticalIncidents > 0
-										? 'Needs Attention'
-										: 'Low Risk'}
-								</Badge>
-							</div>
-						</CardContent>
-					</Card>
-				</aside>
+				</section>
+
+				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
+					<PageHeader
+						title='Incident Management'
+						description='Complete lifecycle management for service incidents'
+					>
+						<Link to='/admin/incidents/new'>
+							<Button size='sm'>
+								<Plus className='h-4 w-4' />
+								Create Incident
+							</Button>
+						</Link>
+					</PageHeader>
+
+					{/* Main Sections */}
+					<CardContent className='p-0 gap-0 flex flex-col'>
+						{/* Active Incidents */}
+						<Card className='rounded-none shadow-none border-none'>
+							<CardHeader className='flex flex-row items-center justify-between'>
+								<div>
+									<CardTitle className='flex items-center gap-2'>
+										🔥 Active Incidents
+										{activeIncidents.length > 0 && (
+											<Badge
+												variant='destructive'
+												className='ml-1 px-1.5 py-0.5 text-xs'
+											>
+												{activeIncidents.length}
+											</Badge>
+										)}
+									</CardTitle>
+									<CardDescription>
+										Current incidents requiring immediate
+										attention
+									</CardDescription>
+								</div>
+							</CardHeader>
+							<CardContent>
+								{activeIncidents.length === 0 ? (
+									<div className='text-center py-8 text-muted-foreground'>
+										<div className='w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4 mx-auto'>
+											<span className='text-2xl'>✅</span>
+										</div>
+										<h3 className='text-xl font-semibold mb-2 text-foreground'>
+											All Systems Operational
+										</h3>
+										<p className='text-muted-foreground mb-6 max-w-md mx-auto'>
+											No active incidents at this time.
+											All monitored services are running
+											smoothly.
+										</p>
+										<Link to='/admin/incidents/new'>
+											<Button>Report New Incident</Button>
+										</Link>
+									</div>
+								) : (
+									<div className='space-y-3'>
+										{activeIncidents
+											.slice(0, 10)
+											.map((incident: any) => (
+												<div
+													key={incident.id}
+													className='flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors'
+												>
+													<div className='flex-1 min-w-0'>
+														<div className='flex items-center gap-3 mb-2'>
+															<h4 className='font-medium text-lg'>
+																{incident.title}
+															</h4>
+															{getStatusBadge(
+																incident.status,
+															)}
+															{getSeverityBadge(
+																incident.severity,
+															)}
+														</div>
+														<div className='flex items-center gap-3 text-sm text-muted-foreground'>
+															<span>
+																{getTimeElapsed(
+																	incident.created_at,
+																)}
+															</span>
+															{getAffectedServicesCount(
+																incident,
+															) > 0 && (
+																<span>
+																	{getAffectedServicesCount(
+																		incident,
+																	)}{' '}
+																	service
+																	{getAffectedServicesCount(
+																		incident,
+																	) !== 1
+																		? 's'
+																		: ''}{' '}
+																	affected
+																</span>
+															)}
+														</div>
+														{incident.description && (
+															<p className='text-sm text-muted-foreground mt-1 truncate'>
+																{incident
+																	.description
+																	.length >
+																100
+																	? `${incident.description.substring(0, 100)}...`
+																	: incident.description}
+															</p>
+														)}
+													</div>
+													<div className='flex items-center gap-2 ml-4'>
+														<Button
+															variant='outline'
+															size='sm'
+															onClick={() =>
+																updateIncidentStatus(
+																	incident,
+																	'investigating',
+																)
+															}
+															disabled={
+																incident.status ===
+																'investigating'
+															}
+														>
+															🔍 Investigating
+														</Button>
+														<Button
+															variant='outline'
+															size='sm'
+															onClick={() =>
+																updateIncidentStatus(
+																	incident,
+																	'resolved',
+																)
+															}
+														>
+															✅ Resolve
+														</Button>
+														<Link
+															to={`/admin/incidents/${incident.id}`}
+														>
+															<Button
+																variant='ghost'
+																size='sm'
+															>
+																📝 Details
+															</Button>
+														</Link>
+													</div>
+												</div>
+											))}
+									</div>
+								)}
+							</CardContent>
+						</Card>
+
+						<Separator />
+
+						{/* Incident History */}
+						<Card className='rounded-none shadow-none border-none'>
+							<CardHeader className='flex flex-row items-center justify-between'>
+								<div>
+									<CardTitle>📋 Incident History</CardTitle>
+									<CardDescription>
+										Resolved and closed incidents with
+										resolution analytics
+									</CardDescription>
+								</div>
+							</CardHeader>
+							<CardContent>
+								{historyIncidents.length === 0 ? (
+									<div className='text-center py-8 text-muted-foreground'>
+										<div className='w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4 mx-auto'>
+											<span className='text-2xl'>📋</span>
+										</div>
+										<h3 className='text-xl font-semibold mb-2 text-foreground'>
+											No Incident History
+										</h3>
+										<p className='text-muted-foreground mb-6 max-w-md mx-auto'>
+											No resolved or closed incidents
+											found. Historical data will appear
+											here once incidents are resolved.
+										</p>
+									</div>
+								) : (
+									<>
+										{/* Filters and Controls - for history only */}
+										<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6'>
+											<div className='flex flex-1 items-center gap-4'>
+												<div className='relative flex-1 max-w-sm'>
+													<Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+													<Input
+														placeholder='Search history...'
+														value={
+															historySearchTerm
+														}
+														onChange={(e) =>
+															setHistorySearchTerm(
+																e.target.value,
+															)
+														}
+														className='pl-10'
+													/>
+												</div>
+												<Select
+													value={historyStatusFilter}
+													onValueChange={
+														setHistoryStatusFilter
+													}
+												>
+													<SelectTrigger className='w-36'>
+														<SelectValue placeholder='All Status' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='all'>
+															All Status
+														</SelectItem>
+														<SelectItem value='resolved'>
+															Resolved
+														</SelectItem>
+														<SelectItem value='closed'>
+															Closed
+														</SelectItem>
+													</SelectContent>
+												</Select>
+												<Select
+													value={
+														historySeverityFilter
+													}
+													onValueChange={
+														setHistorySeverityFilter
+													}
+												>
+													<SelectTrigger className='w-36'>
+														<SelectValue placeholder='All Severity' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='all'>
+															All Severity
+														</SelectItem>
+														<SelectItem value='critical'>
+															Critical
+														</SelectItem>
+														<SelectItem value='high'>
+															High
+														</SelectItem>
+														<SelectItem value='medium'>
+															Medium
+														</SelectItem>
+														<SelectItem value='low'>
+															Low
+														</SelectItem>
+													</SelectContent>
+												</Select>
+											</div>
+											<div className='flex items-center gap-2'>
+												<Button
+													variant='outline'
+													size='sm'
+													className='gap-2'
+												>
+													<Settings2 className='h-4 w-4' />
+													View
+												</Button>
+												<div className='text-sm text-muted-foreground'>
+													{
+														filteredHistoryIncidents.length
+													}{' '}
+													of {historyIncidents.length}{' '}
+													incident(s)
+												</div>
+											</div>
+										</div>
+
+										{/* History List */}
+										<div className='space-y-4'>
+											{filteredHistoryIncidents.map(
+												(incident: any) => {
+													const resolutionTime =
+														incident.end_time &&
+														incident.created_at
+															? Math.round(
+																	(new Date(
+																		incident.end_time,
+																	).getTime() -
+																		new Date(
+																			incident.created_at,
+																		).getTime()) /
+																		(1000 *
+																			60),
+																)
+															: null
+
+													return (
+														<div
+															key={incident.id}
+															className='border rounded-lg p-4 hover:bg-muted/50 transition-colors'
+														>
+															<div className='flex items-start justify-between'>
+																<div className='flex-1'>
+																	<div className='flex items-center gap-3 mb-2'>
+																		<h4 className='font-medium'>
+																			{
+																				incident.title
+																			}
+																		</h4>
+																		{getStatusBadge(
+																			incident.status,
+																		)}
+																		{getSeverityBadge(
+																			incident.severity,
+																		)}
+																	</div>
+																	<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground'>
+																		<div>
+																			<span className='font-medium'>
+																				Created:
+																			</span>
+																			<br />
+																			{new Date(
+																				incident.created_at,
+																			).toLocaleDateString()}
+																		</div>
+																		{incident.end_time && (
+																			<div>
+																				<span className='font-medium'>
+																					Resolved:
+																				</span>
+																				<br />
+																				{new Date(
+																					incident.end_time,
+																				).toLocaleDateString()}
+																			</div>
+																		)}
+																		{resolutionTime && (
+																			<div>
+																				<span className='font-medium'>
+																					Duration:
+																				</span>
+																				<br />
+																				{
+																					resolutionTime
+																				}
+																				m
+																			</div>
+																		)}
+																		{getAffectedServicesCount(
+																			incident,
+																		) >
+																			0 && (
+																			<div>
+																				<span className='font-medium'>
+																					Services:
+																				</span>
+																				<br />
+																				{getAffectedServicesCount(
+																					incident,
+																				)}{' '}
+																				affected
+																			</div>
+																		)}
+																	</div>
+																</div>
+																<Link
+																	to={`/admin/incidents/${incident.id}`}
+																>
+																	<Button
+																		variant='ghost'
+																		size='sm'
+																	>
+																		📝 View
+																		Details
+																	</Button>
+																</Link>
+															</div>
+														</div>
+													)
+												},
+											)}
+										</div>
+									</>
+								)}
+							</CardContent>
+						</Card>
+					</CardContent>
+				</PageContent>
 			</main>
 
 			{/* Delete Confirmation Dialog */}
