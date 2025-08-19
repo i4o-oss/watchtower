@@ -238,7 +238,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	return (
 		<main className='flex flex-col gap-4'>
 			{/* Quick Stats */}
-			<section className='grid grid-cols-3 gap-0 border border-border divide-x divide-border rounded overflow-hidden'>
+			<section className='grid grid-cols-3 gap-0 border border-border rounded overflow-hidden'>
 				<Card className='rounded-none shadow-none border-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>

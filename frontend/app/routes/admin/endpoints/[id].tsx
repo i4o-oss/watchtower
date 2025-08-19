@@ -243,8 +243,8 @@ export default function EndpointDetail({
 	return (
 		<main className='flex flex-col gap-4'>
 			{/* Quick Stats - Similar to /admin route */}
-			<section className='grid grid-cols-1 xl:grid-cols-3 gap-4'>
-				<Card className='rounded shadow-none'>
+			<section className='grid grid-cols-3 gap-1 border border-border divide-x divide-border rounded overflow-hidden'>
+				<Card className='rounded-none shadow-none border-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>
 							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
@@ -261,7 +261,7 @@ export default function EndpointDetail({
 						</div>
 					</CardContent>
 				</Card>
-				<Card className='rounded shadow-none'>
+				<Card className='rounded-none shadow-none border-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>
 							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
@@ -278,7 +278,7 @@ export default function EndpointDetail({
 						</div>
 					</CardContent>
 				</Card>
-				<Card className='rounded shadow-none'>
+				<Card className='rounded-none shadow-none border-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>
 							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
@@ -380,340 +380,292 @@ export default function EndpointDetail({
 					</div>
 				</PageHeader>
 
-				<CardContent className='p-0 gap-4 flex flex-col'>
-					{/* Configuration Details */}
-					<Card className='rounded-none shadow-none border-none p-0 gap-0'>
-						<CardContent className='space-y-4 py-6'>
+				<CardContent className='px-6 py-4 gap-4 flex flex-col'>
+					<div>
+						<h4 className='font-medium mb-2'>URL</h4>
+						<p className='font-mono text-sm bg-muted px-3 py-2 rounded'>
+							{endpoint.url}
+						</p>
+					</div>
+
+					{endpoint.description && (
+						<div>
+							<h4 className='font-medium mb-2'>Description</h4>
+							<p className='text-muted-foreground'>
+								{endpoint.description}
+							</p>
+						</div>
+					)}
+
+					<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+						<div>
+							<h4 className='font-medium text-sm text-muted-foreground'>
+								Method
+							</h4>
+							<p className='font-mono'>{endpoint.method}</p>
+						</div>
+						<div>
+							<h4 className='font-medium text-sm text-muted-foreground'>
+								Expected Status
+							</h4>
+							<p>{endpoint.expected_status_code}</p>
+						</div>
+						<div>
+							<h4 className='font-medium text-sm text-muted-foreground'>
+								Timeout
+							</h4>
+							<p>{endpoint.timeout_seconds}s</p>
+						</div>
+						<div>
+							<h4 className='font-medium text-sm text-muted-foreground'>
+								Interval
+							</h4>
+							<p>{endpoint.check_interval_seconds}s</p>
+						</div>
+					</div>
+
+					{endpoint.headers &&
+						Object.keys(endpoint.headers).length > 0 && (
 							<div>
-								<h4 className='font-medium mb-2'>URL</h4>
-								<p className='font-mono text-sm bg-muted px-3 py-2 rounded'>
-									{endpoint.url}
-								</p>
-							</div>
-
-							{endpoint.description && (
-								<div>
-									<h4 className='font-medium mb-2'>
-										Description
-									</h4>
-									<p className='text-muted-foreground'>
-										{endpoint.description}
-									</p>
-								</div>
-							)}
-
-							<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-								<div>
-									<h4 className='font-medium text-sm text-muted-foreground'>
-										Method
-									</h4>
-									<p className='font-mono'>
-										{endpoint.method}
-									</p>
-								</div>
-								<div>
-									<h4 className='font-medium text-sm text-muted-foreground'>
-										Expected Status
-									</h4>
-									<p>{endpoint.expected_status_code}</p>
-								</div>
-								<div>
-									<h4 className='font-medium text-sm text-muted-foreground'>
-										Timeout
-									</h4>
-									<p>{endpoint.timeout_seconds}s</p>
-								</div>
-								<div>
-									<h4 className='font-medium text-sm text-muted-foreground'>
-										Interval
-									</h4>
-									<p>{endpoint.check_interval_seconds}s</p>
+								<h4 className='font-medium mb-2'>Headers</h4>
+								<div className='bg-muted p-3 rounded font-mono text-sm'>
+									<pre>
+										{JSON.stringify(
+											endpoint.headers,
+											null,
+											2,
+										)}
+									</pre>
 								</div>
 							</div>
+						)}
 
-							{endpoint.headers &&
-								Object.keys(endpoint.headers).length > 0 && (
-									<div>
-										<h4 className='font-medium mb-2'>
-											Headers
-										</h4>
-										<div className='bg-muted p-3 rounded font-mono text-sm'>
-											<pre>
-												{JSON.stringify(
-													endpoint.headers,
-													null,
-													2,
-												)}
-											</pre>
-										</div>
-									</div>
-								)}
-
-							{endpoint.body && (
-								<div>
-									<h4 className='font-medium mb-2'>
-										Request Body
-									</h4>
-									<div className='bg-muted p-3 rounded font-mono text-sm'>
-										<pre>{endpoint.body}</pre>
-									</div>
-								</div>
-							)}
-
-							<div className='grid grid-cols-2 gap-4 text-sm'>
-								<div>
-									<h4 className='font-medium text-muted-foreground'>
-										Created
-									</h4>
-									<p>
-										{new Date(
-											endpoint.created_at,
-										).toLocaleString()}
-									</p>
-								</div>
-								<div>
-									<h4 className='font-medium text-muted-foreground'>
-										Last Updated
-									</h4>
-									<p>
-										{new Date(
-											endpoint.updated_at,
-										).toLocaleString()}
-									</p>
-								</div>
+					{endpoint.body && (
+						<div>
+							<h4 className='font-medium mb-2'>Request Body</h4>
+							<div className='bg-muted p-3 rounded font-mono text-sm'>
+								<pre>{endpoint.body}</pre>
 							</div>
-						</CardContent>
-					</Card>
+						</div>
+					)}
+
+					<div className='grid grid-cols-2 gap-4 text-sm'>
+						<div>
+							<h4 className='font-medium text-muted-foreground'>
+								Created
+							</h4>
+							<p>
+								{new Date(endpoint.created_at).toLocaleString()}
+							</p>
+						</div>
+						<div>
+							<h4 className='font-medium text-muted-foreground'>
+								Last Updated
+							</h4>
+							<p>
+								{new Date(endpoint.updated_at).toLocaleString()}
+							</p>
+						</div>
+					</div>
 				</CardContent>
 			</PageContent>
 
 			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
-				<CardContent className='p-0 gap-4 flex flex-col'>
-					{/* Monitoring Logs with Pagination */}
-					<Card className='rounded-none shadow-none border-none p-0 gap-0'>
-						<CardHeader className='flex flex-row items-center justify-between border-b border-border py-6'>
-							<div>
-								<CardTitle>Monitoring Logs</CardTitle>
-								<CardDescription>
-									Complete monitoring history for this
-									endpoint ({logs.total} total logs)
-								</CardDescription>
+				<PageHeader
+					title='Monitoring Logs'
+					description={`Complete monitoring history for this endpoint (${logs.total} total logs)`}
+				>
+					<Button
+						variant='outline'
+						size='sm'
+						onClick={() => fetchLogs(currentPage)}
+						className='gap-2 rounded'
+					>
+						<RefreshCw className='h-4 w-4' />
+						Refresh
+					</Button>
+				</PageHeader>
+				<CardContent className='p-0 gap-0 flex flex-col'>
+					{isLoadingLogs ? (
+						<div className='flex justify-center py-8'>
+							<div className='text-muted-foreground'>
+								Loading logs...
 							</div>
-							<Button
-								variant='outline'
-								size='sm'
-								onClick={() => fetchLogs(currentPage)}
-								className='gap-2 rounded'
-							>
-								<RefreshCw className='h-4 w-4' />
-								Refresh
-							</Button>
-						</CardHeader>
-						<CardContent className='p-0'>
-							{isLoadingLogs ? (
-								<div className='flex justify-center py-8'>
-									<div className='text-muted-foreground'>
-										Loading logs...
-									</div>
-								</div>
-							) : logs.logs.length === 0 ? (
-								<p className='text-center text-muted-foreground py-8'>
-									No monitoring logs yet
-								</p>
-							) : (
-								<>
-									<div className='divide-y divide-border'>
-										{logs.logs.map((log: any) => (
-											<div
-												key={log.id}
-												className='flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors'
+						</div>
+					) : logs.logs.length === 0 ? (
+						<p className='text-center text-muted-foreground py-8'>
+							No monitoring logs yet
+						</p>
+					) : (
+						<>
+							<div className='divide-y divide-border'>
+								{logs.logs.map((log: any) => (
+									<div
+										key={log.id}
+										className='flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors'
+									>
+										<div className='flex items-center gap-3 min-w-0'>
+											<Badge
+												variant={
+													log.success
+														? 'default'
+														: 'destructive'
+												}
+												className='shrink-0 rounded'
 											>
-												<div className='flex items-center gap-3 min-w-0'>
-													<Badge
-														variant={
-															log.success
-																? 'default'
-																: 'destructive'
-														}
-														className='shrink-0 rounded'
-													>
-														{log.success
-															? 'OK'
-															: 'FAIL'}
-													</Badge>
-													<div className='min-w-0 flex-1'>
-														<p className='text-sm'>
-															{new Date(
-																log.timestamp,
-															).toLocaleString()}
-														</p>
-														{!log.success &&
-															log.error && (
-																<p className='text-xs text-destructive truncate'>
-																	{log.error}
-																</p>
-															)}
-													</div>
-												</div>
-												<div className='flex items-center gap-3 text-sm text-muted-foreground shrink-0'>
-													{log.response_time_ms !==
-														null && (
-														<span>
-															{
-																log.response_time_ms
-															}
-															ms
-														</span>
-													)}
-													{log.status_code && (
-														<span className='font-mono'>
-															{log.status_code}
-														</span>
-													)}
-												</div>
+												{log.success ? 'OK' : 'FAIL'}
+											</Badge>
+											<div className='min-w-0 flex-1'>
+												<p className='text-sm'>
+													{new Date(
+														log.timestamp,
+													).toLocaleString()}
+												</p>
+												{!log.success && log.error && (
+													<p className='text-xs text-destructive truncate'>
+														{log.error}
+													</p>
+												)}
 											</div>
-										))}
+										</div>
+										<div className='flex items-center gap-3 text-sm text-muted-foreground shrink-0'>
+											{log.response_time_ms !== null && (
+												<span>
+													{log.response_time_ms}
+													ms
+												</span>
+											)}
+											{log.status_code && (
+												<span className='font-mono'>
+													{log.status_code}
+												</span>
+											)}
+										</div>
 									</div>
+								))}
+							</div>
 
-									{/* Pagination */}
-									{totalPages > 1 && (
-										<div className='flex items-center justify-end px-6 py-4 border-t border-border'>
-											<Pagination className='flex justify-end'>
-												<PaginationContent>
-													<PaginationItem>
-														<PaginationPrevious
-															onClick={() =>
-																currentPage >
-																	1 &&
-																fetchLogs(
-																	currentPage -
-																		1,
-																)
-															}
-															className={
-																currentPage ===
-																1
-																	? 'pointer-events-none opacity-50'
-																	: 'cursor-pointer'
-															}
-														/>
-													</PaginationItem>
+							{/* Pagination */}
+							{totalPages > 1 && (
+								<div className='flex items-center justify-end px-6 py-4 border-t border-border'>
+									<Pagination className='flex justify-end'>
+										<PaginationContent>
+											<PaginationItem>
+												<PaginationPrevious
+													onClick={() =>
+														currentPage > 1 &&
+														fetchLogs(
+															currentPage - 1,
+														)
+													}
+													className={
+														currentPage === 1
+															? 'pointer-events-none opacity-50'
+															: 'cursor-pointer'
+													}
+												/>
+											</PaginationItem>
 
-													{/* Show first page */}
-													<PaginationItem>
+											{/* Show first page */}
+											<PaginationItem>
+												<PaginationLink
+													onClick={() => fetchLogs(1)}
+													isActive={currentPage === 1}
+													className='cursor-pointer rounded'
+												>
+													1
+												</PaginationLink>
+											</PaginationItem>
+
+											{/* Show pages around current page */}
+											{currentPage > 3 && (
+												<PaginationItem>
+													<span className='px-2'>
+														...
+													</span>
+												</PaginationItem>
+											)}
+
+											{Array.from(
+												{ length: totalPages },
+												(_, i) => i + 1,
+											)
+												.filter(
+													(page) =>
+														page > 1 &&
+														page < totalPages &&
+														Math.abs(
+															page - currentPage,
+														) <= 1,
+												)
+												.map((page) => (
+													<PaginationItem key={page}>
 														<PaginationLink
 															onClick={() =>
-																fetchLogs(1)
+																fetchLogs(page)
 															}
 															isActive={
 																currentPage ===
-																1
+																page
 															}
 															className='cursor-pointer rounded'
 														>
-															1
+															{page}
 														</PaginationLink>
 													</PaginationItem>
+												))}
 
-													{/* Show pages around current page */}
-													{currentPage > 3 && (
-														<PaginationItem>
-															<span className='px-2'>
-																...
-															</span>
-														</PaginationItem>
-													)}
+											{currentPage < totalPages - 2 && (
+												<PaginationItem>
+													<span className='px-2'>
+														...
+													</span>
+												</PaginationItem>
+											)}
 
-													{Array.from(
-														{ length: totalPages },
-														(_, i) => i + 1,
-													)
-														.filter(
-															(page) =>
-																page > 1 &&
-																page <
-																	totalPages &&
-																Math.abs(
-																	page -
-																		currentPage,
-																) <= 1,
+											{/* Show last page */}
+											{totalPages > 1 && (
+												<PaginationItem>
+													<PaginationLink
+														onClick={() =>
+															fetchLogs(
+																totalPages,
+															)
+														}
+														isActive={
+															currentPage ===
+															totalPages
+														}
+														className='cursor-pointer rounded'
+													>
+														{totalPages}
+													</PaginationLink>
+												</PaginationItem>
+											)}
+
+											<PaginationItem>
+												<PaginationNext
+													onClick={() =>
+														currentPage <
+															totalPages &&
+														fetchLogs(
+															currentPage + 1,
 														)
-														.map((page) => (
-															<PaginationItem
-																key={page}
-															>
-																<PaginationLink
-																	onClick={() =>
-																		fetchLogs(
-																			page,
-																		)
-																	}
-																	isActive={
-																		currentPage ===
-																		page
-																	}
-																	className='cursor-pointer rounded'
-																>
-																	{page}
-																</PaginationLink>
-															</PaginationItem>
-														))}
-
-													{currentPage <
-														totalPages - 2 && (
-														<PaginationItem>
-															<span className='px-2'>
-																...
-															</span>
-														</PaginationItem>
-													)}
-
-													{/* Show last page */}
-													{totalPages > 1 && (
-														<PaginationItem>
-															<PaginationLink
-																onClick={() =>
-																	fetchLogs(
-																		totalPages,
-																	)
-																}
-																isActive={
-																	currentPage ===
-																	totalPages
-																}
-																className='cursor-pointer rounded'
-															>
-																{totalPages}
-															</PaginationLink>
-														</PaginationItem>
-													)}
-
-													<PaginationItem>
-														<PaginationNext
-															onClick={() =>
-																currentPage <
-																	totalPages &&
-																fetchLogs(
-																	currentPage +
-																		1,
-																)
-															}
-															className={
-																currentPage ===
-																totalPages
-																	? 'pointer-events-none opacity-50 rounded'
-																	: 'cursor-pointer rounded'
-															}
-														/>
-													</PaginationItem>
-												</PaginationContent>
-											</Pagination>
-										</div>
-									)}
-								</>
+													}
+													className={
+														currentPage ===
+														totalPages
+															? 'pointer-events-none opacity-50 rounded'
+															: 'cursor-pointer rounded'
+													}
+												/>
+											</PaginationItem>
+										</PaginationContent>
+									</Pagination>
+								</div>
 							)}
-						</CardContent>
-					</Card>
+						</>
+					)}
 				</CardContent>
 			</PageContent>
 		</main>

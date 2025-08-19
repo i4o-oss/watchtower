@@ -325,14 +325,14 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 
 	return (
 		<>
-			<main className='flex-1 flex flex-col xl:flex-row gap-6'>
-				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
+			<main className='flex flex-col gap-4'>
+				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 					<PageHeader
 						title='Endpoints'
 						description='Manage and monitor your service endpoints'
 					>
 						<Link to='/admin/endpoints/new'>
-							<Button className='rounded' size='sm'>
+							<Button size='sm'>
 								<Plus className='h-4 w-4' />
 								Add Endpoint
 							</Button>
@@ -351,83 +351,6 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 						)}
 					</CardContent>
 				</PageContent>
-
-				{/* Quick Stats Sidebar */}
-				{/*{endpoints.length > 0 && (
-					<aside className='w-88 rounded-xl space-y-4'>
-						<Card>
-							<CardContent>
-								<div className='flex items-center gap-4'>
-									<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-										<GlobeIcon className='h-7 w-7' />
-									</div>
-									<div className='flex flex-col'>
-										<p className='text-sm font-normal'>
-											Total Endpoints
-										</p>
-										<p className='typography-h4'>{total}</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-						<Card>
-							<CardContent>
-								<div className='flex items-center gap-4'>
-									<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-										<CheckCircle2 className='h-7 w-7' />
-									</div>
-									<div className='flex flex-col'>
-										<p className='text-sm font-normal'>
-											Active Endpoints
-										</p>
-										<p className='typography-h4'>
-											{activeEndpoints}
-										</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-						<Card>
-							<CardContent>
-								<div className='flex items-center gap-4'>
-									<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-										<AlertTriangleIcon className='h-7 w-7' />
-									</div>
-									<div className='flex flex-col'>
-										<p className='text-sm font-normal'>
-											Inactive Endpoints
-										</p>
-										<p className='typography-h4'>
-											{inactiveEndpoints}
-										</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-						{recentlyAdded && (
-							<Card>
-								<CardContent>
-									<div className='flex flex-col gap-2'>
-										<p className='text-sm font-normal text-muted-foreground'>
-											Last Added
-										</p>
-										<p className='font-medium'>
-											{recentlyAdded.name}
-										</p>
-										<Badge
-											variant='outline'
-											className='w-fit'
-										>
-											{new Date(
-												recentlyAdded.created_at,
-											).toLocaleDateString()}
-										</Badge>
-									</div>
-								</CardContent>
-							</Card>
-						)}
-					</aside>
-				)}*/}
 			</main>
 
 			{/* Delete Confirmation Dialog */}
