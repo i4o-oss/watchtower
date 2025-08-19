@@ -60,8 +60,8 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 			throw new Response('Endpoint not found', { status: 404 })
 		}
 
-		const data = await response.json()
-		return data
+		const endpoint = await response.json()
+		return { endpoint }
 	} catch (error) {
 		throw new Response('Error loading endpoint', { status: 500 })
 	}
@@ -770,7 +770,11 @@ export default function EditEndpoint({
 										Status
 									</p>
 									<p
-										className={`font-semibold ${endpoint.enabled ? 'text-green-600' : 'text-muted-foreground'}`}
+										className={`font-semibold ${
+											endpoint.enabled
+												? 'text-green-600'
+												: 'text-muted-foreground'
+										}`}
 									>
 										{endpoint.enabled
 											? 'Active'
