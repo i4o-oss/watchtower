@@ -47,9 +47,10 @@ import {
 } from 'lucide-react'
 import type { Route } from './+types/[id]'
 
-export function meta({ params }: Route.MetaArgs) {
+export function meta({ loaderData, params }: Route.MetaArgs) {
+	const endpoint = loaderData?.endpoint
 	return [
-		{ title: 'Endpoint Details - Admin - Watchtower' },
+		{ title: `${endpoint?.name} · Endpoint Details · Watchtower` },
 		{
 			name: 'description',
 			content: 'View endpoint details and monitoring logs',
@@ -299,7 +300,7 @@ export default function EndpointDetail({
 				</Card>
 			</section>
 
-			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
+			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 				<PageHeader
 					title={endpoint.name}
 					description={`${

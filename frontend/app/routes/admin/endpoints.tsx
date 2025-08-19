@@ -36,7 +36,7 @@ import { Separator } from '~/components/ui/separator'
 
 export function meta() {
 	return [
-		{ title: 'Endpoints - Admin - Watchtower' },
+		{ title: 'Endpoints · Watchtower' },
 		{ name: 'description', content: 'Manage monitoring endpoints' },
 	]
 }
