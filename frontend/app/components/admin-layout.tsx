@@ -172,26 +172,10 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 	return (
 		<div className='min-h-screen bg-background'>
-			{/* Top Header Bar */}
-			<header className='sticky top-4 z-30 h-16 bg-card'>
-				<div className='w-full h-full max-w-5xl mx-auto px-6 border border-border rounded'>
+			<header className='sticky top-4 z-30 h-16'>
+				<div className='w-full h-full max-w-4xl bg-card mx-auto px-6 border border-border rounded'>
 					<div className='flex h-full items-center justify-between'>
-						{/* Left - Logo and Mobile Menu */}
 						<div className='flex items-center gap-4'>
-							<Button
-								variant='ghost'
-								size='sm'
-								onClick={() =>
-									setIsMobileMenuOpen(!isMobileMenuOpen)
-								}
-								className='h-9 w-9 p-0 lg:hidden'
-							>
-								{isMobileMenuOpen ? (
-									<X className='h-5 w-5' />
-								) : (
-									<Menu className='h-5 w-5' />
-								)}
-							</Button>
 							<Link
 								to='/admin'
 								className='flex items-center gap-3'
@@ -227,7 +211,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
-										className='w-8 h-8 cursor-pointer rounded-full'
+										className='w-8 h-8 cursor-pointer'
 										size='sm'
 										variant='secondary'
 									>
@@ -294,10 +278,9 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 				</div>
 			</header>
 
-			{/* Breadcrumb Bar */}
-			<div className='h-16 bg-card mt-8'>
-				<div className='w-full h-full max-w-5xl mx-auto flex items-center justify-between px-6 py-3 rounded border border-border'>
-					<div className='text-sm text-muted-foreground'>
+			<div className='sticky top-24 h-16 z-30 bg-card'>
+				<div className='w-full h-full max-w-4xl mx-auto flex items-center justify-between px-6 py-3 rounded border border-border'>
+					<div className='flex items-center text-sm text-muted-foreground'>
 						{getBreadcrumbs(location.pathname).map(
 							(segment, index) => (
 								<span key={segment}>
@@ -308,7 +291,13 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 									getBreadcrumbs(location.pathname).length -
 										1 ? (
 										<span>
-											{breadcrumbMap[segment] || segment}
+											{breadcrumbMap[segment] ===
+											'Dashboard' ? (
+												<HomeIcon className='w-4 h-4' />
+											) : (
+												breadcrumbMap[segment] ||
+												segment
+											)}
 										</span>
 									) : (
 										<Link
@@ -321,7 +310,13 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 											}
 											className='text-primary hover:underline'
 										>
-											{breadcrumbMap[segment] || segment}
+											{breadcrumbMap[segment] ===
+											'Dashboard' ? (
+												<HomeIcon className='w-4 h-4' />
+											) : (
+												breadcrumbMap[segment] ||
+												segment
+											)}
 										</Link>
 									)}
 								</span>
@@ -330,7 +325,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 					</div>
 					<div className='flex items-center gap-2'>
 						<Badge
-							className='px-4 py-2 rounded'
+							className='px-4 py-2'
 							variant={
 								incidents.length === 0
 									? 'outline'
@@ -351,7 +346,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 			</div>
 
 			{/* Layout Container */}
-			<div className='max-w-5xl mx-auto flex'>
+			<div className='max-w-4xl mx-auto flex mt-8'>
 				{/* Main Content Area */}
 				<main className='flex-1 min-w-0'>
 					<div className='px-0 py-4'>
@@ -377,117 +372,6 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 					</div>
 				</main>
 			</div>
-
-			{/* Mobile Navigation Overlay */}
-			{isMobileMenuOpen && (
-				<div className='fixed inset-0 z-50 lg:hidden'>
-					{/* Backdrop */}
-					{/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-					<div
-						className='fixed inset-0 bg-background/80 backdrop-blur-sm'
-						onClick={closeMobileMenu}
-					/>
-
-					{/* Mobile Menu */}
-					<div className='fixed left-0 top-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-200 ease-out'>
-						<div className='flex flex-col h-full'>
-							{/* Mobile Header */}
-							<div className='flex items-center justify-between p-4 border-b'>
-								<Link
-									to='/admin'
-									onClick={closeMobileMenu}
-									className='flex items-center gap-3'
-								>
-									<Activity className='h-6 w-6 text-primary' />
-									<span className='text-lg font-medium text-foreground'>
-										Watchtower
-									</span>
-								</Link>
-								<Button
-									variant='ghost'
-									size='sm'
-									onClick={closeMobileMenu}
-									className='h-9 w-9 p-0'
-								>
-									<X className='h-4 w-4' />
-								</Button>
-							</div>
-
-							{/* Mobile Navigation */}
-							<nav className='flex-1 p-4 space-y-2'>
-								{navigation.map((item) => {
-									const Icon = item.icon
-									const active = isActive(item.href)
-
-									return (
-										<Link
-											key={item.name}
-											to={item.href}
-											onClick={closeMobileMenu}
-											className={cn(
-												'flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-150 ease-out min-h-[44px]',
-												active
-													? 'bg-primary text-primary-foreground shadow-sm'
-													: 'text-foreground hover:bg-accent hover:text-accent-foreground',
-											)}
-										>
-											<Icon
-												className={cn(
-													'h-5 w-5 flex-shrink-0',
-													active
-														? 'text-white'
-														: 'text-muted-foreground',
-												)}
-											/>
-											<div>
-												<div className='font-medium'>
-													{item.name}
-												</div>
-												<div className='text-xs opacity-75'>
-													{item.description}
-												</div>
-											</div>
-										</Link>
-									)
-								})}
-							</nav>
-
-							{/* Mobile Quick Actions */}
-							<div className='p-4 border-t bg-muted/50'>
-								<h4 className='text-sm font-semibold text-foreground mb-3 uppercase tracking-wide'>
-									Quick Actions
-								</h4>
-								<div className='grid grid-cols-2 gap-2'>
-									<Link
-										to='/admin/endpoints/new'
-										onClick={closeMobileMenu}
-									>
-										<Button
-											variant='outline'
-											className='w-full h-12 text-xs flex-col gap-1'
-										>
-											<Globe className='h-4 w-4' />
-											Add Endpoint
-										</Button>
-									</Link>
-									<Link
-										to='/admin/incidents/new'
-										onClick={closeMobileMenu}
-									>
-										<Button
-											variant='outline'
-											className='w-full h-12 text-xs flex-col gap-1'
-										>
-											<AlertTriangle className='h-4 w-4' />
-											Create Incident
-										</Button>
-									</Link>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
 		</div>
 	)
 }

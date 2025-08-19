@@ -19,13 +19,14 @@ import {
 	GlobeIcon,
 	AlertTriangleIcon,
 	CircleXIcon,
+	ChevronRight,
 } from 'lucide-react'
 import type { Route } from './+types/index'
 import { Separator } from '~/components/ui/separator'
 
 export function meta() {
 	return [
-		{ title: 'Dashboard - Watchtower' },
+		{ title: 'Dashboard · Watchtower' },
 		{ name: 'description', content: 'Watchtower dashboard' },
 	]
 }
@@ -131,14 +132,6 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					)
 				}
 			},
-			status_update: (event) => {
-				try {
-					// Refresh logs when we get monitoring updates
-					refreshMonitoringLogs()
-				} catch (error) {
-					console.error('Error parsing status_update event:', error)
-				}
-			},
 			incident_created: (event) => {
 				try {
 					const newIncident = JSON.parse(event.data)
@@ -233,27 +226,6 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 		},
 	)
 
-	// Function to refresh monitoring logs
-	const refreshMonitoringLogs = async () => {
-		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-		try {
-			const response = await fetch(
-				`${API_BASE_URL}/api/v1/admin/monitoring-logs?limit=10`,
-				{
-					method: 'GET',
-					credentials: 'include',
-					headers: { 'Content-Type': 'application/json' },
-				},
-			)
-			if (response.ok) {
-				const newLogs = await response.json()
-				setLogs(newLogs)
-			}
-		} catch (error) {
-			console.error('Error refreshing monitoring logs:', error)
-		}
-	}
-
 	const activeEndpoints = endpoints.endpoints.filter(
 		(e: any) => e.enabled,
 	).length
@@ -266,11 +238,11 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	return (
 		<main className='flex flex-col gap-4'>
 			{/* Quick Stats */}
-			<section className='grid grid-cols-1 xl:grid-cols-3 gap-4'>
-				<Card className='rounded shadow-none'>
+			<section className='grid grid-cols-3 gap-0 border border-border divide-x divide-border rounded overflow-hidden'>
+				<Card className='rounded-none shadow-none border-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-sm'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
 								<GlobeIcon className='h-7 w-7' />
 							</div>
 							<div className='flex flex-col'>
@@ -284,10 +256,10 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 						</div>
 					</CardContent>
 				</Card>
-				<Card className='rounded shadow-none'>
+				<Card className='rounded-none shadow-none border-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-sm'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
 								<CircleXIcon className='h-7 w-7' />
 							</div>
 							<div className='flex flex-col'>
@@ -301,10 +273,10 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 						</div>
 					</CardContent>
 				</Card>
-				<Card className='rounded shadow-none'>
+				<Card className='rounded-none shadow-none border-none'>
 					<CardContent>
 						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-sm'>
+							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
 								<AlertTriangleIcon className='h-7 w-7' />
 							</div>
 							<div className='flex flex-col'>
@@ -317,7 +289,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</CardContent>
 				</Card>
 			</section>
-			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
+			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 				<PageHeader
 					title='Recent Endpoints'
 					description='Your monitoring endpoints'
@@ -325,7 +297,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					<div className='flex flex-wrap items-center gap-2'>
 						<Link to='/admin/endpoints/new'>
 							<Button
-								className='rounded'
+								className='cursor-pointer'
 								size='sm'
 								variant='outline'
 							>
@@ -335,9 +307,9 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 						</Link>
 						<Link to='/admin/endpoints'>
 							<Button
-								className='rounded'
-								variant='outline'
+								className='cursor-pointer'
 								size='sm'
+								variant='outline'
 							>
 								View All
 							</Button>
@@ -351,7 +323,10 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 						<div className='text-center py-8 text-muted-foreground'>
 							<p>No endpoints configured yet</p>
 							<Link to='/admin/endpoints/new'>
-								<Button className='mt-2' size='sm'>
+								<Button
+									className='mt-2 cursor-pointer'
+									size='sm'
+								>
 									Create First Endpoint
 								</Button>
 							</Link>
@@ -373,7 +348,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 												{endpoint.url}
 											</p>
 										</div>
-										<div className='flex items-center gap-2'>
+										<div className='flex items-center gap-4'>
 											<Badge
 												variant={
 													endpoint.enabled
@@ -389,10 +364,12 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 												to={`/admin/endpoints/${endpoint.id}`}
 											>
 												<Button
-													variant='ghost'
+													className='cursor-pointer'
 													size='sm'
+													variant='ghost'
 												>
 													View
+													<ChevronRight className='h-4 w-4' />
 												</Button>
 											</Link>
 										</div>
@@ -403,7 +380,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 				</CardContent>
 			</PageContent>
 
-			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
+			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 				<PageHeader
 					title='Open Incidents'
 					description='Current issues requiring attention'
@@ -411,7 +388,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					<div className='flex flex-wrap items-center gap-2'>
 						<Link to='/admin/incidents/new'>
 							<Button
-								className='rounded'
+								className='cursor-pointer'
 								size='sm'
 								variant='outline'
 							>
@@ -421,9 +398,9 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 						</Link>
 						<Link to='/admin/incidents'>
 							<Button
-								className='rounded'
-								variant='outline'
+								className='cursor-pointer'
 								size='sm'
+								variant='outline'
 							>
 								View All
 							</Button>
@@ -431,20 +408,20 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</div>
 				</PageHeader>
 				{/* Recent Incidents */}
-				<CardContent>
+				<CardContent className='p-0 border-none shadow-none rounded-none'>
 					{incidents.incidents.length === 0 ? (
 						<div className='text-center py-8 text-muted-foreground'>
 							<p>No open incidents</p>
 							<p className='text-sm'>All systems operational</p>
 						</div>
 					) : (
-						<div className='space-y-3'>
+						<div className='divide-y divide-border'>
 							{incidents.incidents
 								.slice(0, 5)
 								.map((incident: any) => (
 									<div
 										key={incident.id}
-										className='flex items-center justify-between p-3 border rounded-lg'
+										className='flex items-center justify-between px-6 py-4'
 									>
 										<div>
 											<h4 className='font-medium'>
@@ -459,6 +436,8 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 										<div className='flex items-center gap-2'>
 											<Badge
 												variant={
+													incident.severity ===
+														'critical' ||
 													incident.severity === 'high'
 														? 'destructive'
 														: incident.severity ===
@@ -473,10 +452,11 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 												to={`/admin/incidents/${incident.id}`}
 											>
 												<Button
-													variant='ghost'
 													size='sm'
+													variant='ghost'
 												>
 													View
+													<ChevronRight className='h-4 w-4' />
 												</Button>
 											</Link>
 										</div>
