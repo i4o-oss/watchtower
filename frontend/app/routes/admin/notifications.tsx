@@ -29,7 +29,7 @@ import type { Route } from './+types/notifications'
 
 export function meta() {
 	return [
-		{ title: 'Notification · Watchtower' },
+		{ title: 'Notification Channels · Watchtower' },
 		{
 			name: 'description',
 			content: 'Configure notification channels and alerts',
@@ -135,7 +135,7 @@ export default function AdminNotifications({
 		// Empty State
 		return (
 			<main className='flex-1 flex flex-col'>
-				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
+				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 					<PageHeader
 						title='Notification Channels'
 						description='Configure notification channels to stay informed'
@@ -177,7 +177,7 @@ export default function AdminNotifications({
 	// Dashboard State with channels
 	return (
 		<main className='flex-1 flex flex-col'>
-			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
+			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 				<PageHeader
 					title='Notification Channels'
 					description='Manage and monitor your notification delivery channels'

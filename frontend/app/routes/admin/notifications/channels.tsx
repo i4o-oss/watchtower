@@ -22,6 +22,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '~/components/ui/select'
+import { PageHeader } from '~/components/page-header'
+import { PageContent } from '~/components/page-content'
 import {
 	ArrowLeft,
 	Mail,
@@ -44,9 +46,9 @@ import { getApiErrorMessage } from '~/lib/validation'
 import { validators, combineValidators, FieldError } from '~/lib/form-utils'
 import type { Route } from './+types/channels'
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
 	return [
-		{ title: 'Notification Channels - Admin - Watchtower' },
+		{ title: 'Add Channel · Watchtower' },
 		{ name: 'description', content: 'Configure notification channels' },
 	]
 }
@@ -271,15 +273,14 @@ export default function NotificationChannels({
 					`${type} configuration saved successfully`,
 				)
 				return true
-			} else {
-				const error = await response.json()
-				const errorMessage = getApiErrorMessage(error)
-				errorToast(
-					'Save Failed',
-					`Failed to save ${type} configuration: ${errorMessage}`,
-				)
-				return false
 			}
+			const error = await response.json()
+			const errorMessage = getApiErrorMessage(error)
+			errorToast(
+				'Save Failed',
+				`Failed to save ${type} configuration: ${errorMessage}`,
+			)
+			return false
 		} catch (error) {
 			errorToast(
 				'Network Error',
@@ -290,24 +291,12 @@ export default function NotificationChannels({
 	}
 
 	return (
-		<div className='space-y-6'>
-			<div className='flex items-center gap-4'>
-				<Link to='/admin/notifications'>
-					<Button variant='ghost' size='sm'>
-						<ArrowLeft className='h-4 w-4' />
-					</Button>
-				</Link>
-				<div>
-					<h1 className='text-3xl font-bold tracking-tight'>
-						Channel Configuration
-					</h1>
-					<p className='text-muted-foreground'>
-						Set up and test your notification channels
-					</p>
-				</div>
-			</div>
-
-			<Card className='overflow-hidden'>
+		<main className='flex-1 flex flex-col'>
+			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
+				<PageHeader
+					title='Channel Configuration'
+					description='Set up and test your notification channels'
+				/>
 				<CardContent className='p-0'>
 					<Tabs value={activeTab} onValueChange={setActiveTab}>
 						<div className='border-b bg-muted/30'>
@@ -379,10 +368,10 @@ export default function NotificationChannels({
 						<TabsContent value='email' className='space-y-6 p-6'>
 							<div className='flex items-center justify-between'>
 								<div className='space-y-1'>
-									<h3 className='text-xl font-semibold'>
+									<h5 className='typography-h5 font-semibold'>
 										Email SMTP Setup
-									</h3>
-									<p className='text-muted-foreground'>
+									</h5>
+									<p className='text-sm text-muted-foreground'>
 										Configure SMTP settings for reliable
 										email delivery
 									</p>
@@ -455,16 +444,16 @@ export default function NotificationChannels({
 								/>
 
 								{/* SMTP Configuration */}
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
 											SMTP Configuration
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											Server settings and authentication
 										</CardDescription>
 									</CardHeader>
-									<CardContent className='space-y-4'>
+									<CardContent className='p-0 space-y-4'>
 										<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 											<emailForm.Field
 												name='smtp_host'
@@ -659,21 +648,15 @@ export default function NotificationChannels({
 													Security Recommendations
 												</span>
 											</div>
-											<ul className='text-sm text-green-700 space-y-1'>
+											<ul className='text-sm text-green-700 space-y-1 list-disc ml-5'>
 												<li>
-													• Port 587 with STARTTLS is
+													Port 587 with STARTTLS is
 													recommended
 												</li>
 												<li>
-													• Port 465 for SSL/TLS, Port
+													Port 465 for SSL/TLS, Port
 													25 for unencrypted (not
 													recommended)
-												</li>
-												<li>
-													• Use App Passwords for
-													Gmail, Yahoo, and other
-													providers when 2FA is
-													enabled
 												</li>
 											</ul>
 										</div>
@@ -681,17 +664,17 @@ export default function NotificationChannels({
 								</Card>
 
 								{/* Sender Configuration */}
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
 											Sender Information
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											Configure how emails appear to
 											recipients
 										</CardDescription>
 									</CardHeader>
-									<CardContent className='space-y-4'>
+									<CardContent className='p-0 space-y-4'>
 										<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 											<emailForm.Field
 												name='from_email'
@@ -810,11 +793,18 @@ export default function NotificationChannels({
 									</CardContent>
 								</Card>
 
-								<div className='flex items-center gap-3 pt-4'>
+								<div className='flex items-center justify-end gap-4'>
 									<Button
-										type='submit'
+										size='sm'
+										type='button'
+										variant='outline'
+									>
+										Reset to Defaults
+									</Button>
+									<Button
 										disabled={emailForm.state.isSubmitting}
-										className='px-6'
+										size='sm'
+										type='submit'
 									>
 										{emailForm.state.isSubmitting && (
 											<ButtonLoadingSkeleton />
@@ -822,9 +812,6 @@ export default function NotificationChannels({
 										{emailForm.state.isSubmitting
 											? 'Saving...'
 											: 'Save Configuration'}
-									</Button>
-									<Button variant='outline' type='button'>
-										Reset to Defaults
 									</Button>
 								</div>
 							</form>
@@ -834,10 +821,10 @@ export default function NotificationChannels({
 						<TabsContent value='slack' className='space-y-6 p-6'>
 							<div className='flex items-center justify-between'>
 								<div className='space-y-1'>
-									<h3 className='text-xl font-semibold'>
-										Slack Integration
-									</h3>
-									<p className='text-muted-foreground'>
+									<h5 className='typography-h5 font-semibold'>
+										Slack Configuration
+									</h5>
+									<p className='text-sm text-muted-foreground'>
 										Connect Slack for instant team
 										notifications
 									</p>
@@ -882,21 +869,21 @@ export default function NotificationChannels({
 							</div>
 
 							{/* Setup Instructions */}
-							<Card>
-								<CardHeader>
-									<CardTitle className='text-lg'>
+							<Card className='border-none shadow-none p-0'>
+								<CardHeader className='p-0'>
+									<CardTitle className='typography-h6'>
 										Webhook Setup
 									</CardTitle>
-									<CardDescription>
+									<CardDescription className='typography-body'>
 										Follow these steps to create a Slack
 										webhook
 									</CardDescription>
 								</CardHeader>
-								<CardContent>
+								<CardContent className='p-0'>
 									<div className='space-y-4'>
 										<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 											<div className='flex items-start gap-3'>
-												<div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600'>
+												<div className='w-6 h-6 bg-blue-100 rounded-full flex flex-grow-1 items-center justify-center text-sm font-medium text-blue-600'>
 													1
 												</div>
 												<div>
@@ -910,7 +897,7 @@ export default function NotificationChannels({
 												</div>
 											</div>
 											<div className='flex items-start gap-3'>
-												<div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600'>
+												<div className='w-6 h-6 bg-blue-100 rounded-full flex flex-grow-1 items-center justify-center text-sm font-medium text-blue-600'>
 													2
 												</div>
 												<div>
@@ -925,7 +912,7 @@ export default function NotificationChannels({
 												</div>
 											</div>
 											<div className='flex items-start gap-3'>
-												<div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600'>
+												<div className='w-6 h-6 bg-blue-100 rounded-full flex flex-grow-1 items-center justify-center text-sm font-medium text-blue-600'>
 													3
 												</div>
 												<div>
@@ -971,16 +958,16 @@ export default function NotificationChannels({
 									)}
 								/>
 
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
 											Webhook Configuration
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											Enter your Slack webhook details
 										</CardDescription>
 									</CardHeader>
-									<CardContent className='space-y-4'>
+									<CardContent className='p-0 space-y-4'>
 										<slackForm.Field
 											name='webhook_url'
 											validators={{
@@ -1130,17 +1117,17 @@ export default function NotificationChannels({
 								</Card>
 
 								{/* Message Preview */}
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
-											Message Formatting
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
+											Message Preview
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											Preview how notifications appear in
 											Slack
 										</CardDescription>
 									</CardHeader>
-									<CardContent>
+									<CardContent className='p-0'>
 										<div className='p-4 bg-slate-900 rounded-lg text-white font-mono text-sm'>
 											<div className='flex items-center gap-2 mb-2'>
 												<div className='w-6 h-6 bg-green-500 rounded flex items-center justify-center text-xs font-bold'>
@@ -1181,11 +1168,18 @@ export default function NotificationChannels({
 									</CardContent>
 								</Card>
 
-								<div className='flex items-center gap-3 pt-4'>
+								<div className='flex items-center justify-end gap-4'>
 									<Button
-										type='submit'
+										size='sm'
+										type='button'
+										variant='outline'
+									>
+										Reset to Defaults
+									</Button>
+									<Button
 										disabled={slackForm.state.isSubmitting}
-										className='px-6'
+										size='sm'
+										type='submit'
 									>
 										{slackForm.state.isSubmitting && (
 											<ButtonLoadingSkeleton />
@@ -1193,9 +1187,6 @@ export default function NotificationChannels({
 										{slackForm.state.isSubmitting
 											? 'Saving...'
 											: 'Save Configuration'}
-									</Button>
-									<Button variant='outline' type='button'>
-										Reset to Defaults
 									</Button>
 								</div>
 							</form>
@@ -1205,10 +1196,10 @@ export default function NotificationChannels({
 						<TabsContent value='discord' className='space-y-6 p-6'>
 							<div className='flex items-center justify-between'>
 								<div className='space-y-1'>
-									<h3 className='text-xl font-semibold'>
+									<h5 className='typography-h5 font-semibold'>
 										Discord Integration
-									</h3>
-									<p className='text-muted-foreground'>
+									</h5>
+									<p className='text-sm text-muted-foreground'>
 										Connect Discord for instant team
 										notifications
 									</p>
@@ -1253,21 +1244,21 @@ export default function NotificationChannels({
 							</div>
 
 							{/* Setup Instructions */}
-							<Card>
-								<CardHeader>
-									<CardTitle className='text-lg'>
+							<Card className='border-none shadow-none p-0'>
+								<CardHeader className='p-0'>
+									<CardTitle className='typography-h6'>
 										Webhook Setup
 									</CardTitle>
-									<CardDescription>
+									<CardDescription className='typography-body'>
 										Follow these steps to create a Discord
 										webhook
 									</CardDescription>
 								</CardHeader>
-								<CardContent>
+								<CardContent className='p-0'>
 									<div className='space-y-4'>
 										<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 											<div className='flex items-start gap-3'>
-												<div className='w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-sm font-medium text-purple-600'>
+												<div className='w-6 h-6 bg-purple-100 rounded-full flex flex-grow-1 items-center justify-center text-sm font-medium text-purple-600'>
 													1
 												</div>
 												<div>
@@ -1342,16 +1333,16 @@ export default function NotificationChannels({
 									)}
 								/>
 
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
 											Webhook Configuration
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											Enter your Discord webhook details
 										</CardDescription>
 									</CardHeader>
-									<CardContent className='space-y-4'>
+									<CardContent className='p-0 space-y-4'>
 										<discordForm.Field
 											name='webhook_url'
 											validators={{
@@ -1454,17 +1445,17 @@ export default function NotificationChannels({
 								</Card>
 
 								{/* Message Preview */}
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
 											Message Preview
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											Preview how notifications appear in
 											Discord
 										</CardDescription>
 									</CardHeader>
-									<CardContent>
+									<CardContent className='p-0'>
 										<div className='p-4 bg-[#36393f] rounded-lg text-white font-sans text-sm'>
 											<div className='flex items-start gap-3'>
 												<div className='w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold'>
@@ -1521,13 +1512,20 @@ export default function NotificationChannels({
 									</CardContent>
 								</Card>
 
-								<div className='flex items-center gap-3 pt-4'>
+								<div className='flex items-center justify-end gap-4'>
 									<Button
-										type='submit'
+										size='sm'
+										type='button'
+										variant='outline'
+									>
+										Reset to Defaults
+									</Button>
+									<Button
 										disabled={
 											discordForm.state.isSubmitting
 										}
-										className='px-6'
+										size='sm'
+										type='submit'
 									>
 										{discordForm.state.isSubmitting && (
 											<ButtonLoadingSkeleton />
@@ -1535,9 +1533,6 @@ export default function NotificationChannels({
 										{discordForm.state.isSubmitting
 											? 'Saving...'
 											: 'Save Configuration'}
-									</Button>
-									<Button variant='outline' type='button'>
-										Reset to Defaults
 									</Button>
 								</div>
 							</form>
@@ -1547,10 +1542,10 @@ export default function NotificationChannels({
 						<TabsContent value='webhook' className='space-y-6 p-6'>
 							<div className='flex items-center justify-between'>
 								<div className='space-y-1'>
-									<h3 className='text-xl font-semibold'>
+									<h5 className='typography-h5 font-semibold'>
 										Generic Webhook
-									</h3>
-									<p className='text-muted-foreground'>
+									</h5>
+									<p className='text-sm text-muted-foreground'>
 										Connect to any service that accepts HTTP
 										webhooks
 									</p>
@@ -1623,17 +1618,17 @@ export default function NotificationChannels({
 								/>
 
 								{/* Endpoint Configuration */}
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
 											Endpoint Configuration
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											Configure the target webhook
 											endpoint
 										</CardDescription>
 									</CardHeader>
-									<CardContent className='space-y-4'>
+									<CardContent className='p-0 space-y-4'>
 										<webhookForm.Field
 											name='webhook_url'
 											validators={{
@@ -1706,17 +1701,17 @@ export default function NotificationChannels({
 								</Card>
 
 								{/* Headers and Authentication */}
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
 											Security Settings
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											Authentication headers and security
 											options
 										</CardDescription>
 									</CardHeader>
-									<CardContent>
+									<CardContent className='p-0'>
 										<webhookForm.Field
 											name='headers'
 											validators={{
@@ -1792,17 +1787,17 @@ export default function NotificationChannels({
 								</Card>
 
 								{/* Payload Template */}
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
 											Payload Template
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											JSON payload structure with variable
 											substitution
 										</CardDescription>
 									</CardHeader>
-									<CardContent>
+									<CardContent className='p-0'>
 										<div className='space-y-4'>
 											<div className='p-4 bg-slate-900 rounded-lg overflow-x-auto'>
 												<pre className='text-sm text-green-400 font-mono'>
@@ -1875,17 +1870,17 @@ export default function NotificationChannels({
 								</Card>
 
 								{/* Response Handling */}
-								<Card>
-									<CardHeader>
-										<CardTitle className='text-lg'>
+								<Card className='border-none shadow-none p-0'>
+									<CardHeader className='p-0'>
+										<CardTitle className='typography-h6'>
 											Response Handling
 										</CardTitle>
-										<CardDescription>
+										<CardDescription className='typography-body'>
 											Expected response codes and error
 											handling
 										</CardDescription>
 									</CardHeader>
-									<CardContent>
+									<CardContent className='p-0'>
 										<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 											<div className='p-3 bg-green-50 border border-green-200 rounded-lg'>
 												<div className='flex items-center gap-2 mb-1'>
@@ -1925,13 +1920,20 @@ export default function NotificationChannels({
 									</CardContent>
 								</Card>
 
-								<div className='flex items-center gap-3 pt-4'>
+								<div className='flex items-center justify-end gap-4'>
 									<Button
-										type='submit'
+										size='sm'
+										type='button'
+										variant='outline'
+									>
+										Reset to Defaults
+									</Button>
+									<Button
 										disabled={
 											webhookForm.state.isSubmitting
 										}
-										className='px-6'
+										size='sm'
+										type='submit'
 									>
 										{webhookForm.state.isSubmitting && (
 											<ButtonLoadingSkeleton />
@@ -1940,15 +1942,12 @@ export default function NotificationChannels({
 											? 'Saving...'
 											: 'Save Configuration'}
 									</Button>
-									<Button variant='outline' type='button'>
-										Reset to Defaults
-									</Button>
 								</div>
 							</form>
 						</TabsContent>
 					</Tabs>
 				</CardContent>
-			</Card>
-		</div>
+			</PageContent>
+		</main>
 	)
 }
