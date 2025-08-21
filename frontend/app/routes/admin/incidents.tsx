@@ -53,6 +53,8 @@ import {
 	AlertTriangleIcon,
 	Clock,
 	TrendingUp,
+	ChevronDownIcon,
+	ChevronRightIcon,
 } from 'lucide-react'
 import { requireAuth } from '~/lib/auth'
 import type { Route } from './+types/incidents'
@@ -483,7 +485,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 									.map((incident: any) => (
 										<div
 											key={incident.id}
-											className='flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors'
+											className='flex items-center justify-between px-6 py-4'
 										>
 											<div className='flex-1 min-w-0 flex flex-col gap-2'>
 												<div className='flex items-center gap-2'>
@@ -531,42 +533,59 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 												</span>
 											</div>
 											<div className='flex items-center gap-2 ml-4'>
-												<Button
-													variant='outline'
-													size='sm'
-													onClick={() =>
-														openUpdateDialog(
-															incident,
-															'investigating',
-														)
-													}
-													disabled={
-														incident.status ===
-														'investigating'
-													}
-												>
-													🔍 Investigating
-												</Button>
-												<Button
-													variant='outline'
-													size='sm'
-													onClick={() =>
-														openUpdateDialog(
-															incident,
-															'resolve',
-														)
-													}
-												>
-													✅ Resolve
-												</Button>
+												<DropdownMenu>
+													<DropdownMenuTrigger
+														asChild
+													>
+														<Button
+															className='cursor-pointer'
+															size='sm'
+															variant='ghost'
+														>
+															Change Status
+															<ChevronDownIcon className='h-4 w-4' />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent
+														align='end'
+														className='w-40'
+													>
+														<DropdownMenuItem
+															disabled={
+																incident.status ===
+																'investigating'
+															}
+															onClick={() =>
+																openUpdateDialog(
+																	incident,
+																	'investigating',
+																)
+															}
+														>
+															Investigating
+														</DropdownMenuItem>
+														<DropdownMenuItem
+															onClick={() =>
+																openUpdateDialog(
+																	incident,
+																	'resolve',
+																)
+															}
+														>
+															Resolved
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
 												<Link
 													to={`/admin/incidents/${incident.id}`}
 												>
 													<Button
-														variant='ghost'
+														className='cursor-pointer'
 														size='sm'
+														variant='ghost'
 													>
-														📝 Details
+														View
+														<ChevronRightIcon className='h-4 w-4' />
 													</Button>
 												</Link>
 											</div>
@@ -689,82 +708,86 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 											return (
 												<div
 													key={incident.id}
-													className='px-6 py-4 hover:bg-muted/50 transition-colors'
+													className='px-6 py-4'
 												>
 													<div className='flex items-start justify-between'>
-														<div className='flex-1'>
-															<div className='flex items-center gap-3 mb-2'>
-																<h4 className='font-medium'>
-																	{
-																		incident.title
-																	}
-																</h4>
-																{getStatusBadge(
-																	incident.status,
-																)}
-																{getSeverityBadge(
-																	incident.severity,
-																)}
-															</div>
-															<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground'>
-																<div>
-																	<span className='font-medium'>
-																		Created:
-																	</span>
-																	<br />
-																	{new Date(
-																		incident.created_at,
-																	).toLocaleDateString()}
+														<div className='flex-1 flex items-center'>
+															<div className='flex-1 flex flex-col'>
+																<div className='flex items-center gap-3 mb-2'>
+																	<h4 className='font-medium'>
+																		{
+																			incident.title
+																		}
+																	</h4>
+																	{getStatusBadge(
+																		incident.status,
+																	)}
+																	{getSeverityBadge(
+																		incident.severity,
+																	)}
 																</div>
-																{incident.end_time && (
+																<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground'>
 																	<div>
 																		<span className='font-medium'>
-																			Resolved:
+																			Created:
 																		</span>
 																		<br />
 																		{new Date(
-																			incident.end_time,
+																			incident.created_at,
 																		).toLocaleDateString()}
 																	</div>
-																)}
-																{resolutionTime && (
-																	<div>
-																		<span className='font-medium'>
-																			Duration:
-																		</span>
-																		<br />
-																		{
-																			resolutionTime
-																		}
-																		m
-																	</div>
-																)}
-																{getAffectedServicesCount(
-																	incident,
-																) > 0 && (
-																	<div>
-																		<span className='font-medium'>
-																			Services:
-																		</span>
-																		<br />
-																		{getAffectedServicesCount(
-																			incident,
-																		)}{' '}
-																		affected
-																	</div>
-																)}
+																	{incident.end_time && (
+																		<div>
+																			<span className='font-medium'>
+																				Resolved:
+																			</span>
+																			<br />
+																			{new Date(
+																				incident.end_time,
+																			).toLocaleDateString()}
+																		</div>
+																	)}
+																	{resolutionTime && (
+																		<div>
+																			<span className='font-medium'>
+																				Duration:
+																			</span>
+																			<br />
+																			{
+																				resolutionTime
+																			}
+																			m
+																		</div>
+																	)}
+																	{getAffectedServicesCount(
+																		incident,
+																	) > 0 && (
+																		<div>
+																			<span className='font-medium'>
+																				Services:
+																			</span>
+																			<br />
+																			{getAffectedServicesCount(
+																				incident,
+																			)}{' '}
+																			affected
+																		</div>
+																	)}
+																</div>
 															</div>
-														</div>
-														<Link
-															to={`/admin/incidents/${incident.id}`}
-														>
-															<Button
-																variant='ghost'
-																size='sm'
+															<Link
+																to={`/admin/incidents/${incident.id}`}
 															>
-																📝 View Details
-															</Button>
-														</Link>
+																<Button
+																	className='cursor-pointer'
+																	size='sm'
+																	variant='ghost'
+																>
+																	View
+																	<ChevronRightIcon className='h-4 w-4' />
+																</Button>
+															</Link>
+														</div>
 													</div>
 												</div>
 											)
