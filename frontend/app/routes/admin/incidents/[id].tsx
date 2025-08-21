@@ -59,7 +59,7 @@ import type { Route } from './+types/[id]'
 
 export function meta({ params }: Route.MetaArgs) {
 	return [
-		{ title: 'Incident Details - Admin - Watchtower' },
+		{ title: 'Incident Details · Watchtower' },
 		{ name: 'description', content: 'View and manage incident details' },
 	]
 }

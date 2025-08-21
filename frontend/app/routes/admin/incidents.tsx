@@ -63,7 +63,7 @@ import { useSuccessToast, useErrorToast } from '~/components/toast'
 
 export function meta() {
 	return [
-		{ title: 'Incidents - Admin - Watchtower' },
+		{ title: 'Incidents · Watchtower' },
 		{ name: 'description', content: 'Manage system incidents' },
 	]
 }

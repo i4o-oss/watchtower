@@ -22,13 +22,14 @@ import {
 	ToggleLeft,
 	AlertCircle,
 	CheckCircle2,
+	ActivityIcon,
 } from 'lucide-react'
 import { requireAuth } from '~/lib/auth'
 import type { Route } from './+types/notifications'
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
 	return [
-		{ title: 'Notifications - Admin - Watchtower' },
+		{ title: 'Notification · Watchtower' },
 		{
 			name: 'description',
 			content: 'Configure notification channels and alerts',
@@ -138,95 +139,33 @@ export default function AdminNotifications({
 					<PageHeader
 						title='Notification Channels'
 						description='Configure notification channels to stay informed'
-					/>
-					<CardContent className='p-6'>
-						<div className='min-h-[60vh] flex flex-col items-center justify-center space-y-8 px-4'>
-							<div className='text-center space-y-4 max-w-md'>
-								<div className='mx-auto w-16 h-16 bg-gradient-to-br from-blue-500/20 to-green-500/20 rounded-full flex items-center justify-center'>
-									<Activity className='h-8 w-8 text-blue-600' />
-								</div>
-								<h1 className='text-2xl font-bold text-foreground'>
-									Configure notification channels to stay
-									informed
-								</h1>
-								<p className='text-muted-foreground leading-relaxed'>
-									Get instant alerts when your services go
-									down or recover. Choose from multiple
-									notification channels.
-								</p>
+					>
+						<Link to='/admin/notifications/channels'>
+							<Button size='sm' variant='outline'>
+								<Plus className='h-5 w-5' />
+								Add Channel
+							</Button>
+						</Link>
+					</PageHeader>
+					<CardContent className='p-0 gap-0 flex flex-col'>
+						<div className='flex flex-col items-center justify-center py-8 text-muted-foreground'>
+							<div className='w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4 mx-auto'>
+								<ActivityIcon className='h-8 w-8 text-blue-600' />
 							</div>
-
-							{/* Channel Type Grid */}
-							<div className='w-full max-w-4xl'>
-								<h2 className='text-lg font-semibold text-center mb-6'>
-									Available Channel Types
-								</h2>
-								<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-									{channelTypes.map((channel) => {
-										const Icon = channel.icon
-										const difficultyColors = {
-											Easy: 'bg-green-100 text-green-800 border-green-200',
-											Medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-											Hard: 'bg-red-100 text-red-800 border-red-200',
-										}
-
-										return (
-											<Card
-												key={channel.type}
-												className='relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border-0 shadow-md'
-											>
-												<CardHeader>
-													<div className='flex items-center gap-3 mb-2'>
-														<div
-															className={`p-2 rounded-lg bg-${channel.color}-100`}
-														>
-															<Icon
-																className={`h-5 w-5 text-${channel.color}-600`}
-															/>
-														</div>
-														<CardTitle className='text-lg'>
-															{channel.name}
-														</CardTitle>
-													</div>
-													<CardDescription className='text-sm leading-relaxed'>
-														{channel.description}
-													</CardDescription>
-												</CardHeader>
-												<CardContent className='pt-0'>
-													<Badge
-														variant='outline'
-														className={`text-xs font-medium px-2 py-1 ${difficultyColors[channel.difficulty as keyof typeof difficultyColors]}`}
-													>
-														{channel.difficulty}{' '}
-														Setup
-													</Badge>
-												</CardContent>
-											</Card>
-										)
-									})}
-								</div>
-							</div>
-
-							{/* Primary CTA */}
+							<h3 className='text-xl font-semibold mb-2 text-foreground'>
+								Configure Notification Channels
+							</h3>
+							<p className='text-muted-foreground mb-6 max-w-md mx-auto'>
+								Get alerts when your services go down or
+								recover.
+							</p>
 							<div className='flex flex-col sm:flex-row gap-4'>
 								<Link to='/admin/notifications/channels'>
-									<Button
-										size='lg'
-										className='px-6 py-2 text-base font-medium'
-									>
+									<Button size='sm'>
 										<Plus className='h-5 w-5' />
-										Add Your First Channel
+										Add Channel
 									</Button>
 								</Link>
-								<Button variant='outline' size='lg' asChild>
-									<a
-										href='https://docs.example.com/notifications'
-										target='_blank'
-										rel='noopener noreferrer'
-									>
-										View Documentation
-									</a>
-								</Button>
 							</div>
 						</div>
 					</CardContent>
