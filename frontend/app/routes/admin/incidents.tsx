@@ -34,6 +34,16 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '~/components/ui/dialog'
+import { Textarea } from '~/components/ui/textarea'
+import { Label } from '~/components/ui/label'
 import { PageHeader } from '~/components/page-header'
 import { PageContent } from '~/components/page-content'
 import {
@@ -47,6 +57,7 @@ import {
 import { requireAuth } from '~/lib/auth'
 import type { Route } from './+types/incidents'
 import { Separator } from '~/components/ui/separator'
+import { useSuccessToast, useErrorToast } from '~/components/toast'
 
 export function meta() {
 	return [
@@ -86,7 +97,17 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 	const [historySeverityFilter, setHistorySeverityFilter] = useState('all')
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 	const [incidentToDelete, setIncidentToDelete] = useState<any>(null)
+	const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
+	const [incidentToUpdate, setIncidentToUpdate] = useState<any>(null)
+	const [updateNote, setUpdateNote] = useState('')
+	const [newStatus, setNewStatus] = useState('')
+	const [dialogAction, setDialogAction] = useState<
+		'investigating' | 'resolve'
+	>('investigating')
+	const [isUpdating, setIsUpdating] = useState(false)
 	const navigate = useNavigate()
+	const successToast = useSuccessToast()
+	const errorToast = useErrorToast()
 
 	// Real-time updates via Server-Sent Events
 	useSSE(
@@ -206,25 +227,81 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 		setIncidentToDelete(null)
 	}
 
-	const updateIncidentStatus = async (incident: any, newStatus: string) => {
+	const openUpdateDialog = (
+		incident: any,
+		action: 'investigating' | 'resolve',
+	) => {
+		setIncidentToUpdate(incident)
+		setDialogAction(action)
+		setNewStatus(action === 'resolve' ? 'resolved' : 'investigating')
+		setUpdateNote('')
+		setUpdateDialogOpen(true)
+	}
+
+	const handleStatusUpdate = async () => {
+		if (!incidentToUpdate) return
+
+		setIsUpdating(true)
 		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 		try {
+			const updateData: any = {}
+
+			if (newStatus !== incidentToUpdate.status) {
+				updateData.status = newStatus
+			}
+
+			if (updateNote.trim()) {
+				updateData.description = incidentToUpdate.description
+					? `${incidentToUpdate.description}\n\nUpdate: ${updateNote.trim()}`
+					: updateNote.trim()
+			}
+
 			const response = await fetch(
-				`${API_BASE_URL}/api/v1/admin/incidents/${incident.id}`,
+				`${API_BASE_URL}/api/v1/admin/incidents/${incidentToUpdate.id}`,
 				{
 					method: 'PUT',
 					credentials: 'include',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ status: newStatus }),
+					body: JSON.stringify(updateData),
 				},
 			)
 
-			if (!response.ok) {
-				console.error('Failed to update incident status')
+			if (response.ok) {
+				successToast(
+					'Incident Updated',
+					'Status and notes have been updated',
+				)
+				setUpdateNote('')
+				setUpdateDialogOpen(false)
+				setIncidentToUpdate(null)
+			} else {
+				errorToast('Update Failed', 'Failed to update the incident')
 			}
 		} catch (error) {
 			console.error('Error updating incident status:', error)
+			errorToast('Network Error', 'Failed to update the incident')
+		} finally {
+			setIsUpdating(false)
+		}
+	}
+
+	const getDialogConfig = () => {
+		switch (dialogAction) {
+			case 'resolve':
+				return {
+					title: 'Resolve Incident',
+					description:
+						'Mark this incident as resolved and add a final update',
+					submitText: 'Resolve Incident',
+				}
+			default:
+				return {
+					title: 'Start Investigation',
+					description:
+						'Mark this incident as investigating and add an update',
+					submitText: 'Start Investigation',
+				}
 		}
 	}
 
@@ -458,7 +535,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 													variant='outline'
 													size='sm'
 													onClick={() =>
-														updateIncidentStatus(
+														openUpdateDialog(
 															incident,
 															'investigating',
 														)
@@ -474,9 +551,9 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 													variant='outline'
 													size='sm'
 													onClick={() =>
-														updateIncidentStatus(
+														openUpdateDialog(
 															incident,
-															'resolved',
+															'resolve',
 														)
 													}
 												>
@@ -725,6 +802,83 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+
+			{/* Update Dialog */}
+			<Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
+				<DialogContent className='max-w-md'>
+					<DialogHeader>
+						<DialogTitle>{getDialogConfig().title}</DialogTitle>
+						<DialogDescription>
+							{getDialogConfig().description}
+						</DialogDescription>
+					</DialogHeader>
+					<div className='space-y-4'>
+						<div className='space-y-2'>
+							<Label htmlFor='status'>Status</Label>
+							<Select
+								value={newStatus}
+								onValueChange={setNewStatus}
+							>
+								<SelectTrigger>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value='open'>Open</SelectItem>
+									<SelectItem value='investigating'>
+										Investigating
+									</SelectItem>
+									<SelectItem value='identified'>
+										Identified
+									</SelectItem>
+									<SelectItem value='monitoring'>
+										Monitoring
+									</SelectItem>
+									<SelectItem value='resolved'>
+										Resolved
+									</SelectItem>
+									<SelectItem value='closed'>
+										Closed
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<div className='space-y-2'>
+							<Label htmlFor='update_note'>
+								{dialogAction === 'resolve'
+									? 'Resolution Message'
+									: 'Investigation Notes'}
+							</Label>
+							<Textarea
+								id='update_note'
+								value={updateNote}
+								onChange={(e) => setUpdateNote(e.target.value)}
+								placeholder={
+									dialogAction === 'resolve'
+										? 'Describe how the incident was resolved...'
+										: 'Add investigation notes or current status...'
+								}
+								rows={4}
+							/>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button
+							variant='outline'
+							onClick={() => setUpdateDialogOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							onClick={handleStatusUpdate}
+							disabled={isUpdating}
+						>
+							{isUpdating
+								? 'Updating...'
+								: getDialogConfig().submitText}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</>
 	)
 }

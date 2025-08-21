@@ -392,7 +392,7 @@ export default function EndpointDetail({
 					{endpoint.description && (
 						<div>
 							<h4 className='font-medium mb-2'>Description</h4>
-							<p className='text-muted-foreground'>
+							<p className='text-sm text-muted-foreground'>
 								{endpoint.description}
 							</p>
 						</div>

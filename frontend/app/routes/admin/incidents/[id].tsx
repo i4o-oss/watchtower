@@ -11,8 +11,6 @@ import {
 import { Badge } from '~/components/ui/badge'
 import { Textarea } from '~/components/ui/textarea'
 import { Label } from '~/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
-import { Separator } from '~/components/ui/separator'
 import {
 	Select,
 	SelectContent,
@@ -40,6 +38,18 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '~/components/ui/dialog'
+import {
+	AlertTriangle,
+	Clock,
+	Target,
+	CheckCircle2,
+	XCircle,
+	ArrowLeft,
+	Trash2,
+	Megaphone,
+	RefreshCw,
+	Calendar,
+} from 'lucide-react'
 import { useSSE } from '~/hooks/useSSE'
 import { useSuccessToast, useErrorToast } from '~/components/toast'
 import { PageHeader } from '~/components/page-header'
@@ -49,7 +59,7 @@ import type { Route } from './+types/[id]'
 
 export function meta({ params }: Route.MetaArgs) {
 	return [
-		{ title: `Incident Details - Admin - Watchtower` },
+		{ title: 'Incident Details - Admin - Watchtower' },
 		{ name: 'description', content: 'View and manage incident details' },
 	]
 }
@@ -106,9 +116,10 @@ export default function IncidentDetail({
 	const [isUpdating, setIsUpdating] = useState(false)
 	const [updateNote, setUpdateNote] = useState('')
 	const [newStatus, setNewStatus] = useState(incident?.status || 'open')
-	const [publicMessage, setPublicMessage] = useState('')
-	const [isPublicMessageDialogOpen, setIsPublicMessageDialogOpen] =
-		useState(false)
+	const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
+	const [dialogAction, setDialogAction] = useState<
+		'update' | 'resolve' | 'reopen'
+	>('update')
 	const [timeline, setTimeline] = useState<any[]>([])
 
 	// Real-time updates
@@ -238,38 +249,38 @@ export default function IncidentDetail({
 		}
 	}
 
-	const handlePublicMessageUpdate = async () => {
-		if (!publicMessage.trim()) return
+	const openUpdateDialog = (action: 'update' | 'resolve' | 'reopen') => {
+		setDialogAction(action)
+		if (action === 'resolve') {
+			setNewStatus('resolved')
+		} else if (action === 'reopen') {
+			setNewStatus('open')
+		}
+		setIsUpdateDialogOpen(true)
+	}
 
-		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-
-		try {
-			const response = await fetch(
-				`${API_BASE_URL}/api/v1/admin/incidents/${params.id}/public-message`,
-				{
-					method: 'POST',
-					credentials: 'include',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ message: publicMessage.trim() }),
-				},
-			)
-
-			if (response.ok) {
-				successToast(
-					'Public Message Posted',
-					'Your message has been published to the status page',
-				)
-				setPublicMessage('')
-				setIsPublicMessageDialogOpen(false)
-			} else {
-				errorToast(
-					'Publish Failed',
-					'Failed to publish the public message',
-				)
-			}
-		} catch (error) {
-			console.error('Error publishing message:', error)
-			errorToast('Network Error', 'Failed to publish the public message')
+	const getDialogConfig = () => {
+		switch (dialogAction) {
+			case 'resolve':
+				return {
+					title: 'Resolve Incident',
+					description:
+						'Mark this incident as resolved and add a final update',
+					submitText: 'Resolve Incident',
+				}
+			case 'reopen':
+				return {
+					title: 'Reopen Incident',
+					description:
+						'Reopen this incident and add an update explaining why',
+					submitText: 'Reopen Incident',
+				}
+			default:
+				return {
+					title: 'Post Update',
+					description: 'Update the incident status and add notes',
+					submitText: 'Post Update',
+				}
 		}
 	}
 
@@ -286,23 +297,20 @@ export default function IncidentDetail({
 			severityConfig.low
 
 		return (
-			<div className='flex items-center gap-2'>
-				<div className={`w-2 h-2 rounded-full ${config.color}`} />
-				<Badge variant={config.variant} className='capitalize'>
-					{severity}
-				</Badge>
-			</div>
+			<Badge variant={config.variant} className='capitalize'>
+				{severity}
+			</Badge>
 		)
 	}
 
 	const getStatusBadge = (status: string) => {
 		const statusConfig = {
-			open: { variant: 'destructive' as const, icon: '🔴' },
-			investigating: { variant: 'default' as const, icon: '🔍' },
-			identified: { variant: 'default' as const, icon: '✅' },
-			monitoring: { variant: 'default' as const, icon: '👀' },
-			resolved: { variant: 'secondary' as const, icon: '✅' },
-			closed: { variant: 'secondary' as const, icon: '🔒' },
+			open: { variant: 'destructive' as const },
+			investigating: { variant: 'secondary' as const },
+			identified: { variant: 'secondary' as const },
+			monitoring: { variant: 'secondary' as const },
+			closed: { variant: 'secondary' as const },
+			resolved: { variant: 'default' as const },
 		}
 
 		const config =
@@ -311,7 +319,6 @@ export default function IncidentDetail({
 
 		return (
 			<Badge variant={config.variant} className='capitalize'>
-				<span className='mr-1'>{config.icon}</span>
 				{status}
 			</Badge>
 		)
@@ -339,23 +346,6 @@ export default function IncidentDetail({
 		)
 	}
 
-	const getStatusProgressSteps = () => {
-		const steps = [
-			'open',
-			'investigating',
-			'identified',
-			'monitoring',
-			'resolved',
-		]
-		const currentIndex = steps.indexOf(incident.status)
-
-		return steps.map((step, index) => ({
-			name: step,
-			completed: index <= currentIndex,
-			current: step === incident.status,
-		}))
-	}
-
 	// Calculate key metrics for stats section
 	const affectedServices = getAffectedEndpoints().length
 	const resolutionTime =
@@ -373,19 +363,19 @@ export default function IncidentDetail({
 
 	return (
 		<>
-			<main className='flex flex-col gap-6'>
-				{/* Quick Stats Section - Similar to other admin routes */}
-				<section className='grid grid-cols-1 xl:grid-cols-3 gap-6'>
-					<Card>
+			<main className='flex flex-col gap-4'>
+				{/* Quick Stats - Similar to /admin/endpoints/[id] route */}
+				<section className='grid grid-cols-3 gap-1 border border-border divide-x divide-border rounded overflow-hidden'>
+					<Card className='rounded-none shadow-none border-none'>
 						<CardContent>
 							<div className='flex items-center gap-4'>
 								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
 									{incident.status === 'resolved' ? (
-										<span className='text-2xl'>✅</span>
+										<CheckCircle2 className='h-7 w-7 text-green-500' />
 									) : incident.severity === 'critical' ? (
-										<span className='text-2xl'>🚨</span>
+										<AlertTriangle className='h-7 w-7 text-red-500' />
 									) : (
-										<span className='text-2xl'>⚠️</span>
+										<XCircle className='h-7 w-7 text-orange-500' />
 									)}
 								</div>
 								<div className='flex flex-col'>
@@ -399,11 +389,11 @@ export default function IncidentDetail({
 							</div>
 						</CardContent>
 					</Card>
-					<Card>
+					<Card className='rounded-none shadow-none border-none'>
 						<CardContent>
 							<div className='flex items-center gap-4'>
 								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<span className='text-2xl'>🎯</span>
+									<Target className='h-7 w-7' />
 								</div>
 								<div className='flex flex-col'>
 									<p className='text-sm font-normal'>
@@ -416,11 +406,11 @@ export default function IncidentDetail({
 							</div>
 						</CardContent>
 					</Card>
-					<Card>
+					<Card className='rounded-none shadow-none border-none'>
 						<CardContent>
 							<div className='flex items-center gap-4'>
 								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<span className='text-2xl'>⏱️</span>
+									<Clock className='h-7 w-7' />
 								</div>
 								<div className='flex flex-col'>
 									<p className='text-sm font-normal'>
@@ -440,821 +430,368 @@ export default function IncidentDetail({
 					</Card>
 				</section>
 
-				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden'>
+				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 					<PageHeader
 						title={incident.title}
-						description={`${incident.severity} severity incident • Started ${getTimeElapsed(incident.created_at)}${getAffectedEndpoints().length > 0 ? ` • ${getAffectedEndpoints().length} service${getAffectedEndpoints().length !== 1 ? 's' : ''} affected` : ' • No services specified'}`}
+						description={`${
+							incident.severity
+						} severity incident • Started ${getTimeElapsed(
+							incident.created_at,
+						)}${
+							getAffectedEndpoints().length > 0
+								? ` • ${getAffectedEndpoints().length} service${
+										getAffectedEndpoints().length !== 1
+											? 's'
+											: ''
+									} affected`
+								: ' • No services specified'
+						}`}
 					>
-						<div className='flex flex-wrap items-center gap-2'>
-							<Link to='/admin/incidents'>
-								<Button variant='outline' size='sm'>
-									← Back to Incidents
-								</Button>
-							</Link>
-							<Dialog
-								open={isPublicMessageDialogOpen}
-								onOpenChange={setIsPublicMessageDialogOpen}
+						{incident.status === 'resolved' ? (
+							<Button
+								onClick={() => openUpdateDialog('reopen')}
+								size='sm'
+								variant='outline'
 							>
-								<DialogTrigger asChild>
-									<Button size='sm'>📢 Post Update</Button>
-								</DialogTrigger>
-								<DialogContent className='max-w-md'>
-									<DialogHeader>
-										<DialogTitle>
-											Post Public Update
-										</DialogTitle>
-										<DialogDescription>
-											Share an update with your users on
-											the status page
-										</DialogDescription>
-									</DialogHeader>
-									<div className='space-y-4'>
-										<div className='space-y-2'>
-											<Label htmlFor='public_message'>
-												Message
-											</Label>
-											<Textarea
-												id='public_message'
-												value={publicMessage}
-												onChange={(e) =>
-													setPublicMessage(
-														e.target.value,
-													)
-												}
-												placeholder='We are actively investigating this issue and will provide updates as we learn more...'
-												rows={4}
-											/>
-										</div>
-									</div>
-									<DialogFooter>
-										<Button
-											variant='outline'
-											onClick={() =>
-												setIsPublicMessageDialogOpen(
-													false,
-												)
-											}
-										>
-											Cancel
-										</Button>
-										<Button
-											onClick={handlePublicMessageUpdate}
-											disabled={!publicMessage.trim()}
-										>
-											Publish Update
-										</Button>
-									</DialogFooter>
-								</DialogContent>
-							</Dialog>
-							<AlertDialog>
-								<AlertDialogTrigger asChild>
-									<Button variant='destructive' size='sm'>
-										🗑️ Delete
-									</Button>
-								</AlertDialogTrigger>
-								<AlertDialogContent>
-									<AlertDialogHeader>
-										<AlertDialogTitle>
-											Delete Incident
-										</AlertDialogTitle>
-										<AlertDialogDescription>
-											Are you sure you want to permanently
-											delete this incident? This action
-											cannot be undone and will remove all
-											associated timeline data.
-										</AlertDialogDescription>
-									</AlertDialogHeader>
-									<AlertDialogFooter>
-										<AlertDialogCancel>
-											Cancel
-										</AlertDialogCancel>
-										<AlertDialogAction
-											onClick={handleDelete}
-											disabled={isDeleting}
-											className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-										>
-											{isDeleting
-												? 'Deleting...'
-												: 'Delete Incident'}
-										</AlertDialogAction>
-									</AlertDialogFooter>
-								</AlertDialogContent>
-							</AlertDialog>
-						</div>
+								<RefreshCw className='h-4 w-4' />
+								Reopen
+							</Button>
+						) : (
+							<Button
+								onClick={() => openUpdateDialog('resolve')}
+								size='sm'
+								variant='outline'
+							>
+								<CheckCircle2 className='h-4 w-4' />
+								Resolve
+							</Button>
+						)}
+
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
+								<Button
+									className='gap-2'
+									size='sm'
+									variant='destructive'
+								>
+									<Trash2 className='h-4 w-4' />
+									Delete
+								</Button>
+							</AlertDialogTrigger>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>
+										Delete Incident
+									</AlertDialogTitle>
+									<AlertDialogDescription>
+										Are you sure you want to permanently
+										delete this incident? This action cannot
+										be undone and will remove all associated
+										timeline data.
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>
+										Cancel
+									</AlertDialogCancel>
+									<AlertDialogAction
+										onClick={handleDelete}
+										disabled={isDeleting}
+										className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+									>
+										{isDeleting
+											? 'Deleting...'
+											: 'Delete Incident'}
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
 					</PageHeader>
 
-					<Card className='rounded-none shadow-none border-none flex-1'>
-						<CardContent className='p-6 gap-0 flex flex-col h-full'>
-							<Tabs defaultValue='overview' className='space-y-6'>
-								<TabsList className='grid w-full grid-cols-3'>
-									<TabsTrigger
-										value='overview'
-										className='flex items-center gap-2'
-									>
-										📋 Overview
-									</TabsTrigger>
-									<TabsTrigger
-										value='timeline'
-										className='flex items-center gap-2'
-									>
-										⏱️ Timeline
-									</TabsTrigger>
-									<TabsTrigger
-										value='communication'
-										className='flex items-center gap-2'
-									>
-										📢 Public Preview
-									</TabsTrigger>
-								</TabsList>
+					{/* Incident Information Section */}
+					<CardContent className='px-6 py-4 gap-4 flex flex-col'>
+						{incident.description && (
+							<div>
+								<h4 className='font-medium mb-2'>
+									Description
+								</h4>
+								<p className='text-sm text-muted-foreground'>
+									{incident.description}
+								</p>
+							</div>
+						)}
 
-								<TabsContent
-									value='overview'
-									className='space-y-6'
-								>
-									<div className='grid gap-6 lg:grid-cols-3'>
-										{/* Main Incident Details */}
-										<div className='lg:col-span-2 space-y-6'>
-											<Card>
-												<CardHeader>
-													<CardTitle className='flex items-center gap-2'>
-														📝 Incident Information
-													</CardTitle>
-												</CardHeader>
-												<CardContent className='space-y-6'>
-													{incident.description && (
-														<div>
-															<h4 className='font-medium mb-3'>
-																Description
-															</h4>
-															<div className='bg-muted p-4 rounded-lg whitespace-pre-wrap text-sm leading-relaxed'>
-																{
-																	incident.description
-																}
-															</div>
-														</div>
-													)}
+						<div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
+							<div>
+								<h4 className='font-medium text-sm text-muted-foreground mb-1'>
+									Status
+								</h4>
+								<div className='flex items-center gap-2'>
+									{getStatusBadge(incident.status)}
+								</div>
+							</div>
+							<div>
+								<h4 className='font-medium text-sm text-muted-foreground mb-1'>
+									Severity
+								</h4>
+								<div>{getSeverityBadge(incident.severity)}</div>
+							</div>
+							<div>
+								<h4 className='font-medium text-sm text-muted-foreground mb-1'>
+									Created
+								</h4>
+								<p className='text-sm'>
+									{new Date(
+										incident.created_at,
+									).toLocaleString()}
+								</p>
+							</div>
+							{incident.end_time && (
+								<div>
+									<h4 className='font-medium text-sm text-muted-foreground mb-1'>
+										Resolved
+									</h4>
+									<p className='text-sm'>
+										{new Date(
+											incident.end_time,
+										).toLocaleString()}
+									</p>
+								</div>
+							)}
+						</div>
 
-													<div className='grid grid-cols-2 md:grid-cols-3 gap-6'>
-														<div>
-															<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-																Status
-															</h4>
-															<div className='flex items-center gap-2'>
-																{getStatusBadge(
-																	incident.status,
-																)}
-															</div>
-														</div>
-														<div>
-															<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-																Severity
-															</h4>
-															<div>
-																{getSeverityBadge(
-																	incident.severity,
-																)}
-															</div>
-														</div>
-														<div>
-															<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-																Created
-															</h4>
-															<p className='text-sm'>
-																{new Date(
-																	incident.created_at,
-																).toLocaleString()}
-															</p>
-														</div>
-														{incident.end_time && (
-															<div>
-																<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-																	Resolved
-																</h4>
-																<p className='text-sm'>
-																	{new Date(
-																		incident.end_time,
-																	).toLocaleString()}
-																</p>
-															</div>
-														)}
-														{incident.created_by && (
-															<div>
-																<h4 className='font-medium text-sm text-muted-foreground mb-1'>
-																	Reporter
-																</h4>
-																<p className='text-sm'>
-																	User #
-																	{
-																		incident.created_by
-																	}
-																</p>
-															</div>
-														)}
+						{getAffectedEndpoints().length > 0 && (
+							<div>
+								<h4 className='font-medium mb-3'>
+									Affected Services
+								</h4>
+								<div className='space-y-2'>
+									{getAffectedEndpoints().map(
+										(endpoint: any) => (
+											<div
+												key={endpoint.id}
+												className='flex items-center justify-between p-3 border rounded-lg'
+											>
+												<div className='flex-1'>
+													<div className='font-medium'>
+														{endpoint.name}
 													</div>
-												</CardContent>
-											</Card>
+													<div className='text-sm text-muted-foreground'>
+														{endpoint.url}
+													</div>
+												</div>
+												<Badge
+													variant={
+														endpoint.status === 'up'
+															? 'secondary'
+															: 'destructive'
+													}
+													className='text-xs'
+												>
+													{endpoint.status ||
+														'Unknown'}
+												</Badge>
+											</div>
+										),
+									)}
+								</div>
+							</div>
+						)}
+					</CardContent>
+				</PageContent>
 
-											{/* Impact Assessment */}
-											<Card>
-												<CardHeader>
-													<CardTitle className='flex items-center gap-2'>
-														🎯 Impact Assessment
-													</CardTitle>
-													<CardDescription>
-														Services and endpoints
-														affected by this
-														incident
-													</CardDescription>
-												</CardHeader>
-												<CardContent>
-													{getAffectedEndpoints()
-														.length > 0 ? (
-														<div className='space-y-3'>
-															{getAffectedEndpoints().map(
-																(
-																	endpoint: any,
-																) => (
-																	<div
-																		key={
-																			endpoint.id
-																		}
-																		className='flex items-center justify-between p-3 border rounded-lg'
-																	>
-																		<div className='flex-1'>
-																			<div className='font-medium'>
-																				{
-																					endpoint.name
-																				}
-																			</div>
-																			<div className='text-sm text-muted-foreground'>
-																				{
-																					endpoint.url
-																				}
-																			</div>
-																		</div>
-																		<div className='flex items-center gap-2'>
-																			<Badge
-																				variant={
-																					endpoint.status ===
-																					'up'
-																						? 'secondary'
-																						: 'destructive'
-																				}
-																				className='text-xs'
-																			>
-																				{endpoint.status ||
-																					'Unknown'}
-																			</Badge>
-																		</div>
-																	</div>
-																),
-															)}
-														</div>
-													) : (
-														<div className='text-center py-8'>
-															<div className='w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3'>
-																<span className='text-xl'>
-																	📊
-																</span>
-															</div>
-															<p className='text-muted-foreground'>
-																No specific
-																services were
-																identified as
-																affected by this
-																incident
-															</p>
-														</div>
-													)}
-												</CardContent>
-											</Card>
+				{/* Timeline Section */}
+				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
+					<PageHeader
+						title='Timeline'
+						description='Incident updates and status changes'
+					>
+						<Button
+							onClick={() => openUpdateDialog('update')}
+							size='sm'
+							variant='outline'
+						>
+							<Megaphone className='h-4 w-4' />
+							Post Update
+						</Button>
+					</PageHeader>
+					<CardContent className='px-6 py-4 gap-4 flex flex-col'>
+						<div className='relative'>
+							<div className='absolute left-4 top-0 bottom-0 w-0.5 bg-border' />
+							<div className='space-y-6'>
+								<div className='flex gap-4'>
+									<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
+										<Calendar className='h-4 w-4 text-green-600' />
+									</div>
+									<div className='flex-1 pb-4'>
+										<div className='flex items-center gap-2 mb-1'>
+											<span className='font-medium'>
+												Incident Created
+											</span>
+											<Badge
+												variant='outline'
+												className='text-xs'
+											>
+												{incident.status === 'open'
+													? 'Current'
+													: 'Initial'}
+											</Badge>
 										</div>
+										<p className='text-sm text-muted-foreground'>
+											{new Date(
+												incident.created_at,
+											).toLocaleString()}
+										</p>
+									</div>
+								</div>
 
-										{/* Sidebar Actions */}
-										<div className='space-y-6'>
-											{/* Quick Status Updates */}
-											<Card>
-												<CardHeader>
-													<CardTitle className='flex items-center gap-2'>
-														⚡ Quick Actions
-													</CardTitle>
-												</CardHeader>
-												<CardContent className='space-y-3'>
-													{getStatusProgressSteps().map(
-														(step) => (
-															<Button
-																key={step.name}
-																variant={
-																	step.current
-																		? 'default'
-																		: step.completed
-																			? 'secondary'
-																			: 'outline'
-																}
-																className={`w-full justify-start ${step.current ? 'ring-2 ring-primary' : ''}`}
-																onClick={() => {
-																	setNewStatus(
-																		step.name,
-																	)
-																	handleStatusUpdate()
-																}}
-																disabled={
-																	step.completed &&
-																	step.name !==
-																		'resolved'
-																}
-															>
-																<span>
-																	{step.completed
-																		? '✅'
-																		: '⭕'}
-																</span>
-																<span className='capitalize'>
-																	{step.name.replace(
-																		'_',
-																		' ',
-																	)}
-																</span>
-															</Button>
-														),
-													)}
-
-													<Separator className='my-4' />
-
-													<div className='space-y-3'>
-														<Button
-															variant='outline'
-															className='w-full'
-															onClick={() =>
-																setIsPublicMessageDialogOpen(
-																	true,
-																)
-															}
-														>
-															📢 Post Public
-															Update
-														</Button>
-
-														{incident.status ===
-															'resolved' && (
-															<Button
-																variant='outline'
-																className='w-full'
-																onClick={() => {
-																	setNewStatus(
-																		'open',
-																	)
-																	handleStatusUpdate()
-																}}
-															>
-																🔄 Reopen
-																Incident
-															</Button>
-														)}
-													</div>
-												</CardContent>
-											</Card>
-
-											{/* Status Timeline */}
-											<Card>
-												<CardHeader>
-													<CardTitle className='flex items-center gap-2'>
-														📅 Key Timestamps
-													</CardTitle>
-												</CardHeader>
-												<CardContent>
-													<div className='space-y-4 text-sm'>
-														<div className='flex justify-between items-center'>
-															<span className='text-muted-foreground'>
-																Created
-															</span>
-															<span className='font-mono'>
-																{new Date(
-																	incident.created_at,
-																).toLocaleString()}
-															</span>
-														</div>
-
-														{incident.updated_at &&
-															incident.updated_at !==
-																incident.created_at && (
-																<div className='flex justify-between items-center'>
-																	<span className='text-muted-foreground'>
-																		Last
-																		Updated
-																	</span>
-																	<span className='font-mono'>
-																		{new Date(
-																			incident.updated_at,
-																		).toLocaleString()}
-																	</span>
-																</div>
-															)}
-
-														{incident.end_time && (
-															<div className='flex justify-between items-center'>
-																<span className='text-muted-foreground'>
-																	Resolved
-																</span>
-																<span className='font-mono'>
-																	{new Date(
-																		incident.end_time,
-																	).toLocaleString()}
-																</span>
-															</div>
-														)}
-
-														{incident.end_time &&
-															incident.created_at && (
-																<>
-																	<Separator />
-																	<div className='flex justify-between items-center'>
-																		<span className='text-muted-foreground'>
-																			Total
-																			Duration
-																		</span>
-																		<span className='font-medium'>
-																			{Math.round(
-																				(new Date(
-																					incident.end_time,
-																				).getTime() -
-																					new Date(
-																						incident.created_at,
-																					).getTime()) /
-																					(1000 *
-																						60),
-																			)}{' '}
-																			minutes
-																		</span>
-																	</div>
-																</>
-															)}
-													</div>
-												</CardContent>
-											</Card>
+								{incident.status !== 'open' && (
+									<div className='flex gap-4'>
+										<div className='w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center relative z-10'>
+											<RefreshCw className='h-4 w-4 text-blue-600' />
+										</div>
+										<div className='flex-1 pb-4'>
+											<div className='flex items-center gap-2 mb-1'>
+												<span className='font-medium'>
+													Status Updated to{' '}
+													{incident.status}
+												</span>
+												<Badge
+													variant='default'
+													className='text-xs'
+												>
+													Current
+												</Badge>
+											</div>
+											<p className='text-sm text-muted-foreground'>
+												{incident.updated_at
+													? new Date(
+															incident.updated_at,
+														).toLocaleString()
+													: 'Recently updated'}
+											</p>
 										</div>
 									</div>
-								</TabsContent>
+								)}
 
-								<TabsContent
-									value='timeline'
-									className='space-y-6'
-								>
-									<Card>
-										<CardHeader>
-											<CardTitle className='flex items-center gap-2'>
-												⏱️ Incident Timeline
-											</CardTitle>
-											<CardDescription>
-												Chronological sequence of status
-												updates and communications
-											</CardDescription>
-										</CardHeader>
-										<CardContent>
-											<div className='space-y-6'>
-												{/* Status Update Form */}
-												<Card>
-													<CardHeader>
-														<CardTitle className='text-lg'>
-															Add Timeline Entry
-														</CardTitle>
-													</CardHeader>
-													<CardContent className='space-y-4'>
-														<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-															<div className='space-y-2'>
-																<Label htmlFor='status'>
-																	Update
-																	Status
-																</Label>
-																<Select
-																	value={
-																		newStatus
-																	}
-																	onValueChange={
-																		setNewStatus
-																	}
-																>
-																	<SelectTrigger>
-																		<SelectValue />
-																	</SelectTrigger>
-																	<SelectContent>
-																		<SelectItem value='open'>
-																			Open
-																		</SelectItem>
-																		<SelectItem value='investigating'>
-																			Investigating
-																		</SelectItem>
-																		<SelectItem value='identified'>
-																			Identified
-																		</SelectItem>
-																		<SelectItem value='monitoring'>
-																			Monitoring
-																		</SelectItem>
-																		<SelectItem value='resolved'>
-																			Resolved
-																		</SelectItem>
-																		<SelectItem value='closed'>
-																			Closed
-																		</SelectItem>
-																	</SelectContent>
-																</Select>
-															</div>
-															<div className='flex items-end'>
-																<Button
-																	onClick={
-																		handleStatusUpdate
-																	}
-																	disabled={
-																		newStatus ===
-																		incident.status
-																	}
-																	className='w-full'
-																>
-																	{isUpdating
-																		? 'Updating...'
-																		: 'Update Status'}
-																</Button>
-															</div>
-														</div>
-
-														<div className='space-y-2'>
-															<Label htmlFor='note'>
-																Internal Notes
-																(Optional)
-															</Label>
-															<Textarea
-																id='note'
-																value={
-																	updateNote
-																}
-																onChange={(e) =>
-																	setUpdateNote(
-																		e.target
-																			.value,
-																	)
-																}
-																placeholder='Add internal notes about this status change or investigation progress...'
-																rows={3}
-															/>
-														</div>
-													</CardContent>
-												</Card>
-
-												{/* Timeline Display */}
-												<div className='relative'>
-													<div className='absolute left-4 top-0 bottom-0 w-0.5 bg-border'></div>
-													<div className='space-y-6'>
-														<div className='flex gap-4'>
-															<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
-																<span className='text-sm'>
-																	📅
-																</span>
-															</div>
-															<div className='flex-1 pb-4'>
-																<div className='flex items-center gap-2 mb-1'>
-																	<span className='font-medium'>
-																		Incident
-																		Created
-																	</span>
-																	<Badge
-																		variant='outline'
-																		className='text-xs'
-																	>
-																		{incident.status ===
-																		'open'
-																			? 'Current'
-																			: 'Initial'}
-																	</Badge>
-																</div>
-																<p className='text-sm text-muted-foreground'>
-																	{new Date(
-																		incident.created_at,
-																	).toLocaleString()}
-																</p>
-															</div>
-														</div>
-
-														{incident.status !==
-															'open' && (
-															<div className='flex gap-4'>
-																<div className='w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center relative z-10'>
-																	<span className='text-sm'>
-																		🔍
-																	</span>
-																</div>
-																<div className='flex-1 pb-4'>
-																	<div className='flex items-center gap-2 mb-1'>
-																		<span className='font-medium'>
-																			Status
-																			Updated
-																			to{' '}
-																			{
-																				incident.status
-																			}
-																		</span>
-																		{incident.status ===
-																			incident.status && (
-																			<Badge
-																				variant='default'
-																				className='text-xs'
-																			>
-																				Current
-																			</Badge>
-																		)}
-																	</div>
-																	<p className='text-sm text-muted-foreground'>
-																		{incident.updated_at
-																			? new Date(
-																					incident.updated_at,
-																				).toLocaleString()
-																			: 'Recently updated'}
-																	</p>
-																</div>
-															</div>
-														)}
-
-														{incident.end_time && (
-															<div className='flex gap-4'>
-																<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
-																	<span className='text-sm'>
-																		✅
-																	</span>
-																</div>
-																<div className='flex-1 pb-4'>
-																	<div className='flex items-center gap-2 mb-1'>
-																		<span className='font-medium'>
-																			Incident
-																			Resolved
-																		</span>
-																		<Badge
-																			variant='secondary'
-																			className='text-xs'
-																		>
-																			Final
-																		</Badge>
-																	</div>
-																	<p className='text-sm text-muted-foreground'>
-																		{new Date(
-																			incident.end_time,
-																		).toLocaleString()}
-																	</p>
-																</div>
-															</div>
-														)}
-													</div>
-												</div>
+								{incident.end_time && (
+									<div className='flex gap-4'>
+										<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
+											<CheckCircle2 className='h-4 w-4 text-green-600' />
+										</div>
+										<div className='flex-1 pb-4'>
+											<div className='flex items-center gap-2 mb-1'>
+												<span className='font-medium'>
+													Incident Resolved
+												</span>
+												<Badge
+													variant='secondary'
+													className='text-xs'
+												>
+													Final
+												</Badge>
 											</div>
-										</CardContent>
-									</Card>
-								</TabsContent>
-
-								<TabsContent
-									value='communication'
-									className='space-y-6'
-								>
-									<Card>
-										<CardHeader>
-											<CardTitle className='flex items-center gap-2'>
-												👁️ Public Status Page Preview
-											</CardTitle>
-											<CardDescription>
-												How this incident appears to
-												your users on the public status
-												page
-											</CardDescription>
-										</CardHeader>
-										<CardContent>
-											<div className='border rounded-lg p-6 bg-muted/50'>
-												<div className='max-w-2xl mx-auto space-y-4'>
-													<div className='flex items-center justify-between'>
-														<div className='flex items-center gap-3'>
-															{getStatusBadge(
-																incident.status,
-															)}
-															{getSeverityBadge(
-																incident.severity,
-															)}
-														</div>
-														<span className='text-sm text-muted-foreground'>
-															{getTimeElapsed(
-																incident.created_at,
-															)}
-														</span>
-													</div>
-
-													<h3 className='text-xl font-semibold'>
-														{incident.title}
-													</h3>
-
-													{incident.description && (
-														<p className='text-muted-foreground leading-relaxed'>
-															{
-																incident.description.split(
-																	'\n',
-																)[0]
-															}{' '}
-															{/* Show first paragraph only for preview */}
-														</p>
-													)}
-
-													{getAffectedEndpoints()
-														.length > 0 && (
-														<div className='space-y-2'>
-															<h4 className='font-medium text-sm'>
-																Affected
-																Services:
-															</h4>
-															<div className='flex flex-wrap gap-2'>
-																{getAffectedEndpoints().map(
-																	(
-																		endpoint: any,
-																	) => (
-																		<Badge
-																			key={
-																				endpoint.id
-																			}
-																			variant='outline'
-																			className='text-xs'
-																		>
-																			{
-																				endpoint.name
-																			}
-																		</Badge>
-																	),
-																)}
-															</div>
-														</div>
-													)}
-												</div>
-											</div>
-										</CardContent>
-									</Card>
-
-									<Card>
-										<CardHeader>
-											<CardTitle className='flex items-center gap-2'>
-												📝 Message Templates
-											</CardTitle>
-											<CardDescription>
-												Pre-written templates for common
-												incident communications
-											</CardDescription>
-										</CardHeader>
-										<CardContent>
-											<div className='grid gap-4'>
-												{[
-													{
-														title: 'Service Investigation',
-														template:
-															'We are aware of issues affecting our service and are actively investigating. We will provide updates as more information becomes available.',
-													},
-													{
-														title: 'Issue Identified',
-														template:
-															'We have identified the root cause of the service disruption and are implementing a fix. Expected resolution within the next hour.',
-													},
-													{
-														title: 'Service Restored',
-														template:
-															'The issue has been resolved and all services are now operating normally. We apologize for any inconvenience caused.',
-													},
-												].map((template, index) => (
-													<div
-														key={index}
-														className='border rounded-lg p-4 space-y-2'
-													>
-														<div className='flex items-center justify-between'>
-															<h4 className='font-medium'>
-																{template.title}
-															</h4>
-															<Button
-																variant='outline'
-																size='sm'
-																onClick={() => {
-																	setPublicMessage(
-																		template.template,
-																	)
-																	setIsPublicMessageDialogOpen(
-																		true,
-																	)
-																}}
-															>
-																Use Template
-															</Button>
-														</div>
-														<p className='text-sm text-muted-foreground'>
-															{template.template}
-														</p>
-													</div>
-												))}
-											</div>
-										</CardContent>
-									</Card>
-								</TabsContent>
-							</Tabs>
-						</CardContent>
-					</Card>
+											<p className='text-sm text-muted-foreground'>
+												{new Date(
+													incident.end_time,
+												).toLocaleString()}
+											</p>
+										</div>
+									</div>
+								)}
+							</div>
+						</div>
+					</CardContent>
 				</PageContent>
+
+				{/* Update Dialog */}
+				<Dialog
+					open={isUpdateDialogOpen}
+					onOpenChange={setIsUpdateDialogOpen}
+				>
+					<DialogContent className='max-w-md'>
+						<DialogHeader>
+							<DialogTitle>{getDialogConfig().title}</DialogTitle>
+							<DialogDescription>
+								{getDialogConfig().description}
+							</DialogDescription>
+						</DialogHeader>
+						<div className='space-y-4'>
+							<div className='space-y-2'>
+								<Label htmlFor='status'>Status</Label>
+								<Select
+									value={newStatus}
+									onValueChange={setNewStatus}
+								>
+									<SelectTrigger>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value='open'>
+											Open
+										</SelectItem>
+										<SelectItem value='investigating'>
+											Investigating
+										</SelectItem>
+										<SelectItem value='identified'>
+											Identified
+										</SelectItem>
+										<SelectItem value='monitoring'>
+											Monitoring
+										</SelectItem>
+										<SelectItem value='resolved'>
+											Resolved
+										</SelectItem>
+										<SelectItem value='closed'>
+											Closed
+										</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+							<div className='space-y-2'>
+								<Label htmlFor='update_note'>
+									{dialogAction === 'update'
+										? 'Update Notes'
+										: 'Message'}
+								</Label>
+								<Textarea
+									id='update_note'
+									value={updateNote}
+									onChange={(e) =>
+										setUpdateNote(e.target.value)
+									}
+									placeholder={
+										dialogAction === 'resolve'
+											? 'Describe how the incident was resolved...'
+											: dialogAction === 'reopen'
+												? 'Explain why the incident needs to be reopened...'
+												: 'Add update notes...'
+									}
+									rows={4}
+								/>
+							</div>
+						</div>
+						<DialogFooter>
+							<Button
+								variant='outline'
+								onClick={() => setIsUpdateDialogOpen(false)}
+							>
+								Cancel
+							</Button>
+							<Button
+								onClick={() => {
+									handleStatusUpdate()
+									setIsUpdateDialogOpen(false)
+								}}
+								disabled={isUpdating}
+							>
+								{isUpdating
+									? 'Updating...'
+									: getDialogConfig().submitText}
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
 			</main>
 		</>
 	)

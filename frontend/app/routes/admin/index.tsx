@@ -433,7 +433,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 												).toLocaleDateString()}
 											</p>
 										</div>
-										<div className='flex items-center gap-2'>
+										<div className='flex items-center gap-4'>
 											<Badge
 												variant={
 													incident.severity ===
@@ -452,6 +452,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 												to={`/admin/incidents/${incident.id}`}
 											>
 												<Button
+													className='cursor-pointer'
 													size='sm'
 													variant='ghost'
 												>
