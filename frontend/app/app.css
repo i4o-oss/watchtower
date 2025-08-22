@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme {
+	--font-sans: "Inter", sans-serif;
+	--font-mono: "JetBrains Mono", monospace;
+}
+
 @theme inline {
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);
@@ -179,5 +184,12 @@
 
 	.typography-muted {
 		@apply text-sm text-muted-foreground;
+	}
+
+	.line-clamp-2 {
+		overflow: hidden;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
 	}
 }

@@ -252,7 +252,7 @@ export default function EndpointDetail({
 								<GlobeIcon className='h-7 w-7' />
 							</div>
 							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
+								<p className='text-sm font-normal font-mono uppercase'>
 									Success Rate
 								</p>
 								<p className='typography-h4'>
@@ -269,7 +269,7 @@ export default function EndpointDetail({
 								<Clock className='h-7 w-7' />
 							</div>
 							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
+								<p className='text-sm font-normal font-mono uppercase'>
 									Avg Response Time
 								</p>
 								<p className='typography-h4'>
@@ -290,7 +290,9 @@ export default function EndpointDetail({
 								)}
 							</div>
 							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>Status</p>
+								<p className='text-sm font-normal font-mono uppercase'>
+									Status
+								</p>
 								<p className='typography-h4'>
 									{endpoint.enabled ? 'Active' : 'Disabled'}
 								</p>
@@ -392,7 +394,7 @@ export default function EndpointDetail({
 					{endpoint.description && (
 						<div>
 							<h4 className='font-medium mb-2'>Description</h4>
-							<p className='text-sm text-muted-foreground'>
+							<p className='text-sm text-muted-foreground font-mono'>
 								{endpoint.description}
 							</p>
 						</div>
@@ -409,19 +411,25 @@ export default function EndpointDetail({
 							<h4 className='font-medium text-sm text-muted-foreground'>
 								Expected Status
 							</h4>
-							<p>{endpoint.expected_status_code}</p>
+							<p className='font-mono'>
+								{endpoint.expected_status_code}
+							</p>
 						</div>
 						<div>
 							<h4 className='font-medium text-sm text-muted-foreground'>
 								Timeout
 							</h4>
-							<p>{endpoint.timeout_seconds}s</p>
+							<p className='font-mono'>
+								{endpoint.timeout_seconds}s
+							</p>
 						</div>
 						<div>
 							<h4 className='font-medium text-sm text-muted-foreground'>
 								Interval
 							</h4>
-							<p>{endpoint.check_interval_seconds}s</p>
+							<p className='font-mono'>
+								{endpoint.check_interval_seconds}s
+							</p>
 						</div>
 					</div>
 
@@ -455,7 +463,7 @@ export default function EndpointDetail({
 							<h4 className='font-medium text-muted-foreground'>
 								Created
 							</h4>
-							<p>
+							<p className='font-mono'>
 								{new Date(endpoint.created_at).toLocaleString()}
 							</p>
 						</div>
@@ -463,7 +471,7 @@ export default function EndpointDetail({
 							<h4 className='font-medium text-muted-foreground'>
 								Last Updated
 							</h4>
-							<p>
+							<p className='font-mono'>
 								{new Date(endpoint.updated_at).toLocaleString()}
 							</p>
 						</div>
@@ -505,19 +513,19 @@ export default function EndpointDetail({
 										key={log.id}
 										className='flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors'
 									>
-										<div className='flex items-center gap-3 min-w-0'>
+										<div className='flex items-center gap-4 min-w-0'>
 											<Badge
 												variant={
 													log.success
 														? 'default'
 														: 'destructive'
 												}
-												className='shrink-0 rounded'
+												className='shrink-0 rounded font-mono'
 											>
 												{log.success ? 'OK' : 'FAIL'}
 											</Badge>
 											<div className='min-w-0 flex-1'>
-												<p className='text-sm'>
+												<p className='text-sm font-mono'>
 													{new Date(
 														log.timestamp,
 													).toLocaleString()}
@@ -529,9 +537,9 @@ export default function EndpointDetail({
 												)}
 											</div>
 										</div>
-										<div className='flex items-center gap-3 text-sm text-muted-foreground shrink-0'>
+										<div className='flex items-center gap-4 text-sm text-muted-foreground shrink-0'>
 											{log.response_time_ms !== null && (
-												<span>
+												<span className='font-mono'>
 													{log.response_time_ms}
 													ms
 												</span>

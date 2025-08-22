@@ -151,7 +151,7 @@ export function IncidentForm({
 									<Label className='text-base font-medium'>
 										Incident Type
 									</Label>
-									<div className='grid grid-cols-2 gap-3'>
+									<div className='grid grid-cols-2 gap-4'>
 										<div
 											className={`border rounded-lg p-4 cursor-pointer transition-colors ${
 												field.state.value ===
@@ -160,6 +160,9 @@ export function IncidentForm({
 													: 'border-border hover:bg-muted'
 											}`}
 											onClick={() =>
+												field.handleChange('unplanned')
+											}
+											onKeyDown={() =>
 												field.handleChange('unplanned')
 											}
 										>
@@ -175,11 +178,11 @@ export function IncidentForm({
 															'unplanned',
 														)
 													}
-													className='text-red-600'
+													className='text-red-600 hidden'
 												/>
 												<div>
 													<div className='font-medium text-red-600'>
-														🚨 Unplanned Incident
+														Unplanned Incident
 													</div>
 													<div className='text-sm text-muted-foreground'>
 														Service disruption or
@@ -200,6 +203,11 @@ export function IncidentForm({
 													'maintenance',
 												)
 											}
+											onKeyDown={() =>
+												field.handleChange(
+													'maintenance',
+												)
+											}
 										>
 											<div className='flex items-center space-x-2'>
 												<input
@@ -213,11 +221,11 @@ export function IncidentForm({
 															'maintenance',
 														)
 													}
-													className='text-blue-600'
+													className='text-blue-600 hidden'
 												/>
 												<div>
 													<div className='font-medium text-blue-600'>
-														🔧 Scheduled Maintenance
+														Scheduled Maintenance
 													</div>
 													<div className='text-sm text-muted-foreground'>
 														Planned service
@@ -312,9 +320,13 @@ export function IncidentForm({
 												onClick={() =>
 													field.handleChange(severity)
 												}
+												onKeyDown={() =>
+													field.handleChange(severity)
+												}
 											>
 												<div className='flex items-center space-x-3'>
 													<input
+														className='hidden'
 														type='radio'
 														checked={
 															field.state
@@ -329,14 +341,11 @@ export function IncidentForm({
 													/>
 													<div className='flex-1'>
 														<div className='flex items-center gap-2 mb-1'>
-															<div
-																className={`w-2 h-2 rounded-full ${config.color}`}
-															/>
 															<Badge
 																variant={
 																	config.variant
 																}
-																className='capitalize'
+																className='font-mono uppercase'
 															>
 																{severity}
 															</Badge>
@@ -361,13 +370,13 @@ export function IncidentForm({
 										<Label className='text-base font-medium'>
 											Affected Services
 										</Label>
-										<div className='border rounded-lg max-h-48 overflow-y-auto'>
-											<div className='p-4 space-y-2'>
+										<div className='max-h-48 overflow-y-auto'>
+											<div className='space-y-2'>
 												{endpoints.map(
 													(endpoint: any) => (
-														<label
+														<div
 															key={endpoint.id}
-															className='flex items-center space-x-3 p-2 rounded hover:bg-muted cursor-pointer'
+															className='flex items-center space-x-3 py-2 rounded hover:bg-muted cursor-pointer'
 														>
 															<Checkbox
 																checked={field.state.value.includes(
@@ -409,7 +418,7 @@ export function IncidentForm({
 																		endpoint.name
 																	}
 																</div>
-																<div className='text-sm text-muted-foreground'>
+																<div className='text-sm text-muted-foreground font-mono'>
 																	{
 																		endpoint.url
 																	}
@@ -422,7 +431,7 @@ export function IncidentForm({
 																{endpoint.status ||
 																	'Unknown'}
 															</Badge>
-														</label>
+														</div>
 													),
 												)}
 											</div>
@@ -433,185 +442,152 @@ export function IncidentForm({
 						)}
 
 						{/* Public Message */}
-						<form.Field name='public_message'>
-							{(field) => (
-								<div className='space-y-2'>
-									<Label htmlFor='public_message'>
-										Public Message
-									</Label>
-									<Textarea
-										id='public_message'
-										value={field.state.value}
-										onChange={(e) =>
-											field.handleChange(e.target.value)
-										}
-										placeholder='Write a customer-friendly message about this incident...'
-										rows={3}
-									/>
-									<div className='text-sm text-muted-foreground'>
-										This message will be displayed to users
-										on the status page
-									</div>
-								</div>
-							)}
-						</form.Field>
+						{/*<form.Field name="public_message">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="public_message">Public Message</Label>
+                  <Textarea
+                    id="public_message"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="Write a customer-friendly message about this incident..."
+                    rows={3}
+                  />
+                  <div className="text-sm text-muted-foreground">
+                    This message will be displayed to users on the status page
+                  </div>
+                </div>
+              )}
+            </form.Field>*/}
 
 						{/* Communication Settings */}
-						<div className='space-y-4'>
-							<form.Field name='publish_to_status_page'>
-								{(field) => (
-									<div className='flex items-center justify-between p-4 border rounded-lg'>
-										<div>
-											<Label className='font-medium'>
-												Publish to Status Page
-											</Label>
-											<div className='text-sm text-muted-foreground'>
-												Make this incident visible on
-												your public status page
-											</div>
-										</div>
-										<Switch
-											checked={field.state.value}
-											onCheckedChange={field.handleChange}
-										/>
-									</div>
-								)}
-							</form.Field>
+						{/*<div className="space-y-4">
+              <form.Field name="publish_to_status_page">
+                {(field) => (
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <Label className="font-medium">
+                        Publish to Status Page
+                      </Label>
+                      <div className="text-sm text-muted-foreground">
+                        Make this incident visible on your public status page
+                      </div>
+                    </div>
+                    <Switch
+                      checked={field.state.value}
+                      onCheckedChange={field.handleChange}
+                    />
+                  </div>
+                )}
+              </form.Field>
 
-							<form.Field name='notification_channels'>
-								{(field) => (
-									<div className='space-y-3'>
-										<Label className='text-base font-medium'>
-											Notification Channels
-										</Label>
-										<div className='grid grid-cols-2 gap-3'>
-											{[
-												{
-													id: 'email',
-													label: '📧 Email',
-												},
-												{
-													id: 'slack',
-													label: '💬 Slack',
-												},
-												{
-													id: 'discord',
-													label: '🎮 Discord',
-												},
-												{
-													id: 'webhook',
-													label: '🔗 Webhook',
-												},
-											].map((channel) => (
-												<label
-													key={channel.id}
-													className='flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-muted'
-												>
-													<Checkbox
-														checked={field.state.value.includes(
-															channel.id,
-														)}
-														onCheckedChange={(
-															checked,
-														) => {
-															const current =
-																field.state
-																	.value || []
-															if (checked) {
-																field.handleChange(
-																	[
-																		...current,
-																		channel.id,
-																	],
-																)
-															} else {
-																field.handleChange(
-																	current.filter(
-																		(
-																			c: string,
-																		) =>
-																			c !==
-																			channel.id,
-																	),
-																)
-															}
-														}}
-													/>
-													<div className='font-medium'>
-														{channel.label}
-													</div>
-												</label>
-											))}
-										</div>
-									</div>
-								)}
-							</form.Field>
+              <form.Field name="notification_channels">
+                {(field) => (
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium">
+                      Notification Channels
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        {
+                          id: "email",
+                          label: "📧 Email",
+                        },
+                        {
+                          id: "slack",
+                          label: "💬 Slack",
+                        },
+                        {
+                          id: "discord",
+                          label: "🎮 Discord",
+                        },
+                        {
+                          id: "webhook",
+                          label: "🔗 Webhook",
+                        },
+                      ].map((channel) => (
+                        <div
+                          key={channel.id}
+                          className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-muted"
+                        >
+                          <Checkbox
+                            checked={field.state.value.includes(channel.id)}
+                            onCheckedChange={(checked) => {
+                              const current = field.state.value || [];
+                              if (checked) {
+                                field.handleChange([...current, channel.id]);
+                              } else {
+                                field.handleChange(
+                                  current.filter(
+                                    (c: string) => c !== channel.id
+                                  )
+                                );
+                              }
+                            }}
+                          />
+                          <div className="font-medium">{channel.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </form.Field>
 
-							<form.Field name='schedule_publication'>
-								{(field) => (
-									<div className='space-y-3'>
-										<div className='flex items-center justify-between p-4 border rounded-lg'>
-											<div>
-												<Label className='font-medium'>
-													Schedule Publication
-												</Label>
-												<div className='text-sm text-muted-foreground'>
-													Schedule this incident to be
-													published later
-												</div>
-											</div>
-											<Switch
-												checked={field.state.value}
-												onCheckedChange={
-													field.handleChange
-												}
-											/>
-										</div>
-										{field.state.value && (
-											<form.Field name='scheduled_time'>
-												{(timeField) => (
-													<div className='space-y-2'>
-														<Label htmlFor='scheduled_time'>
-															Publication Time
-														</Label>
-														<Input
-															id='scheduled_time'
-															type='datetime-local'
-															value={
-																timeField.state
-																	.value
-															}
-															onChange={(e) =>
-																timeField.handleChange(
-																	e.target
-																		.value,
-																)
-															}
-														/>
-													</div>
-												)}
-											</form.Field>
-										)}
-									</div>
-								)}
-							</form.Field>
-						</div>
+              <form.Field name="schedule_publication">
+                {(field) => (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <Label className="font-medium">
+                          Schedule Publication
+                        </Label>
+                        <div className="text-sm text-muted-foreground">
+                          Schedule this incident to be published later
+                        </div>
+                      </div>
+                      <Switch
+                        checked={field.state.value}
+                        onCheckedChange={field.handleChange}
+                      />
+                    </div>
+                    {field.state.value && (
+                      <form.Field name="scheduled_time">
+                        {(timeField) => (
+                          <div className="space-y-2">
+                            <Label htmlFor="scheduled_time">
+                              Publication Time
+                            </Label>
+                            <Input
+                              id="scheduled_time"
+                              type="datetime-local"
+                              value={timeField.state.value}
+                              onChange={(e) =>
+                                timeField.handleChange(e.target.value)
+                              }
+                            />
+                          </div>
+                        )}
+                      </form.Field>
+                    )}
+                  </div>
+                )}
+              </form.Field>
+            </div>*/}
 
-						<div className='flex flex-col sm:flex-row justify-center sm:justify-between gap-3 pt-8 border-t border-border/50'>
-							<form.Field name='save_as_draft'>
-								{(field) => (
-									<div className='flex items-center space-x-2'>
-										<Switch
-											id='save_as_draft'
-											checked={field.state.value}
-											onCheckedChange={field.handleChange}
-										/>
-										<Label htmlFor='save_as_draft'>
-											Save as draft
-										</Label>
-									</div>
-								)}
-							</form.Field>
+						{/*<div className="flex flex-col sm:flex-row justify-center sm:justify-between gap-3 pt-8 border-t border-border/50">*/}
+						<div className='flex flex-col sm:flex-row justify-end gap-4'>
+							{/*<form.Field name="save_as_draft">
+                {(field) => (
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="save_as_draft"
+                      checked={field.state.value}
+                      onCheckedChange={field.handleChange}
+                    />
+                    <Label htmlFor="save_as_draft">Save as draft</Label>
+                  </div>
+                )}
+              </form.Field>*/}
 							<div className='flex items-center gap-2'>
 								<Link to={cancelPath}>
 									<Button

@@ -450,7 +450,7 @@ export function EndpointForm({
 							)}
 						</form.Field>
 
-						<div className='flex flex-col sm:flex-row justify-center sm:justify-between gap-3 pt-8 border-t border-border/50'>
+						<div className='flex flex-col sm:flex-row justify-center sm:justify-between gap-4 pt-8 border-t border-border/50'>
 							<form.Field name='enabled'>
 								{(field) => (
 									<div className='flex items-center space-x-2'>

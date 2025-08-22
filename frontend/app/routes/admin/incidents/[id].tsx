@@ -297,7 +297,7 @@ export default function IncidentDetail({
 			severityConfig.low
 
 		return (
-			<Badge variant={config.variant} className='capitalize'>
+			<Badge className='font-mono uppercase' variant={config.variant}>
 				{severity}
 			</Badge>
 		)
@@ -318,7 +318,7 @@ export default function IncidentDetail({
 			statusConfig.open
 
 		return (
-			<Badge variant={config.variant} className='capitalize'>
+			<Badge className='font-mono uppercase' variant={config.variant}>
 				{status}
 			</Badge>
 		)
@@ -379,7 +379,7 @@ export default function IncidentDetail({
 									)}
 								</div>
 								<div className='flex flex-col'>
-									<p className='text-sm font-normal'>
+									<p className='text-sm font-normal font-mono uppercase'>
 										Status
 									</p>
 									<p className='typography-h4 capitalize'>
@@ -396,7 +396,7 @@ export default function IncidentDetail({
 									<Target className='h-7 w-7' />
 								</div>
 								<div className='flex flex-col'>
-									<p className='text-sm font-normal'>
+									<p className='text-sm font-normal font-mono uppercase'>
 										Affected Services
 									</p>
 									<p className='typography-h4'>
@@ -413,7 +413,7 @@ export default function IncidentDetail({
 									<Clock className='h-7 w-7' />
 								</div>
 								<div className='flex flex-col'>
-									<p className='text-sm font-normal'>
+									<p className='text-sm font-normal font-mono uppercase'>
 										{incident.status === 'resolved'
 											? 'Resolution Time'
 											: 'Time Elapsed'}
@@ -540,7 +540,7 @@ export default function IncidentDetail({
 								<h4 className='font-medium text-sm text-muted-foreground mb-1'>
 									Created
 								</h4>
-								<p className='text-sm'>
+								<p className='text-sm font-mono'>
 									{new Date(
 										incident.created_at,
 									).toLocaleString()}
@@ -551,7 +551,7 @@ export default function IncidentDetail({
 									<h4 className='font-medium text-sm text-muted-foreground mb-1'>
 										Resolved
 									</h4>
-									<p className='text-sm'>
+									<p className='text-sm font-mono'>
 										{new Date(
 											incident.end_time,
 										).toLocaleString()}
@@ -616,90 +616,89 @@ export default function IncidentDetail({
 						</Button>
 					</PageHeader>
 					<CardContent className='px-6 py-4 gap-4 flex flex-col'>
-						<div className='relative'>
-							<div className='absolute left-4 top-0 bottom-0 w-0.5 bg-border' />
-							<div className='space-y-6'>
+						<div className='space-y-0'>
+							<div className='flex gap-4 relative'>
+								<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
+									<Calendar className='h-4 w-4 text-green-600' />
+								</div>
+								<div className='absolute left-4 top-0 bottom-0 w-0.5 bg-border' />
+								<div className='flex-1 pb-4'>
+									<div className='flex items-center gap-2 mb-1'>
+										<span className='font-medium'>
+											Incident Created
+										</span>
+										<Badge
+											className='font-mono uppercase'
+											variant='outline'
+										>
+											{incident.status === 'open'
+												? 'Current'
+												: 'Initial'}
+										</Badge>
+									</div>
+									<p className='text-sm text-muted-foreground font-mono'>
+										{new Date(
+											incident.created_at,
+										).toLocaleString()}
+									</p>
+								</div>
+							</div>
+
+							{incident.status !== 'open' && (
+								<div className='flex gap-4 relative py-6'>
+									<div className='w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center relative z-10'>
+										<RefreshCw className='h-4 w-4 text-blue-600' />
+									</div>
+									<div className='absolute left-4 top-0 bottom-0 w-0.5 bg-border' />
+									<div className='flex-1 pb-4'>
+										<div className='flex items-center gap-2 mb-1'>
+											<span className='font-medium'>
+												Status Updated to{' '}
+												{incident.status}
+											</span>
+											<Badge
+												className='font-mono uppercase'
+												variant='default'
+											>
+												Current
+											</Badge>
+										</div>
+										<p className='text-sm text-muted-foreground font-mono'>
+											{incident.updated_at
+												? new Date(
+														incident.updated_at,
+													).toLocaleString()
+												: 'Recently updated'}
+										</p>
+									</div>
+								</div>
+							)}
+
+							{incident.end_time && (
 								<div className='flex gap-4'>
 									<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
-										<Calendar className='h-4 w-4 text-green-600' />
+										<CheckCircle2 className='h-4 w-4 text-green-600' />
 									</div>
 									<div className='flex-1 pb-4'>
 										<div className='flex items-center gap-2 mb-1'>
 											<span className='font-medium'>
-												Incident Created
+												Incident Resolved
 											</span>
 											<Badge
-												variant='outline'
-												className='text-xs'
+												className='font-mono uppercase'
+												variant='secondary'
 											>
-												{incident.status === 'open'
-													? 'Current'
-													: 'Initial'}
+												Final
 											</Badge>
 										</div>
-										<p className='text-sm text-muted-foreground'>
+										<p className='text-sm text-muted-foreground font-mono'>
 											{new Date(
-												incident.created_at,
+												incident.end_time,
 											).toLocaleString()}
 										</p>
 									</div>
 								</div>
-
-								{incident.status !== 'open' && (
-									<div className='flex gap-4'>
-										<div className='w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center relative z-10'>
-											<RefreshCw className='h-4 w-4 text-blue-600' />
-										</div>
-										<div className='flex-1 pb-4'>
-											<div className='flex items-center gap-2 mb-1'>
-												<span className='font-medium'>
-													Status Updated to{' '}
-													{incident.status}
-												</span>
-												<Badge
-													variant='default'
-													className='text-xs'
-												>
-													Current
-												</Badge>
-											</div>
-											<p className='text-sm text-muted-foreground'>
-												{incident.updated_at
-													? new Date(
-															incident.updated_at,
-														).toLocaleString()
-													: 'Recently updated'}
-											</p>
-										</div>
-									</div>
-								)}
-
-								{incident.end_time && (
-									<div className='flex gap-4'>
-										<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
-											<CheckCircle2 className='h-4 w-4 text-green-600' />
-										</div>
-										<div className='flex-1 pb-4'>
-											<div className='flex items-center gap-2 mb-1'>
-												<span className='font-medium'>
-													Incident Resolved
-												</span>
-												<Badge
-													variant='secondary'
-													className='text-xs'
-												>
-													Final
-												</Badge>
-											</div>
-											<p className='text-sm text-muted-foreground'>
-												{new Date(
-													incident.end_time,
-												).toLocaleString()}
-											</p>
-										</div>
-									</div>
-								)}
-							</div>
+							)}
 						</div>
 					</CardContent>
 				</PageContent>

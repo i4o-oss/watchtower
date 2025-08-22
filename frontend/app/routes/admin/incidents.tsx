@@ -55,6 +55,7 @@ import {
 	TrendingUp,
 	ChevronDownIcon,
 	ChevronRightIcon,
+	CheckIcon,
 } from 'lucide-react'
 import { requireAuth } from '~/lib/auth'
 import type { Route } from './+types/incidents'
@@ -338,11 +339,9 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 			severityConfig.low
 
 		return (
-			<div className='flex items-center gap-2'>
-				<Badge variant={config.variant} className='capitalize'>
-					{severity}
-				</Badge>
-			</div>
+			<Badge className='font-mono uppercase' variant={config.variant}>
+				{severity}
+			</Badge>
 		)
 	}
 
@@ -361,7 +360,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 			statusConfig.open
 
 		return (
-			<Badge className='capitalize' variant={config.variant}>
+			<Badge className='font-mono uppercase' variant={config.variant}>
 				{status}
 			</Badge>
 		)
@@ -403,7 +402,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 									<AlertTriangleIcon className='h-7 w-7' />
 								</div>
 								<div className='flex flex-col'>
-									<p className='text-sm font-normal'>
+									<p className='text-sm font-normal font-mono uppercase'>
 										Active Incidents
 									</p>
 									<p className='typography-h4'>
@@ -420,7 +419,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 									<TrendingUp className='h-7 w-7' />
 								</div>
 								<div className='flex flex-col'>
-									<p className='text-sm font-normal'>
+									<p className='text-sm font-normal font-mono uppercase'>
 										Total Incidents
 									</p>
 									<p className='typography-h4'>{total}</p>
@@ -435,7 +434,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 									<Clock className='h-7 w-7' />
 								</div>
 								<div className='flex flex-col'>
-									<p className='text-sm font-normal'>
+									<p className='text-sm font-normal font-mono uppercase'>
 										Avg Resolution
 									</p>
 									<p className='typography-h4'>
@@ -465,7 +464,9 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 						{activeIncidents.length === 0 ? (
 							<div className='text-center py-8 text-muted-foreground'>
 								<div className='w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4 mx-auto'>
-									<span className='text-2xl'>✅</span>
+									<span className='text-2xl'>
+										<CheckIcon className='h-8 w-8 text-foreground' />
+									</span>
 								</div>
 								<h3 className='text-xl font-semibold mb-2 text-foreground'>
 									All Systems Operational
@@ -706,15 +707,16 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 													: null
 
 											return (
-												<div
+												<Link
 													key={incident.id}
-													className='px-6 py-4'
+													to={`/admin/incidents/${incident.id}`}
+													className='block hover:bg-accent/50 transition-colors'
 												>
-													<div className='flex items-start justify-between'>
-														<div className='flex-1 flex items-center'>
-															<div className='flex-1 flex flex-col'>
-																<div className='flex items-center gap-3 mb-2'>
-																	<h4 className='font-medium'>
+													<div className='px-6 py-4'>
+														<div className='flex items-start justify-between gap-4'>
+															<div className='flex-1 min-w-0'>
+																<div className='flex items-center gap-2 mb-2'>
+																	<h4 className='font-medium text-base leading-tight'>
 																		{
 																			incident.title
 																		}
@@ -726,70 +728,52 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 																		incident.severity,
 																	)}
 																</div>
-																<div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground'>
-																	<div>
-																		<span className='font-medium'>
-																			Created:
-																		</span>
-																		<br />
+
+																{incident.description && (
+																	<p className='text-sm text-muted-foreground mb-3 line-clamp-2'>
+																		{
+																			incident.description
+																		}
+																	</p>
+																)}
+
+																<div className='flex items-center gap-4 text-xs text-muted-foreground'>
+																	<span className='flex items-center gap-1'>
+																		<Clock className='h-3 w-3' />
 																		{new Date(
 																			incident.created_at,
-																		).toLocaleDateString()}
-																	</div>
-																	{incident.end_time && (
-																		<div>
-																			<span className='font-medium'>
-																				Resolved:
-																			</span>
-																			<br />
-																			{new Date(
-																				incident.end_time,
-																			).toLocaleDateString()}
-																		</div>
-																	)}
-																	{resolutionTime && (
-																		<div>
-																			<span className='font-medium'>
-																				Duration:
-																			</span>
-																			<br />
+																		).toLocaleDateString(
+																			'en-US',
 																			{
-																				resolutionTime
-																			}
-																			m
-																		</div>
-																	)}
-																	{getAffectedServicesCount(
-																		incident,
-																	) > 0 && (
-																		<div>
-																			<span className='font-medium'>
-																				Services:
+																				month: 'short',
+																				day: 'numeric',
+																				year: 'numeric',
+																			},
+																		)}
+																	</span>
+																	{resolutionTime && (
+																		<span className='flex items-center gap-1'>
+																			<span>
+																				Resolved
+																				in:
 																			</span>
-																			<br />
-																			{getAffectedServicesCount(
-																				incident,
-																			)}{' '}
-																			affected
-																		</div>
+																			<span className='font-medium'>
+																				{resolutionTime <
+																				60
+																					? `${resolutionTime}m`
+																					: resolutionTime <
+																							1440
+																						? `${Math.floor(resolutionTime / 60)}h ${resolutionTime % 60}m`
+																						: `${Math.floor(resolutionTime / 1440)}d ${Math.floor((resolutionTime % 1440) / 60)}h`}
+																			</span>
+																		</span>
 																	)}
 																</div>
 															</div>
-															<Link
-																to={`/admin/incidents/${incident.id}`}
-															>
-																<Button
-																	className='cursor-pointer'
-																	size='sm'
-																	variant='ghost'
-																>
-																	View
-																	<ChevronRightIcon className='h-4 w-4' />
-																</Button>
-															</Link>
+															<ChevronRightIcon className='h-4 w-4 text-muted-foreground mt-1' />
 														</div>
 													</div>
-												</div>
+												</Link>
 											)
 										},
 									)}

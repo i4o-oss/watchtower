@@ -21,7 +21,7 @@ export const links: Route.LinksFunction = () => [
 	},
 	{
 		rel: 'stylesheet',
-		href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
+		href: 'https://fonts.bunny.net/css?family=inter:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i|jetbrains-mono:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i',
 	},
 ]
 
@@ -37,7 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Meta />
 				<Links />
 			</head>
-			<body>
+			<body className='font-sans'>
 				<ToastProvider>
 					<AuthProvider>{children}</AuthProvider>
 				</ToastProvider>

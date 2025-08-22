@@ -246,7 +246,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 								<GlobeIcon className='h-7 w-7' />
 							</div>
 							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
+								<p className='text-sm font-normal font-mono uppercase'>
 									Total Endpoints
 								</p>
 								<p className='typography-h4'>
@@ -263,7 +263,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 								<CircleXIcon className='h-7 w-7' />
 							</div>
 							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
+								<p className='text-sm font-normal font-mono uppercase'>
 									Recent Failures
 								</p>
 								<p className='typography-h4'>
@@ -280,7 +280,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 								<AlertTriangleIcon className='h-7 w-7' />
 							</div>
 							<div className='flex flex-col'>
-								<p className='text-sm font-normal'>
+								<p className='text-sm font-normal font-mono uppercase'>
 									Open Incidents
 								</p>
 								<p className='typography-h4'>{openIncidents}</p>

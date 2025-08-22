@@ -55,12 +55,12 @@ const navigation = [
 		icon: AlertTriangle,
 		description: 'Track and manage incidents',
 	},
-	{
-		name: 'Notifications',
-		href: '/admin/notifications',
-		icon: Bell,
-		description: 'Configure alert channels',
-	},
+	// {
+	//   name: "Notifications",
+	//   href: "/admin/notifications",
+	//   icon: Bell,
+	//   description: "Configure alert channels",
+	// },
 ]
 
 const breadcrumbMap: Record<string, string> = {
@@ -178,17 +178,15 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 						<div className='flex items-center gap-4'>
 							<Link
 								to='/admin'
-								className='flex items-center gap-3'
+								className='flex items-center gap-2'
 							>
-								<Activity className='h-6 w-6 text-primary' />
-								<span className='text-lg font-semibold text-foreground'>
-									Watchtower
-								</span>
+								<Activity className='h-4 w-4 text-primary' />
+								<span className='text-sm'>Watchtower</span>
 							</Link>
 						</div>
 
 						{/* Right - Header Actions */}
-						<div className='flex items-center gap-3'>
+						<div className='flex items-center gap-4'>
 							{navigation.map((item) => {
 								const Icon = item.icon
 								const active = isActive(item.href)
@@ -325,7 +323,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 					</div>
 					<div className='flex items-center gap-2'>
 						<Badge
-							className='px-4 py-2'
+							className='px-4 py-2 font-mono uppercase'
 							variant={
 								incidents.length === 0
 									? 'outline'

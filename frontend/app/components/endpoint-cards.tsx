@@ -225,7 +225,7 @@ export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 									<TooltipProvider>
 										<Tooltip>
 											<TooltipTrigger asChild>
-												<div className='text-xs text-muted-foreground truncate mb-3'>
+												<div className='text-xs text-muted-foreground truncate mb-4 font-mono'>
 													{endpoint.url}
 												</div>
 											</TooltipTrigger>
