@@ -343,7 +343,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 											<h4 className='font-medium'>
 												{endpoint.name}
 											</h4>
-											<p className='text-sm text-muted-foreground'>
+											<p className='text-sm text-muted-foreground font-mono'>
 												{endpoint.url}
 											</p>
 										</div>

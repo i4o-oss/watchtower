@@ -181,7 +181,9 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 								className='flex items-center gap-2'
 							>
 								<Activity className='h-4 w-4 text-primary' />
-								<span className='text-sm'>Watchtower</span>
+								<span className='text-sm font-mono uppercase'>
+									Watchtower
+								</span>
 							</Link>
 						</div>
 
