@@ -69,6 +69,7 @@ const breadcrumbMap: Record<string, string> = {
 	incidents: 'Incidents',
 	notifications: 'Notifications',
 	channels: 'Channels',
+	settings: 'Settings',
 	new: 'New',
 	edit: 'Edit',
 }
@@ -240,9 +241,14 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 										My Account
 									</DropdownMenuLabel>
 									<DropdownMenuSeparator />
-									<DropdownMenuItem className='cursor-pointer'>
-										<SettingsIcon className='h-4 w-4' />
-										Settings
+									<DropdownMenuItem asChild>
+										<Link
+											to='/admin/settings'
+											className='cursor-pointer'
+										>
+											<SettingsIcon className='h-4 w-4' />
+											Settings
+										</Link>
 									</DropdownMenuItem>
 									<DropdownMenuSeparator />
 									<DropdownMenuItem>

@@ -22,5 +22,6 @@ export default [
 			'notifications/channels',
 			'routes/admin/notifications/channels.tsx',
 		),
+		route('settings', 'routes/admin/settings.tsx'),
 	]),
 ] satisfies RouteConfig
