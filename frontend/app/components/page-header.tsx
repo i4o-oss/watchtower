@@ -25,7 +25,7 @@ export function PageHeader({ title, description, children }: PageHeaderProps) {
 					</CardDescription>
 				</div>
 				{children && (
-					<div className='flex items-center gap-2 sm:flex-row'>
+					<div className='flex items-center gap-4 sm:flex-row'>
 						{children}
 					</div>
 				)}

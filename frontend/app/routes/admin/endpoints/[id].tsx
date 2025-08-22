@@ -482,8 +482,9 @@ export default function EndpointDetail({
 			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded-sm shadow-none'>
 				<PageHeader
 					title='Monitoring Logs'
-					description={`Complete monitoring history for this endpoint (${logs.total} total logs)`}
+					description='Complete monitoring history for this endpoint'
 				>
+					<span className='text-sm text-muted-foreground'>{`${logs.total} logs`}</span>
 					<Button
 						variant='outline'
 						size='sm'

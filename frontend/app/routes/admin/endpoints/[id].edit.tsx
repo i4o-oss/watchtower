@@ -83,9 +83,7 @@ export default function EditEndpoint({
 		description: endpoint.description || '',
 		url: endpoint.url || '',
 		method: endpoint.method || 'GET',
-		headers: endpoint.headers
-			? JSON.stringify(endpoint.headers, null, 2)
-			: '',
+		headers: endpoint.headers || {},
 		body: endpoint.body || '',
 		expected_status_code: endpoint.expected_status_code || 200,
 		timeout_seconds: endpoint.timeout_seconds || 30,

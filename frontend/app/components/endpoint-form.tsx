@@ -16,6 +16,7 @@ import {
 import { Switch } from '~/components/ui/switch'
 import { Alert, AlertDescription } from '~/components/ui/alert'
 import { LazyJsonEditor as JsonEditor } from '~/components/lazy-json-editor'
+import { KeyValueInput } from '~/components/key-value-input'
 import { ButtonLoadingSkeleton } from '~/lib/lazy'
 import { useSuccessToast, useErrorToast } from '~/components/toast'
 import { PageHeader } from '~/components/page-header'
@@ -29,7 +30,7 @@ export interface EndpointFormData {
 	description: string
 	url: string
 	method: string
-	headers: string
+	headers: Record<string, string>
 	body: string
 	expected_status_code: number
 	timeout_seconds: number
@@ -65,7 +66,7 @@ export function EndpointForm({
 			description: initialValues.description || '',
 			url: initialValues.url || '',
 			method: initialValues.method || 'GET',
-			headers: initialValues.headers || '',
+			headers: initialValues.headers || {},
 			body: initialValues.body || '',
 			expected_status_code: initialValues.expected_status_code || 200,
 			timeout_seconds: initialValues.timeout_seconds || 30,
@@ -77,18 +78,6 @@ export function EndpointForm({
 		} as EndpointFormData,
 		onSubmit: async ({ value }) => {
 			setError(null)
-
-			// Parse headers if provided
-			let headers = {}
-			if (value.headers.trim()) {
-				try {
-					headers = JSON.parse(value.headers)
-				} catch {
-					setError('Invalid JSON format for headers')
-					errorToast('Invalid Headers', 'Headers must be valid JSON')
-					return
-				}
-			}
 
 			// Parse body if provided
 			let body = null
@@ -105,9 +94,9 @@ export function EndpointForm({
 				}
 			}
 
-			const payload: EndpointFormData = {
+			const payload = {
 				...value,
-				headers: JSON.stringify(headers),
+				headers: value.headers, // Already a Record<string, string>
 				body: body ? JSON.stringify(body) : '',
 				expected_status_code: Number(value.expected_status_code),
 				timeout_seconds: Number(value.timeout_seconds),
@@ -385,19 +374,15 @@ export function EndpointForm({
 						<form.Field name='headers'>
 							{(field) => (
 								<div className='space-y-2'>
-									<JsonEditor
+									<KeyValueInput
 										title='Request Headers'
 										value={field.state.value}
 										onChange={(value) =>
 											field.handleChange(value)
 										}
-										height={200}
 										placeholder={{
-											Authorization:
-												'Bearer your-token-here',
-											'Content-Type': 'application/json',
-											'User-Agent':
-												'Watchtower-Monitor/1.0',
+											key: 'Authorization',
+											value: 'Bearer your-token-here',
 										}}
 									/>
 									<FieldError
