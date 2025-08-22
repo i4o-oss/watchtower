@@ -952,3 +952,159 @@ func (app *Application) addIncidentComment(w http.ResponseWriter, r *http.Reques
 func stringPtr(s string) *string {
 	return &s
 }
+
+// Settings API
+
+// SettingsRequest represents the request body for settings operations
+type SettingsRequest struct {
+	SiteName        string `json:"siteName"`
+	SiteDescription string `json:"siteDescription"`
+	Domain          string `json:"domain"`
+	AdminEmail      string `json:"adminEmail"`
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
+}
+
+// SettingsResponse represents the response for settings operations
+type SettingsResponse struct {
+	*data.Settings
+	AdminEmail string `json:"adminEmail"`
+}
+
+// getSettings handles GET /api/v1/admin/settings
+func (app *Application) getSettings(w http.ResponseWriter, r *http.Request) {
+	settings, err := app.db.GetSettings()
+	if err != nil {
+		// If no settings exist, create default settings
+		if err.Error() == "record not found" {
+			defaultSettings := &data.Settings{
+				SiteName:    "Watchtower",
+				Description: "Real-time service status and uptime monitoring",
+				Domain:      "",
+			}
+			if createErr := app.db.CreateSettings(defaultSettings); createErr != nil {
+				app.logger.Error("Error creating default settings", "err", createErr.Error())
+				app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
+				return
+			}
+			settings = defaultSettings
+		} else {
+			app.logger.Error("Error getting settings", "err", err.Error())
+			app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
+			return
+		}
+	}
+
+	// Get admin email from current authenticated user
+	var adminEmail string
+	if user := app.getUserFromContext(r); user != nil {
+		adminEmail = user.Email
+	}
+
+	response := SettingsResponse{
+		Settings:   settings,
+		AdminEmail: adminEmail,
+	}
+
+	app.writeJSON(w, http.StatusOK, response)
+}
+
+// updateSettings handles PUT /api/v1/admin/settings
+func (app *Application) updateSettings(w http.ResponseWriter, r *http.Request) {
+	var req SettingsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		app.errorResponse(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	// Get current user to check if admin credential updates are being made
+	user := app.getUserFromContext(r)
+	var needsCredentialUpdate bool
+	if user != nil {
+		needsCredentialUpdate = (req.AdminEmail != "" && req.AdminEmail != user.Email) || req.NewPassword != ""
+	} else {
+		needsCredentialUpdate = req.AdminEmail != "" || req.NewPassword != ""
+	}
+
+	// Only require current password for admin credential changes
+	if needsCredentialUpdate && strings.TrimSpace(req.CurrentPassword) == "" {
+		app.errorResponse(w, http.StatusBadRequest, "Current password is required for admin credential changes")
+		return
+	}
+
+	// Get existing settings
+	settings, err := app.db.GetSettings()
+	if err != nil {
+		app.logger.Error("Error getting settings", "err", err.Error())
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
+		return
+	}
+
+	// Only update fields that are actually provided in the request
+	// Site configuration updates
+	if req.SiteName != "" {
+		settings.SiteName = req.SiteName
+	}
+	// Always check if description should be updated (can be empty string to clear it)
+	if req.SiteName != "" || req.AdminEmail == "" { // Update description if we're updating site config, not admin
+		settings.Description = req.SiteDescription
+	}
+
+	// Domain updates - only update if domain is provided and we're not updating admin credentials
+	if req.AdminEmail == "" && req.NewPassword == "" {
+		settings.Domain = req.Domain
+	}
+
+	// Update settings
+	if err := app.db.UpdateSettings(settings); err != nil {
+		app.logger.Error("Error updating settings", "err", err.Error())
+		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
+		return
+	}
+
+	// Handle admin credential updates if needed
+	var emailChanged bool
+	if needsCredentialUpdate {
+		// Check if email is being changed
+		if user != nil && req.AdminEmail != "" && req.AdminEmail != user.Email {
+			emailChanged = true
+		}
+
+		if err := app.db.UpdateAdminCredentials(req.AdminEmail, req.CurrentPassword, req.NewPassword); err != nil {
+			app.logger.Error("Error updating admin credentials", "err", err.Error())
+			app.errorResponse(w, http.StatusBadRequest, fmt.Sprintf("Failed to update admin credentials: %s", err.Error()))
+			return
+		}
+	}
+
+	// If email was changed, log the user out so they can login with new credentials
+	if emailChanged {
+		session, _ := store.Get(r, sessionName)
+		session.Values["authenticated"] = false
+		delete(session.Values, "user_id")
+		session.Options.MaxAge = -1 // Delete the session
+
+		if err := session.Save(r, w); err != nil {
+			app.logger.Error("Error clearing session after email change", "err", err.Error())
+		}
+
+		app.writeJSON(w, http.StatusOK, map[string]string{
+			"message":        "Admin credentials updated successfully. Please login with your new email address.",
+			"requiresReauth": "true",
+		})
+		return
+	}
+
+	// Get current admin email (always from authenticated user)
+	var adminEmail string
+	if user := app.getUserFromContext(r); user != nil {
+		adminEmail = user.Email
+	}
+
+	response := SettingsResponse{
+		Settings:   settings,
+		AdminEmail: adminEmail,
+	}
+
+	app.writeJSON(w, http.StatusOK, response)
+}

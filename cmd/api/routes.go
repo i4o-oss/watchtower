@@ -108,6 +108,10 @@ func (app *Application) routes() http.Handler {
 				r.Delete("/channels/{id}", app.deleteNotificationChannel)
 				r.Post("/test", app.testNotificationChannel)
 			})
+
+			// Settings management
+			r.Get("/settings", app.getSettings)
+			r.Put("/settings", app.updateSettings)
 		})
 	})
 

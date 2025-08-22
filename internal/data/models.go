@@ -508,3 +508,71 @@ func (db *DB) GetRecentIncidentActivity(limit int) ([]IncidentTimeline, error) {
 	err := query.Find(&timeline).Error
 	return timeline, err
 }
+
+// Settings represents application settings
+type Settings struct {
+	ID          uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	SiteName    string    `json:"site_name" gorm:"not null;default:'Watchtower'"`
+	Description string    `json:"description"`
+	Domain      string    `json:"domain"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// TableName sets the table name to singular form
+func (Settings) TableName() string {
+	return "settings"
+}
+
+// GetSettings retrieves the application settings (should only be one record)
+func (db *DB) GetSettings() (*Settings, error) {
+	var settings Settings
+	err := db.DB.First(&settings).Error
+	if err != nil {
+		return nil, err
+	}
+	return &settings, nil
+}
+
+// CreateSettings creates initial settings record
+func (db *DB) CreateSettings(settings *Settings) error {
+	return db.DB.Create(settings).Error
+}
+
+// UpdateSettings updates the settings record
+func (db *DB) UpdateSettings(settings *Settings) error {
+	return db.DB.Save(settings).Error
+}
+
+// UpdateAdminCredentials updates admin email and password
+func (db *DB) UpdateAdminCredentials(adminEmail, currentPassword, newPassword string) error {
+	// First, verify the current password
+	user, err := db.GetUserByEmail(adminEmail)
+	if err != nil {
+		// Try to get the admin user by finding the first user (assuming single admin)
+		var firstUser User
+		if err := db.DB.First(&firstUser).Error; err != nil {
+			return err
+		}
+		user = &firstUser
+	}
+
+	// Check current password
+	if err := user.CheckPassword(currentPassword); err != nil {
+		return errors.New("current password is incorrect")
+	}
+
+	// Update email if provided and different
+	if adminEmail != "" && adminEmail != user.Email {
+		user.Email = adminEmail
+	}
+
+	// Update password if provided
+	if newPassword != "" {
+		if err := user.HashPassword(newPassword); err != nil {
+			return err
+		}
+	}
+
+	return db.DB.Save(user).Error
+}
