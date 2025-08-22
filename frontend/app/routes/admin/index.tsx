@@ -11,7 +11,6 @@ import {
 import { Badge } from '~/components/ui/badge'
 import { PageHeader } from '~/components/page-header'
 import { PageContent } from '~/components/page-content'
-import { ActionBar } from '~/components/action-bar'
 import { requireAuth } from '~/lib/auth'
 import { useSSE } from '~/hooks/useSSE'
 import {

@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { cn } from '~/lib/utils'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
+import { Button } from './ui/button'
 
 type ToastType = 'success' | 'error' | 'warning' | 'info'
 
@@ -147,12 +148,9 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
 						</p>
 					)}
 				</div>
-				<button
-					onClick={handleRemove}
-					className='flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors'
-				>
+				<Button onClick={handleRemove} size='icon' variant='ghost'>
 					<X className='h-4 w-4' />
-				</button>
+				</Button>
 			</div>
 		</div>
 	)
