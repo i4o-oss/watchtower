@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { cn } from '~/lib/utils'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
@@ -34,7 +34,7 @@ import {
 	DropdownMenuItem,
 } from '~/components/ui/dropdown-menu'
 import { Avatar, AvatarImage, AvatarFallback } from '~/components/ui/avatar'
-import { requireAuth } from '~/lib/auth'
+import { requireAuth, useAuth } from '~/lib/auth'
 import { useSSE } from '~/hooks/useSSE'
 
 interface AdminLayoutProps {
@@ -75,6 +75,8 @@ const breadcrumbMap: Record<string, string> = {
 
 export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 	const location = useLocation()
+	const navigate = useNavigate()
+	const { logout } = useAuth()
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 	const [incidents, setIncidents] = useState([])
 
@@ -164,6 +166,18 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 	}
 
 	const closeMobileMenu = () => setIsMobileMenuOpen(false)
+
+	// Handle logout
+	const handleLogout = async () => {
+		try {
+			await logout()
+			navigate('/')
+		} catch (error) {
+			console.error('Logout failed:', error)
+			// Even if logout fails, navigate to home
+			navigate('/')
+		}
+	}
 
 	// Generate breadcrumbs based on current path
 	const getBreadcrumbs = (pathname: string) => {
@@ -267,7 +281,10 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 										<span className='text-xs'>v0.1.0</span>
 									</DropdownMenuItem>
 									<DropdownMenuSeparator />
-									<DropdownMenuItem className='cursor-pointer'>
+									<DropdownMenuItem
+										className='cursor-pointer'
+										onClick={handleLogout}
+									>
 										<LogOutIcon className='h-4 w-4' />
 										Logout
 									</DropdownMenuItem>
