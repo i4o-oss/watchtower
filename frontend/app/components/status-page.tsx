@@ -1,7 +1,41 @@
-import { useEffect, useState } from 'react'
+import {
+	Activity,
+	AlertCircle,
+	AlertTriangle,
+	Bell,
+	CheckCircle,
+	ChevronRight,
+	Clock,
+	ExternalLink,
+	RefreshCw,
+	Shield,
+	TrendingUp,
+	Wifi,
+	WifiOff,
+	XCircle,
+	Zap,
+} from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router'
+import {
+	Area,
+	AreaChart,
+	Bar,
+	BarChart,
+	CartesianGrid,
+	Line,
+	LineChart,
+	ReferenceArea,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from 'recharts'
+import { PageContent } from '~/components/page-content'
+import { PageHeader } from '~/components/page-header'
 import { Badge } from '~/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Button } from '~/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import {
 	Dialog,
 	DialogContent,
@@ -11,39 +45,8 @@ import {
 } from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import { Separator } from '~/components/ui/separator'
-import { cn } from '~/lib/utils'
 import { useSSE } from '~/hooks/useSSE'
-import {
-	AlertCircle,
-	CheckCircle,
-	Clock,
-	XCircle,
-	RefreshCw,
-	TrendingUp,
-	ExternalLink,
-	AlertTriangle,
-	Bell,
-	Activity,
-	Shield,
-	ChevronRight,
-	Wifi,
-	WifiOff,
-	Zap,
-} from 'lucide-react'
-import {
-	LineChart,
-	Line,
-	XAxis,
-	YAxis,
-	ResponsiveContainer,
-	AreaChart,
-	Area,
-	ReferenceArea,
-	BarChart,
-	Bar,
-	Tooltip,
-	CartesianGrid,
-} from 'recharts'
+import { cn } from '~/lib/utils'
 
 // Types for API responses
 interface ServiceStatus {
@@ -559,7 +562,7 @@ export function StatusPage({
 		useState<IncidentSummary | null>(null)
 
 	// Fetch status data
-	const fetchStatus = async () => {
+	const fetchStatus = useCallback(async () => {
 		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 		try {
 			const [statusRes, incidentsRes] = await Promise.all([
@@ -583,20 +586,20 @@ export function StatusPage({
 		} finally {
 			setLoading(false)
 		}
-	}
+	}, [])
 
 	// Initial fetch (only if no initial data)
 	useEffect(() => {
 		if (!initialData?.status) {
 			fetchStatus()
 		}
-	}, [initialData?.status])
+	}, [initialData?.status, fetchStatus])
 
 	// Auto-refresh every 5 minutes (since SSE provides real-time updates)
 	useEffect(() => {
 		const interval = setInterval(fetchStatus, 300000) // 5 minutes
 		return () => clearInterval(interval)
-	}, [])
+	}, [fetchStatus])
 
 	// Server-Sent Events for real-time updates
 	useSSE(
@@ -818,45 +821,52 @@ export function StatusPage({
 	// Loading State
 	if (loading) {
 		return (
-			<div className='min-h-screen bg-neutral-50'>
-				{/* Navigation Bar */}
-				<nav className='bg-white border-b border-neutral-200'>
-					<div className='mx-auto max-w-4xl px-4 sm:px-6 lg:px-8'>
-						<div className='flex h-16 justify-between items-center'>
-							<div className='flex items-center space-x-3'>
-								<div className='w-8 h-8 bg-black rounded flex items-center justify-center'>
-									<Zap className='h-5 w-5 text-white' />
-								</div>
-								<span className='text-xl font-semibold text-neutral-900'>
-									Watchtower Status
-								</span>
+			<div className='min-h-screen bg-background'>
+				{/* Navigation Bar - matching admin layout */}
+				<header className='sticky top-4 z-30 h-16'>
+					<div className='w-full h-full max-w-4xl bg-card mx-auto px-6 border border-border rounded'>
+						<div className='flex h-full items-center justify-between'>
+							<div className='flex items-center gap-4'>
+								<Link
+									to='/'
+									className='flex items-center gap-2'
+								>
+									<Activity className='h-4 w-4 text-primary' />
+									<span className='text-sm font-mono uppercase'>
+										Watchtower Status
+									</span>
+								</Link>
 							</div>
 						</div>
 					</div>
-				</nav>
+				</header>
 
 				{/* Loading Content */}
-				<div className='mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12'>
-					<div className='animate-pulse'>
-						<div className='h-8 bg-neutral-200 rounded w-1/4 mb-8' />
-						<div className='space-y-4'>
-							{Array.from({ length: 5 }).map((_, i) => (
-								<div
-									// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-									key={i}
-									className='bg-white rounded-lg p-6 border border-neutral-200'
-								>
-									<div className='flex items-center justify-between'>
-										<div className='space-y-2'>
-											<div className='h-4 bg-neutral-200 rounded w-32' />
-											<div className='h-3 bg-neutral-100 rounded w-20' />
+				<div className='max-w-4xl mx-auto flex mt-8'>
+					<main className='flex-1 min-w-0'>
+						<div className='px-0 py-4'>
+							<div className='animate-pulse'>
+								<div className='h-8 bg-muted rounded w-1/4 mb-8' />
+								<div className='space-y-4'>
+									{Array.from({ length: 5 }).map((_, i) => (
+										<div
+											// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+											key={i}
+											className='bg-card rounded-lg p-6 border border-border'
+										>
+											<div className='flex items-center justify-between'>
+												<div className='space-y-2'>
+													<div className='h-4 bg-muted rounded w-32' />
+													<div className='h-3 bg-muted/50 rounded w-20' />
+												</div>
+												<div className='h-8 bg-muted rounded w-16' />
+											</div>
 										</div>
-										<div className='h-8 bg-neutral-200 rounded w-16' />
-									</div>
+									))}
 								</div>
-							))}
+							</div>
 						</div>
-					</div>
+					</main>
 				</div>
 			</div>
 		)
@@ -864,15 +874,40 @@ export function StatusPage({
 
 	if (!status) {
 		return (
-			<div className='min-h-screen flex items-center justify-center'>
-				<div className='text-center'>
-					<XCircle className='w-8 h-8 text-red-500 mx-auto mb-4' />
-					<p className='text-muted-foreground'>
-						Failed to load status
-					</p>
-					<Button onClick={fetchStatus} className='mt-4'>
-						Retry
-					</Button>
+			<div className='min-h-screen bg-background'>
+				{/* Navigation Bar - matching admin layout */}
+				<header className='sticky top-4 z-30 h-16'>
+					<div className='w-full h-full max-w-4xl bg-card mx-auto px-6 border border-border rounded'>
+						<div className='flex h-full items-center justify-between'>
+							<div className='flex items-center gap-4'>
+								<Link
+									to='/'
+									className='flex items-center gap-2'
+								>
+									<Activity className='h-4 w-4 text-primary' />
+									<span className='text-sm font-mono uppercase'>
+										Watchtower Status
+									</span>
+								</Link>
+							</div>
+						</div>
+					</div>
+				</header>
+
+				<div className='max-w-4xl mx-auto flex mt-8'>
+					<main className='flex-1 min-w-0'>
+						<div className='px-0 py-4 flex items-center justify-center min-h-96'>
+							<div className='text-center'>
+								<XCircle className='w-8 h-8 text-red-500 mx-auto mb-4' />
+								<p className='text-muted-foreground'>
+									Failed to load status
+								</p>
+								<Button onClick={fetchStatus} className='mt-4'>
+									Retry
+								</Button>
+							</div>
+						</div>
+					</main>
 				</div>
 			</div>
 		)
@@ -902,20 +937,21 @@ export function StatusPage({
 	const systemStatus = getSystemStatus()
 
 	return (
-		<div className='min-h-screen bg-neutral-50'>
-			{/* Navigation Bar */}
-			<nav className='bg-white border-b border-neutral-200 sticky top-0 z-50'>
-				<div className='mx-auto max-w-4xl px-4 sm:px-6 lg:px-8'>
-					<div className='flex h-16 justify-between items-center'>
-						<div className='flex items-center space-x-3'>
-							<div className='w-8 h-8 bg-black rounded flex items-center justify-center'>
-								<Zap className='h-5 w-5 text-white' />
-							</div>
-							<span className='text-xl font-semibold text-neutral-900'>
-								Watchtower Status
-							</span>
+		<div className='min-h-screen bg-background'>
+			{/* Navigation Bar - matching admin layout */}
+			<header className='sticky top-4 z-30 h-16'>
+				<div className='w-full h-full max-w-4xl bg-card mx-auto px-6 border border-border rounded'>
+					<div className='flex h-full items-center justify-between'>
+						<div className='flex items-center gap-4'>
+							<Link to='/' className='flex items-center gap-2'>
+								<Activity className='h-4 w-4 text-primary' />
+								<span className='text-sm font-mono uppercase'>
+									Watchtower Status
+								</span>
+							</Link>
 						</div>
-						<div className='flex items-center space-x-6'>
+
+						<div className='flex items-center gap-4'>
 							<Button
 								className='cursor-pointer'
 								size='sm'
@@ -924,358 +960,406 @@ export function StatusPage({
 								<Bell className='h-4 w-4' />
 								<span>Subscribe</span>
 							</Button>
-						</div>
-					</div>
-				</div>
-			</nav>
-
-			{/* Main Content */}
-			<div className='mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12'>
-				{/* System Status Header */}
-				<div className='mb-12'>
-					{systemStatus === 'operational' && (
-						<div className='flex items-center space-x-3'>
-							<div className='w-12 h-12 bg-green-100 rounded-full flex items-center justify-center'>
-								<CheckCircle className='h-7 w-7 text-green-600' />
-							</div>
-							<div>
-								<h1 className='text-3xl font-bold text-neutral-900'>
-									All systems operational
-								</h1>
-								<p className='text-neutral-600 mt-1'>
-									All services are running normally
-								</p>
-							</div>
-						</div>
-					)}
-
-					{systemStatus === 'degradation' && (
-						<div className='flex items-center space-x-3'>
-							<div className='w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center'>
-								<AlertTriangle className='h-7 w-7 text-amber-600' />
-							</div>
-							<div>
-								<h1 className='text-3xl font-bold text-neutral-900'>
-									Partial service disruption
-								</h1>
-								<p className='text-neutral-600 mt-1'>
-									Some services are experiencing issues
-								</p>
-							</div>
-						</div>
-					)}
-
-					{systemStatus === 'outage' && (
-						<div className='flex items-center space-x-3'>
-							<div className='w-12 h-12 bg-red-100 rounded-full flex items-center justify-center'>
-								<XCircle className='h-7 w-7 text-red-600' />
-							</div>
-							<div>
-								<h1 className='text-3xl font-bold text-neutral-900'>
-									Major service outage
-								</h1>
-								<p className='text-neutral-600 mt-1'>
-									We are working to restore service
-								</p>
-							</div>
-						</div>
-					)}
-				</div>
-
-				{/* Current Status Section */}
-				<div className='mb-8'>
-					<div className='flex items-center justify-between mb-6'>
-						<h2 className='text-lg font-semibold text-neutral-900'>
-							Current status
-						</h2>
-						<div className='flex items-center space-x-2 text-sm text-neutral-500'>
-							<Clock className='h-4 w-4' />
-							<span>
-								Last updated{' '}
-								{new Date(lastRefresh).toLocaleTimeString([], {
-									hour: '2-digit',
-									minute: '2-digit',
-								})}
-							</span>
-						</div>
-					</div>
-
-					{/* Active Incidents */}
-					{incidents && incidents.incidents.length > 0 && (
-						<div className='mb-6'>
-							<div className='bg-amber-50 border border-amber-200 rounded-lg p-4'>
-								<div className='flex items-start space-x-3'>
-									<AlertTriangle className='h-5 w-5 text-amber-600 mt-0.5' />
-									<div className='flex-1'>
-										<h3 className='font-semibold text-amber-900 mb-2'>
-											Active Incidents
-										</h3>
-										<div className='space-y-2'>
-											{incidents.incidents.map(
-												(incident) => (
-													<Button
-														key={incident.id}
-														onClick={() =>
-															setSelectedIncident(
-																incident,
-															)
-														}
-														className='text-left w-full group hover:bg-amber-100 rounded p-2 transition-colors'
-													>
-														<div className='flex items-center justify-between'>
-															<span className='font-medium text-amber-900'>
-																{incident.title}
-															</span>
-															<ChevronRight className='h-4 w-4 text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity' />
-														</div>
-														<p className='text-sm text-amber-700 mt-1'>
-															{incident
-																.description
-																.length > 100
-																? `${incident.description.substring(0, 100)}...`
-																: incident.description}
-														</p>
-													</Button>
-												),
-											)}
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					)}
-
-					{/* Services with Railway-style bars */}
-					<div className='space-y-4'>
-						{status.services.map((service) => {
-							const getStatusIcon = (status: string) => {
-								switch (status) {
-									case 'operational':
-										return (
-											<CheckCircle className='h-5 w-5 text-emerald-600' />
-										)
-									case 'degraded':
-										return (
-											<AlertTriangle className='h-5 w-5 text-amber-600' />
-										)
-									case 'outage':
-										return (
-											<XCircle className='h-5 w-5 text-red-600' />
-										)
-									default:
-										return (
-											<AlertCircle className='h-5 w-5 text-neutral-400' />
-										)
+							<Badge
+								className='px-4 py-2 font-mono uppercase'
+								variant={
+									systemStatus === 'operational'
+										? 'outline'
+										: 'destructive'
 								}
-							}
-
-							return (
-								<div
-									key={service.id}
-									className='bg-white border border-neutral-200 rounded-lg p-4'
-								>
-									{/* Service header */}
-									<div className='flex items-center justify-between mb-4'>
-										<div className='flex items-center space-x-3'>
-											{getStatusIcon(service.status)}
-											<div>
-												<h3 className='font-semibold text-neutral-900'>
-													{service.name}
-												</h3>
-												<p className='text-sm text-neutral-500 capitalize'>
-													{service.status}
-												</p>
-											</div>
-										</div>
-										<div className='text-right'>
-											<div className='text-lg font-semibold text-neutral-900'>
-												{service.uptime_90_day.toFixed(
-													2,
-												)}
-												%
-											</div>
-											<div className='text-sm text-neutral-500'>
-												uptime
-											</div>
-										</div>
-									</div>
-
-									{/* Railway-style uptime bar */}
-									<UptimeHistoryBar
-										serviceId={service.id}
-										days={90}
-									/>
-								</div>
-							)
-						})}
+							>
+								{systemStatus === 'operational' ? (
+									<span className='bg-green-500 w-2 h-2 rounded-full -ml-1 mr-2' />
+								) : (
+									<span className='bg-red-500 w-2 h-2 rounded-full -ml-1 mr-2' />
+								)}
+								{systemStatus === 'operational'
+									? 'All Systems Operational'
+									: systemStatus === 'degradation'
+										? 'Partial Service Disruption'
+										: 'Major Service Outage'}
+							</Badge>
+						</div>
 					</div>
 				</div>
+			</header>
 
-				{/* Incident History Section */}
-				<div className='mt-12'>
-					<h2 className='text-lg font-semibold text-neutral-900 mb-6'>
-						Incident History
-					</h2>
-
-					{incidents && incidents.incidents.length > 0 ? (
-						<div className='space-y-4'>
-							{incidents.incidents.slice(0, 5).map((incident) => (
-								<div
-									key={incident.id}
-									className='bg-white border border-neutral-200 rounded-lg p-4'
+			{/* Main Content - matching admin layout structure */}
+			<div className='max-w-4xl mx-auto flex mt-8'>
+				<main className='flex-1 min-w-0'>
+					<div className='px-0 py-4'>
+						<div className='flex flex-col gap-4'>
+							{/* System Status Overview */}
+							<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
+								<PageHeader
+									title={
+										systemStatus === 'operational'
+											? 'All systems operational'
+											: systemStatus === 'degradation'
+												? 'Partial service disruption'
+												: 'Major service outage'
+									}
+									description={
+										systemStatus === 'operational'
+											? 'All services are running normally'
+											: systemStatus === 'degradation'
+												? 'Some services are experiencing issues'
+												: 'We are working to restore service'
+									}
 								>
-									<div className='flex items-start justify-between'>
-										<div className='flex-1'>
-											<div className='flex items-center space-x-2 mb-2'>
-												<Badge
-													variant={
-														incident.status ===
-														'resolved'
-															? 'secondary'
-															: 'destructive'
-													}
-													className='text-xs'
-												>
-													{incident.status}
-												</Badge>
-												<span className='text-sm text-neutral-500'>
-													{new Date(
-														incident.start_time,
-													).toLocaleDateString()}
-												</span>
-											</div>
-											<h4 className='font-semibold text-neutral-900 mb-2'>
-												{incident.title}
-											</h4>
-											<p className='text-neutral-600 text-sm'>
-												{incident.description}
-											</p>
-										</div>
+									<div className='flex items-center space-x-2 text-sm text-muted-foreground'>
+										<Clock className='h-4 w-4' />
+										<span>
+											Last updated{' '}
+											{new Date(
+												lastRefresh,
+											).toLocaleTimeString([], {
+												hour: '2-digit',
+												minute: '2-digit',
+											})}
+										</span>
 									</div>
-								</div>
-							))}
-						</div>
-					) : (
-						<div className='bg-white border border-neutral-200 rounded-lg p-8 text-center'>
-							<CheckCircle className='h-8 w-8 text-emerald-500 mx-auto mb-3' />
-							<h3 className='font-semibold text-neutral-900 mb-2'>
-								No incidents reported
-							</h3>
-							<p className='text-neutral-500 text-sm'>
-								All systems have been operating normally.
-							</p>
-						</div>
-					)}
-				</div>
+								</PageHeader>
 
-				{/* Incident Detail Modal */}
-				<Dialog
-					open={!!selectedIncident}
-					onOpenChange={() => setSelectedIncident(null)}
-				>
-					<DialogContent className='max-w-2xl'>
-						<DialogHeader>
-							<DialogTitle className='text-xl font-semibold text-neutral-900'>
-								Incident Details
-							</DialogTitle>
-						</DialogHeader>
-						{selectedIncident && (
-							<div className='space-y-4'>
-								<div>
-									<h3 className='font-semibold text-neutral-900 mb-2'>
-										{selectedIncident.title}
-									</h3>
-									<div className='flex items-center space-x-2 mb-3'>
-										<Badge
-											className={cn(
-												'capitalize',
-												selectedIncident.severity ===
-													'critical' &&
-													'bg-red-100 text-red-700 border-red-200',
-												selectedIncident.severity ===
-													'high' &&
-													'bg-orange-100 text-orange-700 border-orange-200',
-												selectedIncident.severity ===
-													'medium' &&
-													'bg-amber-100 text-amber-700 border-amber-200',
-												selectedIncident.severity ===
-													'low' &&
-													'bg-blue-100 text-blue-700 border-blue-200',
-											)}
-											variant='outline'
-										>
-											{selectedIncident.severity} severity
-										</Badge>
-										<Badge
-											variant='outline'
-											className='capitalize'
-										>
-											{selectedIncident.status}
-										</Badge>
-									</div>
-									<p className='text-neutral-600'>
-										{selectedIncident.description}
-									</p>
-								</div>
-
-								<Separator />
-
-								<div>
-									<h4 className='font-medium text-neutral-900 mb-2'>
-										Timeline
-									</h4>
-									<div className='space-y-2 text-sm'>
-										<div className='flex items-center space-x-2'>
-											<Clock className='h-4 w-4 text-neutral-400' />
-											<span className='text-neutral-600'>
-												Started:{' '}
-												{new Date(
-													selectedIncident.start_time,
-												).toLocaleString()}
-											</span>
-										</div>
-										{selectedIncident.end_time && (
-											<div className='flex items-center space-x-2'>
-												<CheckCircle className='h-4 w-4 text-green-500' />
-												<span className='text-neutral-600'>
-													Resolved:{' '}
-													{new Date(
-														selectedIncident.end_time,
-													).toLocaleString()}
-												</span>
+								<CardContent className='p-0 gap-0 flex flex-col'>
+									{/* Active Incidents Alert */}
+									{incidents &&
+										incidents.incidents.length > 0 && (
+											<div className='px-6 py-4 bg-amber-50 border-b border-amber-200'>
+												<div className='flex items-start space-x-3'>
+													<AlertTriangle className='h-5 w-5 text-amber-600 mt-0.5' />
+													<div className='flex-1'>
+														<h3 className='font-semibold text-amber-900 mb-2'>
+															Active Incidents
+														</h3>
+														<div className='space-y-2'>
+															{incidents.incidents.map(
+																(incident) => (
+																	<Button
+																		key={
+																			incident.id
+																		}
+																		onClick={() =>
+																			setSelectedIncident(
+																				incident,
+																			)
+																		}
+																		className='text-left w-full group hover:bg-amber-100 rounded p-2 transition-colors'
+																		variant='ghost'
+																	>
+																		<div className='flex items-center justify-between'>
+																			<span className='font-medium text-amber-900'>
+																				{
+																					incident.title
+																				}
+																			</span>
+																			<ChevronRight className='h-4 w-4 text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity' />
+																		</div>
+																		<p className='text-sm text-amber-700 mt-1'>
+																			{incident
+																				.description
+																				.length >
+																			100
+																				? `${incident.description.substring(0, 100)}...`
+																				: incident.description}
+																		</p>
+																	</Button>
+																),
+															)}
+														</div>
+													</div>
+												</div>
 											</div>
 										)}
-									</div>
-								</div>
+								</CardContent>
+							</PageContent>
 
-								{selectedIncident.affected_services.length >
-									0 && (
-									<>
-										<Separator />
-										<div>
-											<h4 className='font-medium text-neutral-900 mb-2'>
-												Affected Services
-											</h4>
-											<div className='flex flex-wrap gap-2'>
-												{selectedIncident.affected_services.map(
-													(serviceName, index) => (
-														// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-														<Badge
-															key={index}
-															variant='secondary'
+							{/* Service Status */}
+							<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
+								<PageHeader
+									title='Service Status'
+									description='Current status and uptime history'
+								/>
+
+								<CardContent className='p-0 gap-0 flex flex-col'>
+									{status.services.length === 0 ? (
+										<div className='text-center py-8 text-muted-foreground'>
+											<p>No services configured</p>
+										</div>
+									) : (
+										<div className='divide-y divide-border'>
+											{status.services.map((service) => {
+												const getStatusIcon = (
+													status: string,
+												) => {
+													switch (status) {
+														case 'operational':
+															return (
+																<CheckCircle className='h-5 w-5 text-emerald-600' />
+															)
+														case 'degraded':
+															return (
+																<AlertTriangle className='h-5 w-5 text-amber-600' />
+															)
+														case 'outage':
+															return (
+																<XCircle className='h-5 w-5 text-red-600' />
+															)
+														default:
+															return (
+																<AlertCircle className='h-5 w-5 text-neutral-400' />
+															)
+													}
+												}
+
+												return (
+													<div
+														key={service.id}
+														className='px-6 py-4'
+													>
+														{/* Service header */}
+														<div className='flex items-center justify-between mb-4'>
+															<div className='flex items-center space-x-3'>
+																{getStatusIcon(
+																	service.status,
+																)}
+																<div>
+																	<h3 className='font-semibold'>
+																		{
+																			service.name
+																		}
+																	</h3>
+																	<p className='text-sm text-muted-foreground capitalize'>
+																		{
+																			service.status
+																		}
+																	</p>
+																</div>
+															</div>
+															<div className='text-right'>
+																<div className='text-lg font-semibold'>
+																	{service.uptime_90_day.toFixed(
+																		2,
+																	)}
+																	%
+																</div>
+																<div className='text-sm text-muted-foreground'>
+																	uptime
+																</div>
+															</div>
+														</div>
+
+														{/* Railway-style uptime bar */}
+														<UptimeHistoryBar
+															serviceId={
+																service.id
+															}
+															days={90}
+														/>
+													</div>
+												)
+											})}
+										</div>
+									)}
+								</CardContent>
+							</PageContent>
+
+							{/* Incident History */}
+							<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
+								<PageHeader
+									title='Incident History'
+									description='Recent incidents and their resolution status'
+								/>
+
+								<CardContent className='p-0 border-none shadow-none rounded-none'>
+									{incidents &&
+									incidents.incidents.length > 0 ? (
+										<div className='divide-y divide-border'>
+											{incidents.incidents
+												.slice(0, 5)
+												.map((incident) => (
+													<div
+														key={incident.id}
+														className='flex items-center justify-between px-6 py-4'
+													>
+														<div className='flex-1'>
+															<div className='flex items-center space-x-2 mb-2'>
+																<Badge
+																	variant={
+																		incident.status ===
+																		'resolved'
+																			? 'secondary'
+																			: 'destructive'
+																	}
+																	className='text-xs'
+																>
+																	{
+																		incident.status
+																	}
+																</Badge>
+																<span className='text-sm text-muted-foreground'>
+																	{new Date(
+																		incident.start_time,
+																	).toLocaleDateString()}
+																</span>
+															</div>
+															<h4 className='font-semibold mb-2'>
+																{incident.title}
+															</h4>
+															<p className='text-muted-foreground text-sm'>
+																{
+																	incident.description
+																}
+															</p>
+														</div>
+														<Button
+															onClick={() =>
+																setSelectedIncident(
+																	incident,
+																)
+															}
+															className='cursor-pointer'
+															size='sm'
+															variant='ghost'
 														>
-															{serviceName}
-														</Badge>
-													),
+															View
+															<ChevronRight className='h-4 w-4' />
+														</Button>
+													</div>
+												))}
+										</div>
+									) : (
+										<div className='text-center py-8 text-muted-foreground'>
+											<CheckCircle className='h-8 w-8 text-emerald-500 mx-auto mb-3' />
+											<h3 className='font-semibold mb-2'>
+												No incidents reported
+											</h3>
+											<p className='text-sm'>
+												All systems have been operating
+												normally.
+											</p>
+										</div>
+									)}
+								</CardContent>
+							</PageContent>
+						</div>
+
+						{/* Incident Detail Modal */}
+						<Dialog
+							open={!!selectedIncident}
+							onOpenChange={() => setSelectedIncident(null)}
+						>
+							<DialogContent className='max-w-2xl'>
+								<DialogHeader>
+									<DialogTitle className='text-xl font-semibold'>
+										Incident Details
+									</DialogTitle>
+								</DialogHeader>
+								{selectedIncident && (
+									<div className='space-y-4'>
+										<div>
+											<h3 className='font-semibold mb-2'>
+												{selectedIncident.title}
+											</h3>
+											<div className='flex items-center space-x-2 mb-3'>
+												<Badge
+													className={cn(
+														'capitalize',
+														selectedIncident.severity ===
+															'critical' &&
+															'bg-red-100 text-red-700 border-red-200',
+														selectedIncident.severity ===
+															'high' &&
+															'bg-orange-100 text-orange-700 border-orange-200',
+														selectedIncident.severity ===
+															'medium' &&
+															'bg-amber-100 text-amber-700 border-amber-200',
+														selectedIncident.severity ===
+															'low' &&
+															'bg-blue-100 text-blue-700 border-blue-200',
+													)}
+													variant='outline'
+												>
+													{selectedIncident.severity}{' '}
+													severity
+												</Badge>
+												<Badge
+													variant='outline'
+													className='capitalize'
+												>
+													{selectedIncident.status}
+												</Badge>
+											</div>
+											<p className='text-muted-foreground'>
+												{selectedIncident.description}
+											</p>
+										</div>
+
+										<Separator />
+
+										<div>
+											<h4 className='font-medium mb-2'>
+												Timeline
+											</h4>
+											<div className='space-y-2 text-sm'>
+												<div className='flex items-center space-x-2'>
+													<Clock className='h-4 w-4 text-muted-foreground' />
+													<span className='text-muted-foreground'>
+														Started:{' '}
+														{new Date(
+															selectedIncident.start_time,
+														).toLocaleString()}
+													</span>
+												</div>
+												{selectedIncident.end_time && (
+													<div className='flex items-center space-x-2'>
+														<CheckCircle className='h-4 w-4 text-green-500' />
+														<span className='text-muted-foreground'>
+															Resolved:{' '}
+															{new Date(
+																selectedIncident.end_time,
+															).toLocaleString()}
+														</span>
+													</div>
 												)}
 											</div>
 										</div>
-									</>
+
+										{selectedIncident.affected_services
+											.length > 0 && (
+											<>
+												<Separator />
+												<div>
+													<h4 className='font-medium mb-2'>
+														Affected Services
+													</h4>
+													<div className='flex flex-wrap gap-2'>
+														{selectedIncident.affected_services.map(
+															(
+																serviceName,
+																index,
+															) => (
+																<Badge
+																	// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+																	key={index}
+																	variant='secondary'
+																>
+																	{
+																		serviceName
+																	}
+																</Badge>
+															),
+														)}
+													</div>
+												</div>
+											</>
+										)}
+									</div>
 								)}
-							</div>
-						)}
-					</DialogContent>
-				</Dialog>
+							</DialogContent>
+						</Dialog>
+					</div>
+				</main>
 			</div>
 		</div>
 	)
