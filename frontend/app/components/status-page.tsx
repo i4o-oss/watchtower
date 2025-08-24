@@ -247,7 +247,7 @@ function UptimeHistoryBar({
 
 	return (
 		<div className='flex flex-col items-center justify-between gap-2'>
-			<div className='w-full flex-1 flex gap-0.5 rounded overflow-hidden'>
+			<div className='w-full flex-1 flex gap-px rounded overflow-hidden'>
 				{historyData.map((day, index) => {
 					const getBarColor = () => {
 						switch (day.status) {
@@ -960,9 +960,9 @@ export function StatusPage({
 
 						<div className='flex items-center gap-4'>
 							{/*<Button className="cursor-pointer" size="sm" variant="ghost">
-                				<Bell className="h-4 w-4" />
-                    			<span>Subscribe</span>
-                       		</Button>*/}
+                <Bell className="h-4 w-4" />
+                <span>Subscribe</span>
+              </Button>*/}
 							<Badge
 								className='px-4 py-2 font-mono uppercase'
 								variant={
