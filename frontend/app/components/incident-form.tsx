@@ -24,6 +24,7 @@ import { PageContent } from '~/components/page-content'
 import { getApiErrorMessage } from '~/lib/validation'
 import { validators, FieldError } from '~/lib/form-utils'
 import { Check } from 'lucide-react'
+import { Separator } from './ui/separator'
 
 export interface IncidentFormData {
 	title: string
@@ -129,7 +130,7 @@ export function IncidentForm({
 		<main className='flex flex-col gap-6'>
 			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 				<PageHeader title={title} description={description} />
-
+				<Separator />
 				<CardContent className='p-0 gap-0 flex flex-col'>
 					<form
 						onSubmit={(e) => {

@@ -293,29 +293,27 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					title='Recent Endpoints'
 					description='Your monitoring endpoints'
 				>
-					<div className='flex flex-wrap items-center gap-2'>
-						<Link to='/admin/endpoints/new'>
-							<Button
-								className='cursor-pointer'
-								size='sm'
-								variant='outline'
-							>
-								<PlusIcon className='h-4 w-4' />
-								Add Endpoint
-							</Button>
-						</Link>
-						<Link to='/admin/endpoints'>
-							<Button
-								className='cursor-pointer'
-								size='sm'
-								variant='outline'
-							>
-								View All
-							</Button>
-						</Link>
-					</div>
+					<Link to='/admin/endpoints/new'>
+						<Button
+							className='cursor-pointer'
+							size='sm'
+							variant='outline'
+						>
+							<PlusIcon className='h-4 w-4' />
+							Add Endpoint
+						</Button>
+					</Link>
+					<Link to='/admin/endpoints'>
+						<Button
+							className='cursor-pointer'
+							size='sm'
+							variant='outline'
+						>
+							View All
+						</Button>
+					</Link>
 				</PageHeader>
-
+				<Separator />
 				<CardContent className='p-0 gap-0 flex flex-col'>
 					{/* Recent Endpoints */}
 					{endpoints.endpoints.length === 0 ? (
@@ -406,6 +404,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 						</Link>
 					</div>
 				</PageHeader>
+				<Separator />
 				{/* Recent Incidents */}
 				<CardContent className='p-0 border-none shadow-none rounded-none'>
 					{incidents.incidents.length === 0 ? (

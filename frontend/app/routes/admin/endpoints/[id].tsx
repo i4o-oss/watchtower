@@ -382,7 +382,7 @@ export default function EndpointDetail({
 						</AlertDialog>
 					</div>
 				</PageHeader>
-
+				<Separator />
 				<CardContent className='px-6 py-4 gap-4 flex flex-col'>
 					<div>
 						<h4 className='font-medium mb-2'>URL</h4>
@@ -495,6 +495,7 @@ export default function EndpointDetail({
 						Refresh
 					</Button>
 				</PageHeader>
+				<Separator />
 				<CardContent className='p-0 gap-0 flex flex-col'>
 					{isLoadingLogs ? (
 						<div className='flex justify-center py-8'>

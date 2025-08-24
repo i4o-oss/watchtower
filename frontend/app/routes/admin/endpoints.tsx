@@ -338,7 +338,7 @@ export default function AdminEndpoints({ loaderData }: Route.ComponentProps) {
 							</Button>
 						</Link>
 					</PageHeader>
-
+					<Separator />
 					<CardContent className='p-0'>
 						{/* Endpoint Cards */}
 						{endpoints.length === 0 ? (

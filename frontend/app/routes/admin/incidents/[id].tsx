@@ -56,6 +56,7 @@ import { PageHeader } from '~/components/page-header'
 import { PageContent } from '~/components/page-content'
 import { requireAuth } from '~/lib/auth'
 import type { Route } from './+types/[id]'
+import { Separator } from '~/components/ui/separator'
 
 export function meta({ params }: Route.MetaArgs) {
 	return [
@@ -507,7 +508,7 @@ export default function IncidentDetail({
 							</AlertDialogContent>
 						</AlertDialog>
 					</PageHeader>
-
+					<Separator />
 					{/* Incident Information Section */}
 					<CardContent className='px-6 py-4 gap-4 flex flex-col'>
 						{incident.description && (
@@ -615,6 +616,7 @@ export default function IncidentDetail({
 							Post Update
 						</Button>
 					</PageHeader>
+					<Separator />
 					<CardContent className='px-6 py-4 gap-4 flex flex-col'>
 						<div className='space-y-0'>
 							<div className='flex gap-4 relative'>

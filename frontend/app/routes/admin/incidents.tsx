@@ -458,7 +458,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 							</Button>
 						</Link>
 					</PageHeader>
-
+					<Separator />
 					{/* Active Incidents */}
 					<CardContent className='p-0 gap-0 flex flex-col'>
 						{activeIncidents.length === 0 ? (
@@ -602,7 +602,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 						title='Incident History'
 						description='Resolved and closed incidents with resolution analytics'
 					/>
-
+					<Separator />
 					{/* Incident History */}
 					<CardContent className='p-0 gap-0 flex flex-col'>
 						{historyIncidents.length === 0 ? (
@@ -763,8 +763,18 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 																					? `${resolutionTime}m`
 																					: resolutionTime <
 																							1440
-																						? `${Math.floor(resolutionTime / 60)}h ${resolutionTime % 60}m`
-																						: `${Math.floor(resolutionTime / 1440)}d ${Math.floor((resolutionTime % 1440) / 60)}h`}
+																						? `${Math.floor(
+																								resolutionTime /
+																									60,
+																							)}h ${resolutionTime % 60}m`
+																						: `${Math.floor(
+																								resolutionTime /
+																									1440,
+																							)}d ${Math.floor(
+																								(resolutionTime %
+																									1440) /
+																									60,
+																							)}h`}
 																			</span>
 																		</span>
 																	)}
