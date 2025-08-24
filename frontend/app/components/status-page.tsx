@@ -35,7 +35,13 @@ import { PageContent } from '~/components/page-content'
 import { PageHeader } from '~/components/page-header'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '~/components/ui/card'
 import {
 	Dialog,
 	DialogContent,
@@ -240,9 +246,8 @@ function UptimeHistoryBar({
 	}
 
 	return (
-		<div className='flex items-center justify-between'>
-			<span className='text-xs text-neutral-500 w-20'>90 DAYS AGO</span>
-			<div className='flex-1 mx-4 flex space-x-0.5'>
+		<div className='flex flex-col items-center justify-between gap-2'>
+			<div className='w-full flex-1 flex gap-0.5 rounded overflow-hidden'>
 				{historyData.map((day, index) => {
 					const getBarColor = () => {
 						switch (day.status) {
@@ -259,11 +264,11 @@ function UptimeHistoryBar({
 
 					return (
 						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-						<div key={index} className='relative group'>
+						<div key={index} className='flex-1 h-12 relative group'>
 							{/* Main status bar */}
 							<div
 								className={cn(
-									'w-1 h-8 rounded-sm transition-all cursor-pointer',
+									'w-full h-full transition-all cursor-pointer',
 									getBarColor(),
 								)}
 							/>
@@ -289,9 +294,14 @@ function UptimeHistoryBar({
 					)
 				})}
 			</div>
-			<span className='text-xs text-neutral-500 w-12 text-right'>
-				TODAY
-			</span>
+			<div className='w-full flex items-center justify-between'>
+				<span className='text-xs text-neutral-500 w-20'>
+					90 DAYS AGO
+				</span>
+				<span className='text-xs text-neutral-500 w-12 text-right'>
+					TODAY
+				</span>
+			</div>
 		</div>
 	)
 }
@@ -842,7 +852,7 @@ export function StatusPage({
 				</header>
 
 				{/* Loading Content */}
-				<div className='max-w-4xl mx-auto flex mt-8'>
+				<div className='max-w-4xl mx-auto flex mt-4'>
 					<main className='flex-1 min-w-0'>
 						<div className='px-0 py-4'>
 							<div className='animate-pulse'>
@@ -894,7 +904,7 @@ export function StatusPage({
 					</div>
 				</header>
 
-				<div className='max-w-4xl mx-auto flex mt-8'>
+				<div className='max-w-4xl mx-auto flex mt-4'>
 					<main className='flex-1 min-w-0'>
 						<div className='px-0 py-4 flex items-center justify-center min-h-96'>
 							<div className='text-center'>
@@ -952,14 +962,10 @@ export function StatusPage({
 						</div>
 
 						<div className='flex items-center gap-4'>
-							<Button
-								className='cursor-pointer'
-								size='sm'
-								variant='ghost'
-							>
-								<Bell className='h-4 w-4' />
-								<span>Subscribe</span>
-							</Button>
+							{/*<Button className="cursor-pointer" size="sm" variant="ghost">
+                <Bell className="h-4 w-4" />
+                <span>Subscribe</span>
+              </Button>*/}
 							<Badge
 								className='px-4 py-2 font-mono uppercase'
 								variant={
@@ -985,7 +991,7 @@ export function StatusPage({
 			</header>
 
 			{/* Main Content - matching admin layout structure */}
-			<div className='max-w-4xl mx-auto flex mt-8'>
+			<div className='max-w-4xl mx-auto flex mt-4'>
 				<main className='flex-1 min-w-0'>
 					<div className='px-0 py-4'>
 						<div className='flex flex-col gap-4'>
@@ -1021,66 +1027,68 @@ export function StatusPage({
 									</div>
 								</PageHeader>
 
-								<CardContent className='p-0 gap-0 flex flex-col'>
-									{/* Active Incidents Alert */}
-									{incidents &&
-										incidents.incidents.length > 0 && (
-											<div className='px-6 py-4 bg-amber-50 border-b border-amber-200'>
-												<div className='flex items-start space-x-3'>
-													<AlertTriangle className='h-5 w-5 text-amber-600 mt-0.5' />
-													<div className='flex-1'>
-														<h3 className='font-semibold text-amber-900 mb-2'>
+								{incidents &&
+									incidents.incidents.length > 0 && (
+										<>
+											<Separator />
+											<CardContent className='p-0 gap-0 flex flex-col'>
+												{/* Active Incidents Alert */}
+												<div className='w-full px-6 py-4 bg-amber-50 border-b border-amber-200 flex flex-col items-start gap-4'>
+													<div className='flex items-center gap-2'>
+														<AlertTriangle className='h-5 w-5 text-amber-600' />
+														<h3 className='font-semibold text-amber-900'>
 															Active Incidents
 														</h3>
-														<div className='space-y-2'>
-															{incidents.incidents.map(
-																(incident) => (
-																	<Button
-																		key={
-																			incident.id
-																		}
-																		onClick={() =>
-																			setSelectedIncident(
-																				incident,
-																			)
-																		}
-																		className='text-left w-full group hover:bg-amber-100 rounded p-2 transition-colors'
-																		variant='ghost'
-																	>
-																		<div className='flex items-center justify-between'>
-																			<span className='font-medium text-amber-900'>
-																				{
-																					incident.title
-																				}
-																			</span>
-																			<ChevronRight className='h-4 w-4 text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity' />
-																		</div>
-																		<p className='text-sm text-amber-700 mt-1'>
+													</div>
+													<div className='w-full flex flex-col items-start justify-around gap-2'>
+														{incidents.incidents.map(
+															(incident) => (
+																<Card
+																	className='w-full py-4 rounded shadow-none border border-amber-400 bg-transparent cursor-pointer'
+																	key={
+																		incident.id
+																	}
+																	onClick={() =>
+																		setSelectedIncident(
+																			incident,
+																		)
+																	}
+																>
+																	<CardHeader className='px-4'>
+																		<CardTitle>
+																			{
+																				incident.title
+																			}
+																		</CardTitle>
+																		<CardDescription>
 																			{incident
 																				.description
 																				.length >
 																			100
-																				? `${incident.description.substring(0, 100)}...`
+																				? `${incident.description.substring(
+																						0,
+																						100,
+																					)}...`
 																				: incident.description}
-																		</p>
-																	</Button>
-																),
-															)}
-														</div>
+																		</CardDescription>
+																	</CardHeader>
+																</Card>
+															),
+														)}
 													</div>
 												</div>
-											</div>
-										)}
-								</CardContent>
+											</CardContent>
+										</>
+									)}
 							</PageContent>
 
 							{/* Service Status */}
 							<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 								<PageHeader
-									title='Service Status'
+									title='Services'
 									description='Current status and uptime history'
 								/>
-
+								<Separator />
 								<CardContent className='p-0 gap-0 flex flex-col'>
 									{status.services.length === 0 ? (
 										<div className='text-center py-8 text-muted-foreground'>
@@ -1118,8 +1126,8 @@ export function StatusPage({
 														className='px-6 py-4'
 													>
 														{/* Service header */}
-														<div className='flex items-center justify-between mb-4'>
-															<div className='flex items-center space-x-3'>
+														<div className='flex items-center justify-between mb-2'>
+															<div className='flex items-center space-x-2'>
 																{getStatusIcon(
 																	service.status,
 																)}
@@ -1129,22 +1137,14 @@ export function StatusPage({
 																			service.name
 																		}
 																	</h3>
-																	<p className='text-sm text-muted-foreground capitalize'>
-																		{
-																			service.status
-																		}
-																	</p>
 																</div>
 															</div>
 															<div className='text-right'>
-																<div className='text-lg font-semibold'>
+																<div className='text-sm font-mono font-normal'>
 																	{service.uptime_90_day.toFixed(
 																		2,
 																	)}
-																	%
-																</div>
-																<div className='text-sm text-muted-foreground'>
-																	uptime
+																	% uptime
 																</div>
 															</div>
 														</div>
@@ -1170,7 +1170,7 @@ export function StatusPage({
 									title='Incident History'
 									description='Recent incidents and their resolution status'
 								/>
-
+								<Separator />
 								<CardContent className='p-0 border-none shadow-none rounded-none'>
 									{incidents &&
 									incidents.incidents.length > 0 ? (
