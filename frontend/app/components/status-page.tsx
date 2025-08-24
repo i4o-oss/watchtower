@@ -265,7 +265,6 @@ function UptimeHistoryBar({
 					return (
 						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 						<div key={index} className='flex-1 h-12 relative group'>
-							{/* Main status bar */}
 							<div
 								className={cn(
 									'w-full h-full transition-all cursor-pointer',
@@ -273,14 +272,12 @@ function UptimeHistoryBar({
 								)}
 							/>
 
-							{/* Incident marker */}
 							{day.hasIncident && (
 								<div className='absolute -top-1 left-1/2 transform -translate-x-1/2'>
 									<div className='w-2 h-2 bg-amber-400 rounded-full border border-white' />
 								</div>
 							)}
 
-							{/* Tooltip */}
 							<div className='absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-neutral-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10'>
 								<div className='font-medium'>{day.date}</div>
 								<div>{day.uptime.toFixed(2)}% uptime</div>
@@ -963,9 +960,9 @@ export function StatusPage({
 
 						<div className='flex items-center gap-4'>
 							{/*<Button className="cursor-pointer" size="sm" variant="ghost">
-                <Bell className="h-4 w-4" />
-                <span>Subscribe</span>
-              </Button>*/}
+                				<Bell className="h-4 w-4" />
+                    			<span>Subscribe</span>
+                       		</Button>*/}
 							<Badge
 								className='px-4 py-2 font-mono uppercase'
 								variant={
@@ -1033,7 +1030,7 @@ export function StatusPage({
 											<Separator />
 											<CardContent className='p-0 gap-0 flex flex-col'>
 												{/* Active Incidents Alert */}
-												<div className='w-full px-6 py-4 bg-amber-50 border-b border-amber-200 flex flex-col items-start gap-4'>
+												<div className='w-full px-6 py-4 bg-amber-50 flex flex-col items-start gap-4'>
 													<div className='flex items-center gap-2'>
 														<AlertTriangle className='h-5 w-5 text-amber-600' />
 														<h3 className='font-semibold text-amber-900'>
