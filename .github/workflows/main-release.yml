@@ -1,0 +1,186 @@
+name: Main Branch Release
+
+# This workflow runs when changes are merged to main branch
+# It automatically creates version tags and releases
+on:
+  push:
+    branches: [ main ]
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: i4o-oss/watchtower
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  version-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout with full history for version detection
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Install SVU for version detection
+      - name: Install SVU
+        run: |
+          go install github.com/caarlos0/svu@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+
+      # Install Changie for changelog generation
+      - name: Install Changie
+        run: |
+          go install github.com/miniscruff/changie@latest
+
+      # Detect next version using SVU
+      - name: Detect next version
+        id: version
+        run: |
+          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          NEXT_VERSION=$(svu next 2>/dev/null || echo "")
+          
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          
+          if [ -z "$NEXT_VERSION" ] || [ "$NEXT_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "No version bump needed. Current: $CURRENT_VERSION"
+          else
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "Version bump detected: $CURRENT_VERSION -> $NEXT_VERSION"
+          fi
+
+      # Generate changelog entry
+      - name: Generate changelog
+        if: steps.version.outputs.should_release == 'true'
+        run: |
+          echo "Generating changelog for ${{ steps.version.outputs.next_version }}..."
+          
+          # Create changelog entry from conventional commits
+          git log ${{ steps.version.outputs.current_version }}..HEAD \
+            --pretty=format:"- %s" \
+            --grep="^feat" \
+            --grep="^fix" \
+            --grep="^perf" \
+            --grep="^security" > /tmp/changelog.md || echo "- Initial release" > /tmp/changelog.md
+
+      # Create and push version tag
+      - name: Create version tag
+        if: steps.version.outputs.should_release == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Create annotated tag
+          git tag -a "${{ steps.version.outputs.next_version }}" -m "Release ${{ steps.version.outputs.next_version }}"
+          
+          # Push the tag
+          git push origin "${{ steps.version.outputs.next_version }}"
+          
+          echo "Created and pushed tag: ${{ steps.version.outputs.next_version }}"
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        if: steps.version.outputs.should_release == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        if: steps.version.outputs.should_release == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Set up Node.js for frontend build
+      - name: Set up Node.js
+        if: steps.version.outputs.should_release == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      # Build and push Docker image with version tags
+      - name: Build and push Docker image
+        if: steps.version.outputs.should_release == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.next_version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+            org.opencontainers.image.title=Watchtower
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.version.outputs.next_version }}
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+          cache-from: type=gha,scope=production
+          cache-to: type=gha,mode=max,scope=production
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      # Create GitHub release
+      - name: Create GitHub release
+        if: steps.version.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.next_version }}
+          name: Watchtower ${{ steps.version.outputs.next_version }}
+          body: |
+            ## Watchtower ${{ steps.version.outputs.next_version }}
+            
+            Welcome to this new release of Watchtower! 🎉
+
+            ### 🐳 Docker Installation
+            
+            ```bash
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.next_version }}
+            ```
+            
+            ### 🐙 Docker Compose
+            
+            Update your `docker-compose.yml`:
+            ```yaml
+            services:
+              watchtower:
+                image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.next_version }}
+                # ... rest of your config
+            ```
+
+            ### 📝 Changes
+
+            $(cat /tmp/changelog.md || echo "- See commit history for changes")
+
+            ---
+            
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.current_version }}...${{ steps.version.outputs.next_version }}
+            
+            Don't forget to update your Docker deployments! 🚀
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+      # Summary
+      - name: Release Summary
+        if: steps.version.outputs.should_release == 'true'
+        run: |
+          echo "🎉 Release completed successfully!"
+          echo "📦 Docker image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.next_version }}"
+          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.next_version }}"
+
+      - name: No Release Summary
+        if: steps.version.outputs.should_release == 'false'
+        run: |
+          echo "ℹ️ No release created - no version bump detected"
+          echo "💡 Make sure to use conventional commit messages (feat:, fix:, etc.) to trigger releases"

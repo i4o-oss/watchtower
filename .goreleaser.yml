@@ -1,0 +1,111 @@
+# GoReleaser configuration for Watchtower
+# Focuses on Docker image releases for web application deployment
+version: 2
+
+project_name: watchtower
+
+# Skip building binaries since this is a Docker-first web application
+builds:
+  - skip: true
+
+# Docker configuration for single-arch builds
+dockers:
+  - image_templates:
+      - "{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:{{ .Version }}"
+      - "{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:latest"
+    dockerfile: docker/Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
+
+# GitHub release configuration
+release:
+  github:
+    owner: i4o-oss
+    name: watchtower
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## Watchtower {{.Tag}}
+    
+    Welcome to this new release of Watchtower! 🎉
+
+    ### Docker Installation
+    
+    ```bash
+    docker pull {{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:{{.Version}}
+    ```
+    
+    ### Docker Compose
+    
+    Update your `docker-compose.yml`:
+    ```yaml
+    services:
+      watchtower:
+        image: {{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:{{.Version}}
+        # ... rest of your config
+    ```
+
+  footer: |
+    **Full Changelog**: https://github.com/i4o-oss/watchtower/compare/{{.PreviousTag}}...{{.Tag}}
+    
+    ---
+    
+    Don't forget to update your Docker deployments! 🚀
+
+# Changelog configuration - will be populated by changie
+changelog:
+  use: github-native
+  sort: asc
+  abbrev: 0
+  groups:
+    - title: 'New Features'
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug Fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Performance Improvements'
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: 'Documentation Updates'
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: 'Other Changes'
+      order: 999
+  filters:
+    exclude:
+      - '^docs:'
+      - typo
+      - '^test:'
+      - '^ci:'
+      - '^chore:'
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+
+# Archive configuration (disabled since we're Docker-only)
+archives:
+  - id: disabled
+    name_template: 'disabled'
+    files:
+      - 'none*'
+
+# Checksum configuration (disabled for Docker-only)
+checksum:
+  disable: true
+
+# Snapshot configuration for unreleased builds
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+# Metadata for the release
+metadata:
+  mod_timestamp: '{{ .CommitTimestamp }}'
