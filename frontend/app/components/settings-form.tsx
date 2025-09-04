@@ -184,7 +184,7 @@ export function SettingsForm() {
 	}
 
 	return (
-		<CardContent className='p-0 gap-4 flex flex-col'>
+		<CardContent className='p-0 flex flex-col'>
 			{/* Site Configuration Section */}
 			<div className='px-6 py-4 space-y-4'>
 				<div>
@@ -262,11 +262,9 @@ export function SettingsForm() {
 						)}
 					</form.Field>
 
-					<div className='flex justify-end pt-4'>
+					<div className='flex justify-start'>
 						<Button type='submit' disabled={isSubmittingSite}>
-							{isSubmittingSite
-								? 'Saving...'
-								: 'Save Site Settings'}
+							{isSubmittingSite ? 'Saving...' : 'Save'}
 						</Button>
 					</div>
 				</form>
@@ -328,11 +326,9 @@ export function SettingsForm() {
 						)}
 					</form.Field>
 
-					<div className='flex justify-end pt-4'>
+					<div className='flex justify-start'>
 						<Button type='submit' disabled={isSubmittingDomain}>
-							{isSubmittingDomain
-								? 'Saving...'
-								: 'Save Domain Settings'}
+							{isSubmittingDomain ? 'Saving...' : 'Save'}
 						</Button>
 					</div>
 				</form>
@@ -543,11 +539,9 @@ export function SettingsForm() {
 						}}
 					</form.Field>
 
-					<div className='flex justify-end pt-4'>
+					<div className='flex justify-start'>
 						<Button type='submit' disabled={isSubmittingAdmin}>
-							{isSubmittingAdmin
-								? 'Saving...'
-								: 'Save Admin Settings'}
+							{isSubmittingAdmin ? 'Saving...' : 'Save'}
 						</Button>
 					</div>
 				</form>
