@@ -186,7 +186,7 @@ export function SettingsForm() {
 	return (
 		<CardContent className='p-0 flex flex-col'>
 			{/* Site Configuration Section */}
-			<div className='px-6 py-4 space-y-4'>
+			<div className='p-6 space-y-4'>
 				<div>
 					<h3 className='text-lg font-semibold'>
 						Site Configuration
@@ -273,7 +273,7 @@ export function SettingsForm() {
 			<Separator />
 
 			{/* Domain Settings Section */}
-			<div className='px-6 py-4 space-y-4'>
+			<div className='p-6 space-y-4'>
 				<div>
 					<h3 className='text-lg font-semibold'>Domain Settings</h3>
 					<p className='text-sm text-muted-foreground'>
@@ -337,7 +337,7 @@ export function SettingsForm() {
 			<Separator />
 
 			{/* Admin Account Management Section */}
-			<div className='px-6 py-4 space-y-4'>
+			<div className='p-6 space-y-4'>
 				<div>
 					<h3 className='text-lg font-semibold'>Admin Account</h3>
 					<p className='text-sm text-muted-foreground'>
