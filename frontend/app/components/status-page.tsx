@@ -3,10 +3,12 @@ import {
 	AlertCircle,
 	AlertTriangle,
 	Bell,
+	Calendar,
 	CheckCircle,
 	ChevronRight,
 	Clock,
 	ExternalLink,
+	Megaphone,
 	RefreshCw,
 	Shield,
 	TrendingUp,
@@ -567,6 +569,8 @@ export function StatusPage({
 	const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 	const [selectedIncident, setSelectedIncident] =
 		useState<IncidentSummary | null>(null)
+	const [timeline, setTimeline] = useState<any[]>([])
+	const [isLoadingTimeline, setIsLoadingTimeline] = useState(false)
 
 	// Fetch status data
 	const fetchStatus = useCallback(async () => {
@@ -595,12 +599,45 @@ export function StatusPage({
 		}
 	}, [])
 
+	// Load timeline data function
+	const loadTimeline = async (incidentId: string) => {
+		setIsLoadingTimeline(true)
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+		try {
+			const response = await fetch(
+				`${API_BASE_URL}/api/v1/admin/incidents/${incidentId}/timeline`,
+				{
+					method: 'GET',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+				},
+			)
+
+			if (response.ok) {
+				const data = await response.json()
+				setTimeline(data.timeline || [])
+			}
+		} catch (error) {
+			console.error('Error loading timeline:', error)
+		} finally {
+			setIsLoadingTimeline(false)
+		}
+	}
+
 	// Initial fetch (only if no initial data)
 	useEffect(() => {
 		if (!initialData?.status) {
 			fetchStatus()
 		}
 	}, [initialData?.status, fetchStatus])
+
+	// Load timeline when incident is selected
+	useEffect(() => {
+		if (selectedIncident) {
+			loadTimeline(selectedIncident.id)
+		}
+	}, [selectedIncident?.id])
 
 	// Auto-refresh every 5 minutes (since SSE provides real-time updates)
 	useEffect(() => {
@@ -1229,7 +1266,10 @@ export function StatusPage({
 						{/* Incident Detail Modal */}
 						<Dialog
 							open={!!selectedIncident}
-							onOpenChange={() => setSelectedIncident(null)}
+							onOpenChange={() => {
+								setSelectedIncident(null)
+								setTimeline([])
+							}}
 						>
 							<DialogContent className='max-w-2xl'>
 								<DialogHeader>
@@ -1280,31 +1320,139 @@ export function StatusPage({
 										<Separator />
 
 										<div>
-											<h4 className='font-medium mb-2'>
+											<h4 className='font-medium mb-4'>
 												Timeline
 											</h4>
-											<div className='space-y-2 text-sm'>
-												<div className='flex items-center space-x-2'>
-													<Clock className='h-4 w-4 text-muted-foreground' />
-													<span className='text-muted-foreground'>
-														Started:{' '}
-														{new Date(
-															selectedIncident.start_time,
-														).toLocaleString()}
-													</span>
-												</div>
-												{selectedIncident.end_time && (
-													<div className='flex items-center space-x-2'>
-														<CheckCircle className='h-4 w-4 text-green-500' />
-														<span className='text-muted-foreground'>
-															Resolved:{' '}
-															{new Date(
-																selectedIncident.end_time,
-															).toLocaleString()}
-														</span>
+											{isLoadingTimeline ? (
+												<div className='flex items-center justify-center py-8'>
+													<div className='flex items-center gap-2 text-muted-foreground'>
+														<RefreshCw className='h-4 w-4 animate-spin' />
+														Loading timeline...
 													</div>
-												)}
-											</div>
+												</div>
+											) : timeline.length === 0 ? (
+												<div className='text-center py-8 text-muted-foreground'>
+													No timeline entries found
+												</div>
+											) : (
+												<div className='space-y-0'>
+													{timeline.map(
+														(entry, index) => {
+															const isLast =
+																index ===
+																timeline.length -
+																	1
+															const getTimelineIcon =
+																(
+																	eventType: string,
+																) => {
+																	switch (
+																		eventType
+																	) {
+																		case 'created':
+																			return (
+																				<Calendar className='h-4 w-4 text-green-600' />
+																			)
+																		case 'update':
+																			return (
+																				<Megaphone className='h-4 w-4 text-blue-600' />
+																			)
+																		default:
+																			return (
+																				<Calendar className='h-4 w-4 text-gray-600' />
+																			)
+																	}
+																}
+
+															const getBadgeVariant =
+																(
+																	eventType: string,
+																) => {
+																	switch (
+																		eventType
+																	) {
+																		case 'created':
+																			return 'outline'
+																		case 'update':
+																			return 'default'
+																		default:
+																			return 'outline'
+																	}
+																}
+
+															const getEventTitle =
+																(
+																	entry: any,
+																) => {
+																	switch (
+																		entry.event_type
+																	) {
+																		case 'created':
+																			return 'Incident Created'
+																		case 'update':
+																			return 'Update'
+																		default:
+																			return 'Timeline Event'
+																	}
+																}
+
+															return (
+																<div
+																	key={
+																		entry.id
+																	}
+																	className={`flex gap-4 relative ${!isLast ? 'pb-6' : ''}`}
+																>
+																	<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
+																		{getTimelineIcon(
+																			entry.event_type,
+																		)}
+																	</div>
+																	{!isLast && (
+																		<div className='absolute left-4 top-8 bottom-0 w-0.5 bg-border' />
+																	)}
+																	<div className='flex-1'>
+																		<div className='flex items-center gap-2 mb-1'>
+																			<span className='font-medium'>
+																				{getEventTitle(
+																					entry,
+																				)}
+																			</span>
+																			<Badge
+																				className='font-mono uppercase'
+																				variant={getBadgeVariant(
+																					entry.event_type,
+																				)}
+																			>
+																				{entry.event_type.replace(
+																					'_',
+																					' ',
+																				)}
+																			</Badge>
+																		</div>
+																		{entry.message &&
+																			entry.event_type ===
+																				'update' && (
+																				<p className='text-sm mb-2 bg-muted p-3 rounded-lg'>
+																					{
+																						entry.message
+																					}
+																				</p>
+																			)}
+																		<p className='text-sm text-muted-foreground font-mono'>
+																			{new Date(
+																				entry.created_at,
+																			).toLocaleString()}
+																			{entry.user_id &&
+																				' • System'}
+																		</p>
+																	</div>
+																</div>
+															)
+														},
+													)}
+												</div>
+											)}
 										</div>
 
 										{selectedIncident.affected_services

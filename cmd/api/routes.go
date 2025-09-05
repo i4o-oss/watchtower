@@ -98,6 +98,9 @@ func (app *Application) routes() http.Handler {
 				// Incident timeline and comments
 				r.Get("/{id}/timeline", app.getIncidentTimeline)
 				r.Post("/{id}/comments", app.addIncidentComment)
+
+				// Data migration endpoint
+				r.Post("/migrate", app.migrateIncidentData)
 			})
 
 			// Notification management

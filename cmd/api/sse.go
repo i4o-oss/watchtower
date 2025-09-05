@@ -156,6 +156,24 @@ func (h *SSEHub) BroadcastIncidentUpdate(incidentType string, incident interface
 	}
 }
 
+// BroadcastTimelineUpdate broadcasts a timeline update to all connected clients
+func (h *SSEHub) BroadcastTimelineUpdate(timelineType string, timeline interface{}) {
+	message := SSEMessage{
+		Event: timelineType, // "timeline_created", "timeline_updated"
+		Data:  timeline,
+		ID:    fmt.Sprintf("%d", time.Now().UnixNano()),
+	}
+
+	if data, err := json.Marshal(message.Data); err == nil {
+		eventData := fmt.Sprintf("event: %s\ndata: %s\nid: %s\n\n", message.Event, string(data), message.ID)
+		select {
+		case h.broadcast <- []byte(eventData):
+		default:
+			log.Printf("SSE broadcast channel full, dropping timeline message")
+		}
+	}
+}
+
 // BroadcastEndpointUpdate broadcasts an endpoint update to all connected clients
 func (h *SSEHub) BroadcastEndpointUpdate(eventType string, endpoint interface{}) {
 	message := SSEMessage{

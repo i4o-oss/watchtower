@@ -474,11 +474,7 @@ func (app *Application) createIncident(w http.ResponseWriter, r *http.Request) {
 		IncidentID: incident.ID,
 		UserID:     createdBy,
 		EventType:  "created",
-		Message:    stringPtr("Incident created"),
-		Metadata: map[string]interface{}{
-			"severity": incident.Severity,
-			"status":   incident.Status,
-		},
+		Message:    "Incident created",
 	}
 	if err := app.db.CreateIncidentTimeline(timeline); err != nil {
 		app.logger.Error("Error creating incident timeline", "err", err.Error())
@@ -500,20 +496,6 @@ func (app *Application) createIncident(w http.ResponseWriter, r *http.Request) {
 		if err := app.db.CreateEndpointIncident(endpointIncident); err != nil {
 			app.logger.Error("Error creating endpoint incident", "err", err.Error())
 			// Continue with other endpoints
-		} else {
-			// Create timeline entry for endpoint association
-			timeline := &data.IncidentTimeline{
-				IncidentID: incident.ID,
-				UserID:     createdBy,
-				EventType:  "endpoint_associated",
-				Message:    stringPtr("Endpoint associated with incident"),
-				Metadata: map[string]interface{}{
-					"endpoint_id": endpointIDStr,
-				},
-			}
-			if timelineErr := app.db.CreateIncidentTimeline(timeline); timelineErr != nil {
-				app.logger.Error("Error creating timeline for endpoint association", "err", timelineErr.Error())
-			}
 		}
 	}
 
@@ -559,103 +541,35 @@ func (app *Application) updateIncident(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Store original values for timeline tracking
-	originalStatus := incident.Status
-	originalSeverity := incident.Severity
-	originalTitle := incident.Title
-	originalDescription := incident.Description
-
 	var req IncidentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		app.errorResponse(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
 
-	// Get current user for timeline tracking
-	user := app.getUserFromContext(r)
-	var userID *uuid.UUID
-	if user != nil {
-		userID = &user.ID
-	}
-
-	// Update fields and track changes
-	var timelineEntries []*data.IncidentTimeline
-
-	if req.Title != "" && req.Title != incident.Title {
-		timelineEntries = append(timelineEntries, &data.IncidentTimeline{
-			IncidentID: incident.ID,
-			UserID:     userID,
-			EventType:  "update",
-			OldValue:   &originalTitle,
-			NewValue:   &req.Title,
-			Message:    stringPtr("Title updated"),
-		})
+	// Update fields
+	if req.Title != "" {
 		incident.Title = req.Title
 	}
-
-	if req.Description != incident.Description {
-		timelineEntries = append(timelineEntries, &data.IncidentTimeline{
-			IncidentID: incident.ID,
-			UserID:     userID,
-			EventType:  "update",
-			OldValue:   &originalDescription,
-			NewValue:   &req.Description,
-			Message:    stringPtr("Description updated"),
-		})
+	if req.Description != "" {
 		incident.Description = req.Description
 	}
-
-	if req.Severity != "" && req.Severity != incident.Severity {
-		timelineEntries = append(timelineEntries, &data.IncidentTimeline{
-			IncidentID: incident.ID,
-			UserID:     userID,
-			EventType:  "update",
-			OldValue:   &originalSeverity,
-			NewValue:   &req.Severity,
-			Message:    stringPtr("Severity changed"),
-		})
+	if req.Severity != "" {
 		incident.Severity = req.Severity
 	}
-
-	if req.Status != "" && req.Status != incident.Status {
-		timelineEntries = append(timelineEntries, &data.IncidentTimeline{
-			IncidentID: incident.ID,
-			UserID:     userID,
-			EventType:  "status_change",
-			OldValue:   &originalStatus,
-			NewValue:   &req.Status,
-			Message:    stringPtr(fmt.Sprintf("Status changed from %s to %s", originalStatus, req.Status)),
-		})
-		incident.Status = req.Status
-
-		// If status is resolved, set end time and create resolved timeline entry
+	if req.Status != "" {
+		// If status is resolved, set end time
 		if req.Status == "resolved" && incident.EndTime == nil {
 			now := time.Now()
 			incident.EndTime = &now
-			timelineEntries = append(timelineEntries, &data.IncidentTimeline{
-				IncidentID: incident.ID,
-				UserID:     userID,
-				EventType:  "resolved",
-				Message:    stringPtr("Incident resolved"),
-				Metadata: map[string]interface{}{
-					"resolved_at": now.Format(time.RFC3339),
-				},
-			})
 		}
+		incident.Status = req.Status
 	}
 
 	if err := app.db.UpdateIncident(incident); err != nil {
 		app.logger.Error("Error updating incident", "err", err.Error())
 		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
-	}
-
-	// Create timeline entries
-	for _, entry := range timelineEntries {
-		if err := app.db.CreateIncidentTimeline(entry); err != nil {
-			app.logger.Error("Error creating incident timeline", "err", err.Error())
-			// Continue anyway
-		}
 	}
 
 	// Broadcast incident update event via SSE
@@ -723,13 +637,6 @@ func (app *Application) associateEndpointsWithIncident(w http.ResponseWriter, r 
 		return
 	}
 
-	// Get current user
-	user := app.getUserFromContext(r)
-	var userID *uuid.UUID
-	if user != nil {
-		userID = &user.ID
-	}
-
 	// Associate endpoints with incident
 	for _, endpointIDStr := range req.EndpointIDs {
 		endpointID, err := uuid.Parse(endpointIDStr)
@@ -738,7 +645,7 @@ func (app *Application) associateEndpointsWithIncident(w http.ResponseWriter, r 
 		}
 
 		// Check if endpoint exists
-		endpoint, err := app.db.GetEndpoint(endpointID)
+		_, err = app.db.GetEndpoint(endpointID)
 		if err != nil {
 			continue // Skip non-existent endpoints
 		}
@@ -752,21 +659,6 @@ func (app *Application) associateEndpointsWithIncident(w http.ResponseWriter, r 
 		if err := app.db.CreateEndpointIncident(endpointIncident); err != nil {
 			app.logger.Error("Error creating endpoint incident", "err", err.Error())
 			// Continue with other endpoints
-		} else {
-			// Create timeline entry for endpoint association
-			timeline := &data.IncidentTimeline{
-				IncidentID: incidentID,
-				UserID:     userID,
-				EventType:  "endpoint_associated",
-				Message:    stringPtr(fmt.Sprintf("Endpoint '%s' associated with incident", endpoint.Name)),
-				Metadata: map[string]interface{}{
-					"endpoint_id":   endpointIDStr,
-					"endpoint_name": endpoint.Name,
-				},
-			}
-			if timelineErr := app.db.CreateIncidentTimeline(timeline); timelineErr != nil {
-				app.logger.Error("Error creating timeline for endpoint association", "err", timelineErr.Error())
-			}
 		}
 	}
 
@@ -790,40 +682,10 @@ func (app *Application) removeEndpointFromIncident(w http.ResponseWriter, r *htt
 		return
 	}
 
-	// Get endpoint name for timeline
-	endpoint, _ := app.db.GetEndpoint(endpointID)
-	endpointName := "Unknown"
-	if endpoint != nil {
-		endpointName = endpoint.Name
-	}
-
 	if err := app.db.DeleteEndpointIncident(endpointID, incidentID); err != nil {
 		app.logger.Error("Error removing endpoint from incident", "err", err.Error())
 		app.errorResponse(w, http.StatusInternalServerError, constants.ErrInternalServer)
 		return
-	}
-
-	// Get current user
-	user := app.getUserFromContext(r)
-	var userID *uuid.UUID
-	if user != nil {
-		userID = &user.ID
-	}
-
-	// Create timeline entry for endpoint removal
-	timeline := &data.IncidentTimeline{
-		IncidentID: incidentID,
-		UserID:     userID,
-		EventType:  "endpoint_removed",
-		Message:    stringPtr(fmt.Sprintf("Endpoint '%s' removed from incident", endpointName)),
-		Metadata: map[string]interface{}{
-			"endpoint_id":   endpointID.String(),
-			"endpoint_name": endpointName,
-		},
-	}
-	if err := app.db.CreateIncidentTimeline(timeline); err != nil {
-		app.logger.Error("Error creating timeline for endpoint removal", "err", err.Error())
-		// Continue anyway
 	}
 
 	w.WriteHeader(http.StatusNoContent)
@@ -935,8 +797,8 @@ func (app *Application) addIncidentComment(w http.ResponseWriter, r *http.Reques
 	timeline := &data.IncidentTimeline{
 		IncidentID: incidentID,
 		UserID:     userID,
-		EventType:  "comment",
-		Message:    &req.Message,
+		EventType:  "update",
+		Message:    req.Message,
 	}
 
 	if err := app.db.CreateIncidentTimeline(timeline); err != nil {
@@ -945,7 +807,24 @@ func (app *Application) addIncidentComment(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Broadcast timeline update via SSE
+	app.sseHub.BroadcastTimelineUpdate("timeline_created", timeline)
+
 	app.writeJSON(w, http.StatusCreated, map[string]string{"message": "Comment added"})
+}
+
+// migrateIncidentData handles POST /api/v1/admin/incidents/migrate
+func (app *Application) migrateIncidentData(w http.ResponseWriter, r *http.Request) {
+	err := app.db.MigrateIncidentDescriptions()
+	if err != nil {
+		app.logger.Error("Error migrating incident data", "err", err.Error())
+		app.errorResponse(w, http.StatusInternalServerError, "Failed to migrate incident data")
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, map[string]string{
+		"message": "Incident data migration completed successfully",
+	})
 }
 
 // Helper function to create string pointers

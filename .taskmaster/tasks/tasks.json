@@ -1864,11 +1864,68 @@
 						"testStrategy": "Test API endpoint with proper authentication and validation, verify database operations work correctly, test password change functionality, validate error handling and response formatting"
 					}
 				]
+			},
+			{
+				"id": 45,
+				"title": "Fix Incident Timeline Functionality",
+				"description": "Correct the incident update functionality to properly use the incident_timeline table instead of modifying the incident description, ensuring accurate timestamps and separate timeline entries.",
+				"details": "Investigate and fix the current incident update mechanism that incorrectly modifies the incident description field instead of creating new entries in the incident_timeline table. This involves: 1) Audit the current incident update API endpoints to identify where timeline updates are being handled incorrectly, 2) Modify the backend logic to properly insert new timeline entries into the incident_timeline table with correct timestamps, user attribution, and update content, 3) Update the frontend incident detail UI to display timeline entries from the incident_timeline table rather than parsing concatenated description text, 4) Implement proper timeline entry creation when incident status changes, manual updates are posted, or system events occur, 5) Add validation to ensure timeline entries have proper structure (timestamp, user_id, update_type, content), 6) Update existing incidents that have concatenated updates in descriptions by parsing and migrating them to proper timeline entries, 7) Implement real-time timeline updates in the UI so new entries appear immediately after posting.",
+				"testStrategy": "Test that posting incident updates creates new entries in incident_timeline table rather than modifying incident description. Verify timeline entries have correct timestamps reflecting when they were actually created. Test that incident description remains unchanged when timeline updates are posted. Validate that timeline entries are properly displayed in chronological order in the incident detail UI. Test different types of timeline entries (status changes, manual updates, system events) are handled correctly. Verify existing incidents with concatenated descriptions are properly migrated to timeline format. Test real-time updates appear in UI without requiring page refresh.",
+				"status": "done",
+				"dependencies": [7, 34],
+				"priority": "medium",
+				"subtasks": [
+					{
+						"id": 1,
+						"title": "Audit Current Incident Update API Endpoints",
+						"description": "Investigate and document all incident update API endpoints to identify where timeline updates are being incorrectly handled by modifying the incident description field.",
+						"dependencies": [],
+						"details": "Review all incident-related API endpoints in the backend code, particularly those handling incident updates, status changes, and timeline entries. Document the current flow of how incident updates are processed and identify specific code locations where the incident description field is being modified instead of creating timeline entries. Map out the data flow from API request to database operations.",
+						"status": "done",
+						"testStrategy": "Create test cases that trace the complete flow of incident update requests through the API endpoints. Verify current behavior by making test API calls and examining database changes to confirm whether updates go to incident description or timeline table."
+					},
+					{
+						"id": 2,
+						"title": "Modify Backend Logic for Timeline Table Usage",
+						"description": "Update the backend incident update logic to properly insert new entries into the incident_timeline table with correct timestamps, user attribution, and content.",
+						"dependencies": ["45.1"],
+						"details": "Refactor the identified problematic code paths to create new entries in the incident_timeline table instead of modifying the incident description. Implement proper data structure for timeline entries including timestamp, user_id, update_type (status_change, manual_update, system_event), and content fields. Ensure all incident updates preserve the original incident description while adding timeline entries.",
+						"status": "done",
+						"testStrategy": "Test that incident updates create new timeline entries with proper structure. Verify timestamps are accurate, user attribution is correct, and incident description remains unchanged. Test various update types (status changes, manual updates) to ensure proper timeline entry creation."
+					},
+					{
+						"id": 3,
+						"title": "Update Frontend Timeline Display",
+						"description": "Modify the frontend incident detail UI to display timeline entries from the incident_timeline table rather than parsing concatenated description text.",
+						"dependencies": ["45.2"],
+						"details": "Update the incident detail page to fetch and display timeline entries from the incident_timeline table. Implement proper timeline UI components that show timestamps, user information, update types, and content in a chronological order. Remove any existing logic that parses concatenated text from incident descriptions to extract timeline information.",
+						"status": "done",
+						"testStrategy": "Test that the incident detail page displays timeline entries correctly with proper formatting, timestamps, and user information. Verify that the timeline updates in real-time when new entries are added and that old concatenated description parsing logic no longer affects the display."
+					},
+					{
+						"id": 4,
+						"title": "Implement Timeline Entry Validation and Structure",
+						"description": "Add comprehensive validation to ensure timeline entries have proper structure with required fields and implement timeline entry creation for all incident events.",
+						"dependencies": ["45.2"],
+						"details": "Create validation rules for timeline entries to ensure they contain required fields: timestamp, user_id, update_type, and content. Implement timeline entry creation for various incident events including status changes, manual updates, and system events. Add database constraints and application-level validation to maintain data integrity.",
+						"status": "done",
+						"testStrategy": "Test validation rules by attempting to create timeline entries with missing or invalid data. Verify that all incident events (status changes, manual updates, system events) properly create timeline entries. Test database constraints and error handling for malformed timeline data."
+					},
+					{
+						"id": 5,
+						"title": "Migrate Existing Incident Data and Implement Real-time Updates",
+						"description": "Migrate existing incidents with concatenated updates in descriptions to proper timeline entries and implement real-time timeline updates in the UI.",
+						"dependencies": ["45.3", "45.4"],
+						"details": "Create a data migration script to parse existing incident descriptions that contain concatenated updates and convert them into proper timeline entries. Implement real-time functionality (WebSocket or server-sent events) so new timeline entries appear immediately in the UI after posting. Ensure the migration preserves the original incident descriptions while extracting timeline data.",
+						"status": "done",
+						"testStrategy": "Test the migration script on sample incidents with concatenated updates to verify proper extraction and timeline entry creation. Test real-time updates by posting new timeline entries and confirming they appear immediately in other browser sessions viewing the same incident."
+					}
+				]
 			}
 		],
 		"metadata": {
 			"created": "2025-07-01T12:04:27.719Z",
-			"updated": "2025-08-22T05:07:21.558Z",
+			"updated": "2025-09-05T08:29:46.553Z",
 			"description": "Tasks for master context"
 		}
 	}

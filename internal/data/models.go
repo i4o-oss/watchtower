@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -465,15 +466,12 @@ func (db *DB) DeleteEndpointIncident(endpointID uuid.UUID, incidentID uuid.UUID)
 
 // IncidentTimeline represents a timeline entry for incident history
 type IncidentTimeline struct {
-	ID         uuid.UUID              `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	IncidentID uuid.UUID              `json:"incident_id" gorm:"type:uuid;not null"`
-	UserID     *uuid.UUID             `json:"user_id" gorm:"type:uuid"`
-	EventType  string                 `json:"event_type" gorm:"not null"`
-	OldValue   *string                `json:"old_value"`
-	NewValue   *string                `json:"new_value"`
-	Message    *string                `json:"message"`
-	Metadata   map[string]interface{} `json:"metadata" gorm:"type:jsonb;default:'{}'"`
-	CreatedAt  time.Time              `json:"created_at"`
+	ID         uuid.UUID  `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	IncidentID uuid.UUID  `json:"incident_id" gorm:"type:uuid;not null"`
+	UserID     *uuid.UUID `json:"user_id" gorm:"type:uuid"`
+	EventType  string     `json:"event_type" gorm:"not null"`
+	Message    string     `json:"message"`
+	CreatedAt  time.Time  `json:"created_at"`
 
 	// Relationships
 	Incident *Incident `json:"incident,omitempty" gorm:"foreignKey:IncidentID"`
@@ -485,8 +483,49 @@ func (IncidentTimeline) TableName() string {
 	return "incident_timeline"
 }
 
+// ValidEventTypes defines allowed event types for incident timeline entries
+var ValidEventTypes = []string{
+	"created",
+	"update",
+}
+
+// Validate validates the incident timeline entry
+func (it *IncidentTimeline) Validate() error {
+	if it.IncidentID == uuid.Nil {
+		return errors.New("incident_id is required")
+	}
+
+	if it.EventType == "" {
+		return errors.New("event_type is required")
+	}
+
+	// Check if event type is valid
+	validType := false
+	for _, validEventType := range ValidEventTypes {
+		if it.EventType == validEventType {
+			validType = true
+			break
+		}
+	}
+	if !validType {
+		return errors.New("invalid event_type: must be 'created' or 'update'")
+	}
+
+	// Message is required for updates
+	if it.EventType == "update" && strings.TrimSpace(it.Message) == "" {
+		return errors.New("update events require a message")
+	}
+
+	return nil
+}
+
 // IncidentTimeline database operations
 func (db *DB) CreateIncidentTimeline(timeline *IncidentTimeline) error {
+	// Validate the timeline entry before creating
+	if err := timeline.Validate(); err != nil {
+		return err
+	}
+
 	return db.DB.Create(timeline).Error
 }
 
@@ -497,6 +536,63 @@ func (db *DB) GetIncidentTimeline(incidentID uuid.UUID) ([]IncidentTimeline, err
 		Order("created_at ASC").
 		Find(&timeline).Error
 	return timeline, err
+}
+
+// MigrateIncidentDescriptions migrates concatenated descriptions to timeline entries
+func (db *DB) MigrateIncidentDescriptions() error {
+	var incidents []Incident
+
+	// Find incidents that might have concatenated descriptions
+	err := db.DB.Where("description LIKE '%Update:%'").Find(&incidents).Error
+	if err != nil {
+		return err
+	}
+
+	for _, incident := range incidents {
+		if incident.Description == "" {
+			continue
+		}
+
+		// Split the description by "Update:" to extract updates
+		parts := strings.Split(incident.Description, "Update:")
+		if len(parts) <= 1 {
+			continue // No updates found
+		}
+
+		// The first part is the original description
+		originalDescription := strings.TrimSpace(parts[0])
+
+		// Process each update
+		for _, updateText := range parts[1:] {
+			updateText = strings.TrimSpace(updateText)
+			if updateText == "" {
+				continue
+			}
+
+			// Create a timeline entry for the update
+			timeline := &IncidentTimeline{
+				IncidentID: incident.ID,
+				UserID:     nil, // System migration
+				EventType:  "update",
+				Message:    updateText,
+			}
+
+			// Set created_at to incident's updated_at to preserve timing
+			timeline.CreatedAt = incident.UpdatedAt
+
+			if err := db.DB.Create(timeline).Error; err != nil {
+				return err
+			}
+		}
+
+		// Update the incident description to just the original part
+		incident.Description = originalDescription
+		if err := db.DB.Save(&incident).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (db *DB) GetRecentIncidentActivity(limit int) ([]IncidentTimeline, error) {

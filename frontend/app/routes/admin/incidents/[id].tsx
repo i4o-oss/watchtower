@@ -122,6 +122,40 @@ export default function IncidentDetail({
 		'update' | 'resolve' | 'reopen'
 	>('update')
 	const [timeline, setTimeline] = useState<any[]>([])
+	const [isLoadingTimeline, setIsLoadingTimeline] = useState(true)
+
+	// Load timeline data function
+	const loadTimeline = async () => {
+		if (!incident?.id) return
+
+		setIsLoadingTimeline(true)
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+		try {
+			const response = await fetch(
+				`${API_BASE_URL}/api/v1/admin/incidents/${incident.id}/timeline`,
+				{
+					method: 'GET',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+				},
+			)
+
+			if (response.ok) {
+				const data = await response.json()
+				setTimeline(data.timeline || [])
+			}
+		} catch (error) {
+			console.error('Error loading timeline:', error)
+		} finally {
+			setIsLoadingTimeline(false)
+		}
+	}
+
+	// Load timeline data on component mount
+	useEffect(() => {
+		loadTimeline()
+	}, [incident?.id])
 
 	// Real-time updates
 	useSSE(
@@ -135,6 +169,20 @@ export default function IncidentDetail({
 				} catch (error) {
 					console.error(
 						'Error parsing incident_updated event:',
+						error,
+					)
+				}
+			},
+			timeline_created: (event) => {
+				try {
+					const timelineEntry = JSON.parse(event.data)
+					if (timelineEntry.incident_id === incident?.id) {
+						// Reload timeline to get the new entry
+						loadTimeline()
+					}
+				} catch (error) {
+					console.error(
+						'Error parsing timeline_created event:',
 						error,
 					)
 				}
@@ -209,39 +257,56 @@ export default function IncidentDetail({
 		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 		try {
-			const updateData: any = {}
-
+			// Update status first if it changed
 			if (newStatus !== incident.status) {
-				updateData.status = newStatus
-			}
-
-			if (updateNote.trim()) {
-				updateData.description = incident.description
-					? `${incident.description}\n\nUpdate: ${updateNote.trim()}`
-					: updateNote.trim()
-			}
-
-			const response = await fetch(
-				`${API_BASE_URL}/api/v1/admin/incidents/${params.id}`,
-				{
-					method: 'PUT',
-					credentials: 'include',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(updateData),
-				},
-			)
-
-			if (response.ok) {
-				const updatedData = await response.json()
-				setIncident(updatedData.incident || updatedData)
-				setUpdateNote('')
-				successToast(
-					'Incident Updated',
-					'Status and notes have been updated',
+				const statusResponse = await fetch(
+					`${API_BASE_URL}/api/v1/admin/incidents/${params.id}`,
+					{
+						method: 'PUT',
+						credentials: 'include',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ status: newStatus }),
+					},
 				)
-			} else {
-				errorToast('Update Failed', 'Failed to update the incident')
+
+				if (!statusResponse.ok) {
+					errorToast(
+						'Update Failed',
+						'Failed to update the incident status',
+					)
+					return
+				}
+
+				const updatedData = await statusResponse.json()
+				setIncident(updatedData.incident || updatedData)
 			}
+
+			// Add comment/update if provided
+			if (updateNote.trim()) {
+				const commentResponse = await fetch(
+					`${API_BASE_URL}/api/v1/admin/incidents/${params.id}/comments`,
+					{
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ message: updateNote.trim() }),
+					},
+				)
+
+				if (!commentResponse.ok) {
+					errorToast('Comment Failed', 'Failed to add update comment')
+					return
+				}
+			}
+
+			// Refresh timeline data
+			await loadTimeline()
+
+			setUpdateNote('')
+			successToast(
+				'Incident Updated',
+				'Status and notes have been updated',
+			)
 		} catch (error) {
 			console.error('Error updating incident:', error)
 			errorToast('Network Error', 'Failed to update the incident')
@@ -607,90 +672,114 @@ export default function IncidentDetail({
 					</PageHeader>
 					<Separator />
 					<CardContent className='p-4 gap-4 flex flex-col'>
-						<div className='space-y-0'>
-							<div className='flex gap-4 relative'>
-								<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
-									<Calendar className='h-4 w-4 text-green-600' />
-								</div>
-								<div className='absolute left-4 top-0 bottom-0 w-0.5 bg-border' />
-								<div className='flex-1 pb-4'>
-									<div className='flex items-center gap-2 mb-1'>
-										<span className='font-medium'>
-											Incident Created
-										</span>
-										<Badge
-											className='font-mono uppercase'
-											variant='outline'
-										>
-											{incident.status === 'open'
-												? 'Current'
-												: 'Initial'}
-										</Badge>
-									</div>
-									<p className='text-sm text-muted-foreground font-mono'>
-										{new Date(
-											incident.created_at,
-										).toLocaleString()}
-									</p>
+						{isLoadingTimeline ? (
+							<div className='flex items-center justify-center py-8'>
+								<div className='flex items-center gap-2 text-muted-foreground'>
+									<RefreshCw className='h-4 w-4 animate-spin' />
+									Loading timeline...
 								</div>
 							</div>
+						) : timeline.length === 0 ? (
+							<div className='text-center py-8 text-muted-foreground'>
+								No timeline entries found
+							</div>
+						) : (
+							<div className='space-y-0'>
+								{timeline.map((entry, index) => {
+									const isLast = index === timeline.length - 1
+									const getTimelineIcon = (
+										eventType: string,
+									) => {
+										switch (eventType) {
+											case 'created':
+												return (
+													<Calendar className='h-4 w-4 text-green-600' />
+												)
+											case 'update':
+												return (
+													<Megaphone className='h-4 w-4 text-blue-600' />
+												)
+											default:
+												return (
+													<Calendar className='h-4 w-4 text-gray-600' />
+												)
+										}
+									}
 
-							{incident.status !== 'open' && (
-								<div className='flex gap-4 relative py-6'>
-									<div className='w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center relative z-10'>
-										<RefreshCw className='h-4 w-4 text-blue-600' />
-									</div>
-									<div className='absolute left-4 top-0 bottom-0 w-0.5 bg-border' />
-									<div className='flex-1 pb-4'>
-										<div className='flex items-center gap-2 mb-1'>
-											<span className='font-medium'>
-												Status Updated to{' '}
-												{incident.status}
-											</span>
-											<Badge
-												className='font-mono uppercase'
-												variant='default'
-											>
-												Current
-											</Badge>
-										</div>
-										<p className='text-sm text-muted-foreground font-mono'>
-											{incident.updated_at
-												? new Date(
-														incident.updated_at,
-													).toLocaleString()
-												: 'Recently updated'}
-										</p>
-									</div>
-								</div>
-							)}
+									const getBadgeVariant = (
+										eventType: string,
+									) => {
+										switch (eventType) {
+											case 'created':
+												return 'outline'
+											case 'update':
+												return 'default'
+											default:
+												return 'outline'
+										}
+									}
 
-							{incident.end_time && (
-								<div className='flex gap-4'>
-									<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
-										<CheckCircle2 className='h-4 w-4 text-green-600' />
-									</div>
-									<div className='flex-1 pb-4'>
-										<div className='flex items-center gap-2 mb-1'>
-											<span className='font-medium'>
-												Incident Resolved
-											</span>
-											<Badge
-												className='font-mono uppercase'
-												variant='secondary'
-											>
-												Final
-											</Badge>
+									const getEventTitle = (entry: any) => {
+										switch (entry.event_type) {
+											case 'created':
+												return 'Incident Created'
+											case 'update':
+												return 'Update'
+											default:
+												return 'Timeline Event'
+										}
+									}
+
+									return (
+										<div
+											key={entry.id}
+											className={`flex gap-4 relative ${!isLast ? 'pb-6' : ''}`}
+										>
+											<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>
+												{getTimelineIcon(
+													entry.event_type,
+												)}
+											</div>
+											{!isLast && (
+												<div className='absolute left-4 top-8 bottom-0 w-0.5 bg-border' />
+											)}
+											<div className='flex-1'>
+												<div className='flex items-center gap-2 mb-1'>
+													<span className='font-medium'>
+														{getEventTitle(entry)}
+													</span>
+													<Badge
+														className='font-mono uppercase'
+														variant={getBadgeVariant(
+															entry.event_type,
+														)}
+													>
+														{entry.event_type.replace(
+															'_',
+															' ',
+														)}
+													</Badge>
+												</div>
+												{entry.message &&
+													entry.event_type ===
+														'update' && (
+														<p className='text-sm mb-2 bg-muted p-3 rounded-lg'>
+															{entry.message}
+														</p>
+													)}
+												<p className='text-sm text-muted-foreground font-mono'>
+													{new Date(
+														entry.created_at,
+													).toLocaleString()}
+													{entry.user_id &&
+														' • System'}
+												</p>
+											</div>
 										</div>
-										<p className='text-sm text-muted-foreground font-mono'>
-											{new Date(
-												incident.end_time,
-											).toLocaleString()}
-										</p>
-									</div>
-								</div>
-							)}
-						</div>
+									)
+								})}
+							</div>
+						)}
 					</CardContent>
 				</PageContent>
 

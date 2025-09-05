@@ -268,14 +268,7 @@ func (id *IncidentDetector) createIncidentIfNeeded(endpointID uuid.UUID, tracker
 		IncidentID: incident.ID,
 		UserID:     nil, // System-generated
 		EventType:  "created",
-		Message:    stringPtr("Incident automatically created by monitoring system"),
-		Metadata: map[string]interface{}{
-			"endpoint_id":          endpointID.String(),
-			"endpoint_name":        endpoint.Name,
-			"consecutive_failures": tracker.ConsecutiveFailures,
-			"detection_trigger":    "automatic",
-			"severity":             severity,
-		},
+		Message:    "Incident automatically created by monitoring system",
 	}
 	if err := id.db.CreateIncidentTimeline(timeline); err != nil {
 		id.logger.Error("failed to create incident timeline", "incident_id", incident.ID, "error", err)
@@ -297,13 +290,8 @@ func (id *IncidentDetector) createIncidentIfNeeded(endpointID uuid.UUID, tracker
 		endpointTimeline := &data.IncidentTimeline{
 			IncidentID: incident.ID,
 			UserID:     nil, // System-generated
-			EventType:  "endpoint_associated",
-			Message:    stringPtr(fmt.Sprintf("Endpoint '%s' automatically associated due to failures", endpoint.Name)),
-			Metadata: map[string]interface{}{
-				"endpoint_id":   endpointID.String(),
-				"endpoint_name": endpoint.Name,
-				"automatic":     true,
-			},
+			EventType:  "update",
+			Message:    fmt.Sprintf("Endpoint '%s' automatically associated due to failures", endpoint.Name),
 		}
 		if err := id.db.CreateIncidentTimeline(endpointTimeline); err != nil {
 			id.logger.Error("failed to create endpoint association timeline", "incident_id", incident.ID, "error", err)
@@ -360,14 +348,8 @@ func (id *IncidentDetector) resolveIncidentIfNeeded(endpointID uuid.UUID, tracke
 	timeline := &data.IncidentTimeline{
 		IncidentID: incident.ID,
 		UserID:     nil, // System-generated
-		EventType:  "resolved",
-		Message:    stringPtr("Incident automatically resolved by monitoring system"),
-		Metadata: map[string]interface{}{
-			"endpoint_id":           endpointID.String(),
-			"consecutive_successes": tracker.ConsecutiveSuccess,
-			"resolution_trigger":    "automatic",
-			"resolved_at":           now.Format(time.RFC3339),
-		},
+		EventType:  "update",
+		Message:    "Incident automatically resolved by monitoring system",
 	}
 	if err := id.db.CreateIncidentTimeline(timeline); err != nil {
 		id.logger.Error("failed to create resolution timeline", "incident_id", incidentID, "error", err)
