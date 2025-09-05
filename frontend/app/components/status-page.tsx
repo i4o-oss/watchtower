@@ -830,8 +830,8 @@ export function StatusPage({
 		return (
 			<div className='min-h-screen bg-background'>
 				{/* Navigation Bar - matching admin layout */}
-				<header className='sticky top-4 z-30 h-16'>
-					<div className='w-full h-full max-w-4xl bg-card mx-auto px-6 border border-border rounded'>
+				<header className='sticky top-4 z-30 h-12'>
+					<div className='w-full h-full max-w-5xl bg-card mx-auto px-4 border border-border rounded'>
 						<div className='flex h-full items-center justify-between'>
 							<div className='flex items-center gap-4'>
 								<Link
@@ -849,7 +849,7 @@ export function StatusPage({
 				</header>
 
 				{/* Loading Content */}
-				<div className='max-w-4xl mx-auto flex mt-4'>
+				<div className='max-w-5xl mx-auto flex mt-4'>
 					<main className='flex-1 min-w-0'>
 						<div className='px-0 py-4'>
 							<div className='animate-pulse'>
@@ -883,8 +883,8 @@ export function StatusPage({
 		return (
 			<div className='min-h-screen bg-background'>
 				{/* Navigation Bar - matching admin layout */}
-				<header className='sticky top-4 z-30 h-16'>
-					<div className='w-full h-full max-w-4xl bg-card mx-auto px-6 border border-border rounded'>
+				<header className='sticky top-4 z-30 h-12'>
+					<div className='w-full h-full max-w-5xl bg-card mx-auto px-4 border border-border rounded'>
 						<div className='flex h-full items-center justify-between'>
 							<div className='flex items-center gap-4'>
 								<Link
@@ -901,7 +901,7 @@ export function StatusPage({
 					</div>
 				</header>
 
-				<div className='max-w-4xl mx-auto flex mt-4'>
+				<div className='max-w-5xl mx-auto flex mt-4'>
 					<main className='flex-1 min-w-0'>
 						<div className='px-0 py-4 flex items-center justify-center min-h-96'>
 							<div className='text-center'>
@@ -946,8 +946,8 @@ export function StatusPage({
 	return (
 		<div className='min-h-screen bg-background'>
 			{/* Navigation Bar - matching admin layout */}
-			<header className='sticky top-4 z-30 h-16'>
-				<div className='w-full h-full max-w-4xl bg-card mx-auto px-6 border border-border rounded'>
+			<header className='sticky top-4 z-30 h-12'>
+				<div className='w-full h-full max-w-5xl bg-card mx-auto px-4 border border-border rounded'>
 					<div className='flex h-full items-center justify-between'>
 						<div className='flex items-center gap-4'>
 							<Link to='/' className='flex items-center gap-2'>
@@ -958,37 +958,22 @@ export function StatusPage({
 							</Link>
 						</div>
 
-						<div className='flex items-center gap-4'>
-							{/*<Button className="cursor-pointer" size="sm" variant="ghost">
-                <Bell className="h-4 w-4" />
-                <span>Subscribe</span>
-              </Button>*/}
-							<Badge
-								className='px-4 py-2 font-mono uppercase'
-								variant={
-									systemStatus === 'operational'
-										? 'outline'
-										: 'destructive'
-								}
+						<div className='flex items-center gap-4 -mr-2'>
+							<Button
+								className='cursor-pointer'
+								size='sm'
+								variant='ghost'
 							>
-								{systemStatus === 'operational' ? (
-									<span className='bg-green-500 w-2 h-2 rounded-full -ml-1 mr-2' />
-								) : (
-									<span className='bg-red-500 w-2 h-2 rounded-full -ml-1 mr-2' />
-								)}
-								{systemStatus === 'operational'
-									? 'All Systems Operational'
-									: systemStatus === 'degradation'
-										? 'Partial Service Disruption'
-										: 'Major Service Outage'}
-							</Badge>
+								<Bell className='h-4 w-4' />
+								<span>Subscribe</span>
+							</Button>
 						</div>
 					</div>
 				</div>
 			</header>
 
 			{/* Main Content - matching admin layout structure */}
-			<div className='max-w-4xl mx-auto flex mt-4'>
+			<div className='max-w-5xl mx-auto flex mt-4'>
 				<main className='flex-1 min-w-0'>
 					<div className='px-0 py-4'>
 						<div className='flex flex-col gap-4'>
@@ -1030,7 +1015,7 @@ export function StatusPage({
 											<Separator />
 											<CardContent className='p-0 gap-0 flex flex-col'>
 												{/* Active Incidents Alert */}
-												<div className='w-full px-6 py-4 bg-amber-50 flex flex-col items-start gap-4'>
+												<div className='w-full p-4 bg-amber-50 flex flex-col items-start gap-4'>
 													<div className='flex items-center gap-2'>
 														<AlertTriangle className='h-5 w-5 text-amber-600' />
 														<h3 className='font-semibold text-amber-900'>
@@ -1120,7 +1105,7 @@ export function StatusPage({
 												return (
 													<div
 														key={service.id}
-														className='px-6 py-4'
+														className='p-4'
 													>
 														{/* Service header */}
 														<div className='flex items-center justify-between mb-2'>
@@ -1177,7 +1162,7 @@ export function StatusPage({
 												.map((incident) => (
 													<div
 														key={incident.id}
-														className='flex items-center justify-between px-6 py-4'
+														className='flex items-center justify-between p-4'
 													>
 														<div className='flex-1'>
 															<div className='flex items-center space-x-2 mb-2'>

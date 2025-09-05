@@ -394,56 +394,44 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 		<>
 			<main className='flex flex-col gap-4'>
 				{/* Quick Stats Section - Similar to /admin/endpoints/[id] pattern */}
-				<section className='grid grid-cols-3 gap-0 border border-border rounded overflow-hidden'>
-					<Card className='rounded-none shadow-none border-none'>
-						<CardContent>
-							<div className='flex items-center gap-4'>
-								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<AlertTriangleIcon className='h-7 w-7' />
-								</div>
-								<div className='flex flex-col'>
-									<p className='text-sm font-normal font-mono uppercase'>
-										Active Incidents
-									</p>
-									<p className='typography-h4'>
-										{activeIncidents.length}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-					<Card className='rounded-none shadow-none border-none'>
-						<CardContent>
-							<div className='flex items-center gap-4'>
-								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<TrendingUp className='h-7 w-7' />
-								</div>
-								<div className='flex flex-col'>
-									<p className='text-sm font-normal font-mono uppercase'>
-										Total Incidents
-									</p>
-									<p className='typography-h4'>{total}</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-					<Card className='rounded-none shadow-none border-none'>
-						<CardContent>
-							<div className='flex items-center gap-4'>
-								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<Clock className='h-7 w-7' />
-								</div>
-								<div className='flex flex-col'>
-									<p className='text-sm font-normal font-mono uppercase'>
-										Avg Resolution
-									</p>
-									<p className='typography-h4'>
-										{avgResolutionTime}m
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
+				<section className='flex items-center gap-4'>
+					<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+							<AlertTriangleIcon className='h-7 w-7' />
+						</div>
+						<div className='flex flex-col'>
+							<p className='text-sm font-normal font-mono uppercase'>
+								Active Incidents
+							</p>
+							<p className='typography-h4'>
+								{activeIncidents.length}
+							</p>
+						</div>
+					</div>
+					<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+							<TrendingUp className='h-7 w-7' />
+						</div>
+						<div className='flex flex-col'>
+							<p className='text-sm font-normal font-mono uppercase'>
+								Total Incidents
+							</p>
+							<p className='typography-h4'>{total}</p>
+						</div>
+					</div>
+					<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+							<Clock className='h-7 w-7' />
+						</div>
+						<div className='flex flex-col'>
+							<p className='text-sm font-normal font-mono uppercase'>
+								Avg Resolution
+							</p>
+							<p className='typography-h4'>
+								{avgResolutionTime}m
+							</p>
+						</div>
+					</div>
 				</section>
 
 				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
@@ -486,7 +474,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 									.map((incident: any) => (
 										<div
 											key={incident.id}
-											className='flex items-center justify-between px-6 py-4'
+											className='flex items-center justify-between p-4'
 										>
 											<div className='flex-1 min-w-0 flex flex-col gap-2'>
 												<div className='flex items-center gap-2'>
@@ -622,7 +610,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 						) : (
 							<>
 								{/* Filters and Controls - for history only */}
-								<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border'>
+								<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 border-b border-border'>
 									<div className='relative flex-1 max-w-sm'>
 										<Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
 										<Input
@@ -712,7 +700,7 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 													to={`/admin/incidents/${incident.id}`}
 													className='block hover:bg-accent/50 transition-colors'
 												>
-													<div className='px-6 py-4'>
+													<div className='p-4'>
 														<div className='flex items-start justify-between gap-4'>
 															<div className='flex-1 min-w-0'>
 																<div className='flex items-center gap-2 mb-2'>

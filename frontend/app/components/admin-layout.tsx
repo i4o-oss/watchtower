@@ -187,23 +187,19 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 
 	return (
 		<div className='min-h-screen bg-background'>
-			<header className='sticky top-4 z-30 h-16'>
-				<div className='w-full h-full max-w-4xl bg-card mx-auto px-6 border border-border rounded'>
+			<header className='sticky top-4 z-30 h-12'>
+				<div className='w-full h-full max-w-5xl bg-card mx-auto px-4 border border-border rounded'>
 					<div className='flex h-full items-center justify-between'>
-						<div className='flex items-center gap-4'>
+						<div className='flex items-center gap-2'>
 							<Link
 								to='/admin'
-								className='flex items-center gap-2'
+								className='flex items-center gap-2 mr-2'
 							>
 								<Activity className='h-4 w-4 text-primary' />
 								<span className='text-sm font-mono uppercase'>
 									Watchtower
 								</span>
 							</Link>
-						</div>
-
-						{/* Right - Header Actions */}
-						<div className='flex items-center gap-4'>
 							{navigation.map((item) => {
 								const Icon = item.icon
 								const active = isActive(item.href)
@@ -223,12 +219,16 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 									</Link>
 								)
 							})}
+						</div>
+
+						{/* Right - Header Actions */}
+						<div className='flex items-center gap-4'>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
-										className='w-8 h-8 cursor-pointer'
+										className='w-8 h-8 cursor-pointer -mr-2'
 										size='sm'
-										variant='secondary'
+										variant='ghost'
 									>
 										<UserIcon className='h-4 w-4' />
 									</Button>
@@ -301,8 +301,8 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 				</div>
 			</header>
 
-			<div className='sticky top-24 h-16 z-30 bg-card'>
-				<div className='w-full h-full max-w-4xl mx-auto flex items-center justify-between px-6 py-3 rounded border border-border'>
+			<div className='sticky top-20 h-12 z-30 bg-card'>
+				<div className='w-full h-full max-w-5xl mx-auto flex items-center justify-between px-4 rounded border border-border'>
 					<div className='flex items-center text-sm text-muted-foreground'>
 						{getBreadcrumbs(location.pathname).map(
 							(segment, index) => (
@@ -347,14 +347,7 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 						)}
 					</div>
 					<div className='flex items-center gap-2'>
-						<Badge
-							className='px-4 py-2 font-mono uppercase'
-							variant={
-								incidents.length === 0
-									? 'outline'
-									: 'destructive'
-							}
-						>
+						<div className='w-fit whitespace-nowrap shrink-0 flex items-center gap-1 text-xs font-medium font-mono uppercase'>
 							{incidents.length === 0 ? (
 								<span className='bg-green-500 w-2 h-2 rounded-full -ml-1 mr-2' />
 							) : (
@@ -363,13 +356,13 @@ export function AdminLayout({ children, isLoading = false }: AdminLayoutProps) {
 							{incidents.length === 0
 								? 'All Systems Operational'
 								: 'Issues'}
-						</Badge>
+						</div>
 					</div>
 				</div>
 			</div>
 
 			{/* Layout Container */}
-			<div className='max-w-4xl mx-auto flex mt-8'>
+			<div className='max-w-5xl mx-auto flex mt-8'>
 				{/* Main Content Area */}
 				<main className='flex-1 min-w-0'>
 					<div className='px-0 py-4'>

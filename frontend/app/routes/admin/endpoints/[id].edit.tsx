@@ -7,7 +7,7 @@ import type { Route } from './+types/[id].edit'
 
 export function meta({ params }: Route.MetaArgs) {
 	return [
-		{ title: `Edit Endpoint - Admin - Watchtower` },
+		{ title: 'Edit Endpoint - Admin - Watchtower' },
 		{
 			name: 'description',
 			content: 'Edit monitoring endpoint configuration',

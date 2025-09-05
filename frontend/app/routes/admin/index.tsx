@@ -237,56 +237,40 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	return (
 		<main className='flex flex-col gap-4'>
 			{/* Quick Stats */}
-			<section className='grid grid-cols-3 gap-0 border border-border rounded overflow-hidden'>
-				<Card className='rounded-none shadow-none border-none'>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
-								<GlobeIcon className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal font-mono uppercase'>
-									Total Endpoints
-								</p>
-								<p className='typography-h4'>
-									{endpoints.total}
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card className='rounded-none shadow-none border-none'>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
-								<CircleXIcon className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal font-mono uppercase'>
-									Recent Failures
-								</p>
-								<p className='typography-h4'>
-									{recentFailures}
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card className='rounded-none shadow-none border-none'>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
-								<AlertTriangleIcon className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal font-mono uppercase'>
-									Open Incidents
-								</p>
-								<p className='typography-h4'>{openIncidents}</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
+			<section className='flex items-center gap-4'>
+				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
+						<GlobeIcon className='h-7 w-7' />
+					</div>
+					<div className='flex flex-col'>
+						<p className='text-sm font-normal font-mono uppercase'>
+							Total Endpoints
+						</p>
+						<p className='typography-h4'>{endpoints.total}</p>
+					</div>
+				</div>
+				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
+						<CircleXIcon className='h-7 w-7' />
+					</div>
+					<div className='flex flex-col'>
+						<p className='text-sm font-normal font-mono uppercase'>
+							Recent Failures
+						</p>
+						<p className='typography-h4'>{recentFailures}</p>
+					</div>
+				</div>
+				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
+						<AlertTriangleIcon className='h-7 w-7' />
+					</div>
+					<div className='flex flex-col'>
+						<p className='text-sm font-normal font-mono uppercase'>
+							Open Incidents
+						</p>
+						<p className='typography-h4'>{openIncidents}</p>
+					</div>
+				</div>
 			</section>
 			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
 				<PageHeader
@@ -335,7 +319,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 								.map((endpoint: any) => (
 									<div
 										key={endpoint.id}
-										className='flex items-center justify-between px-6 py-4'
+										className='flex items-center justify-between p-4'
 									>
 										<div>
 											<h4 className='font-medium'>
@@ -419,7 +403,7 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 								.map((incident: any) => (
 									<div
 										key={incident.id}
-										className='flex items-center justify-between px-6 py-4'
+										className='flex items-center justify-between p-4'
 									>
 										<div>
 											<h4 className='font-medium'>

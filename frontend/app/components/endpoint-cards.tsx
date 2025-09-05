@@ -111,7 +111,7 @@ export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 	return (
 		<div className='divide-y divide-border'>
 			{/* Filters and Controls */}
-			<div className='flex flex-col px-6 py-4 gap-4 sm:flex-row sm:items-center sm:justify-between'>
+			<div className='flex flex-col p-4 gap-4 sm:flex-row sm:items-center sm:justify-between'>
 				<div className='relative flex-1 max-w-sm'>
 					<Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
 					<Input
@@ -201,7 +201,7 @@ export function EndpointCards({ data, isLoading = false }: EndpointCardsProps) {
 								)}
 								onClick={() => handleCardClick(endpoint)}
 							>
-								<CardContent className='px-6 py-4'>
+								<CardContent className='p-4'>
 									{/* Minimal Header */}
 									<div className='flex items-center justify-between mb-2'>
 										<h3 className='font-semibold text-foreground text-base truncate'>

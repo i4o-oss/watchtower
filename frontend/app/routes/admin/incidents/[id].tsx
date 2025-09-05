@@ -366,69 +366,55 @@ export default function IncidentDetail({
 		<>
 			<main className='flex flex-col gap-4'>
 				{/* Quick Stats - Similar to /admin/endpoints/[id] route */}
-				<section className='grid grid-cols-3 gap-1 border border-border divide-x divide-border rounded overflow-hidden'>
-					<Card className='rounded-none shadow-none border-none'>
-						<CardContent>
-							<div className='flex items-center gap-4'>
-								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									{incident.status === 'resolved' ? (
-										<CheckCircle2 className='h-7 w-7 text-green-500' />
-									) : incident.severity === 'critical' ? (
-										<AlertTriangle className='h-7 w-7 text-red-500' />
-									) : (
-										<XCircle className='h-7 w-7 text-orange-500' />
-									)}
-								</div>
-								<div className='flex flex-col'>
-									<p className='text-sm font-normal font-mono uppercase'>
-										Status
-									</p>
-									<p className='typography-h4 capitalize'>
-										{incident.status}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-					<Card className='rounded-none shadow-none border-none'>
-						<CardContent>
-							<div className='flex items-center gap-4'>
-								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<Target className='h-7 w-7' />
-								</div>
-								<div className='flex flex-col'>
-									<p className='text-sm font-normal font-mono uppercase'>
-										Affected Services
-									</p>
-									<p className='typography-h4'>
-										{affectedServices}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-					<Card className='rounded-none shadow-none border-none'>
-						<CardContent>
-							<div className='flex items-center gap-4'>
-								<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-									<Clock className='h-7 w-7' />
-								</div>
-								<div className='flex flex-col'>
-									<p className='text-sm font-normal font-mono uppercase'>
-										{incident.status === 'resolved'
-											? 'Resolution Time'
-											: 'Time Elapsed'}
-									</p>
-									<p className='typography-h4'>
-										{incident.status === 'resolved' &&
-										resolutionTime
-											? `${resolutionTime}m`
-											: `${timeElapsed}m`}
-									</p>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
+				<section className='flex items-center gap-4'>
+					<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+							{incident.status === 'resolved' ? (
+								<CheckCircle2 className='h-7 w-7 text-green-500' />
+							) : incident.severity === 'critical' ? (
+								<AlertTriangle className='h-7 w-7 text-red-500' />
+							) : (
+								<XCircle className='h-7 w-7 text-orange-500' />
+							)}
+						</div>
+						<div className='flex flex-col'>
+							<p className='text-sm font-normal font-mono uppercase'>
+								Status
+							</p>
+							<p className='typography-h4 capitalize'>
+								{incident.status}
+							</p>
+						</div>
+					</div>
+					<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+							<Target className='h-7 w-7' />
+						</div>
+						<div className='flex flex-col'>
+							<p className='text-sm font-normal font-mono uppercase'>
+								Affected Services
+							</p>
+							<p className='typography-h4'>{affectedServices}</p>
+						</div>
+					</div>
+					<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+							<Clock className='h-7 w-7' />
+						</div>
+						<div className='flex flex-col'>
+							<p className='text-sm font-normal font-mono uppercase'>
+								{incident.status === 'resolved'
+									? 'Resolution Time'
+									: 'Time Elapsed'}
+							</p>
+							<p className='typography-h4'>
+								{incident.status === 'resolved' &&
+								resolutionTime
+									? `${resolutionTime}m`
+									: `${timeElapsed}m`}
+							</p>
+						</div>
+					</div>
 				</section>
 
 				<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
@@ -510,7 +496,7 @@ export default function IncidentDetail({
 					</PageHeader>
 					<Separator />
 					{/* Incident Information Section */}
-					<CardContent className='px-6 py-4 gap-4 flex flex-col'>
+					<CardContent className='p-4 gap-4 flex flex-col'>
 						{incident.description && (
 							<div>
 								<h4 className='font-medium mb-2'>
@@ -617,7 +603,7 @@ export default function IncidentDetail({
 						</Button>
 					</PageHeader>
 					<Separator />
-					<CardContent className='px-6 py-4 gap-4 flex flex-col'>
+					<CardContent className='p-4 gap-4 flex flex-col'>
 						<div className='space-y-0'>
 							<div className='flex gap-4 relative'>
 								<div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative z-10'>

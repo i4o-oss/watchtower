@@ -244,62 +244,50 @@ export default function EndpointDetail({
 	return (
 		<main className='flex flex-col gap-4'>
 			{/* Quick Stats - Similar to /admin route */}
-			<section className='grid grid-cols-3 gap-1 border border-border divide-x divide-border rounded overflow-hidden'>
-				<Card className='rounded-none shadow-none border-none'>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								<GlobeIcon className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal font-mono uppercase'>
-									Success Rate
-								</p>
-								<p className='typography-h4'>
-									{healthMetrics.successRate}%
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card className='rounded-none shadow-none border-none'>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								<Clock className='h-7 w-7' />
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal font-mono uppercase'>
-									Avg Response Time
-								</p>
-								<p className='typography-h4'>
-									{healthMetrics.avgResponseTime}ms
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-				<Card className='rounded-none shadow-none border-none'>
-					<CardContent>
-						<div className='flex items-center gap-4'>
-							<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-								{endpoint.enabled ? (
-									<CheckCircle2 className='h-7 w-7 text-green-500' />
-								) : (
-									<XCircle className='h-7 w-7 text-red-500' />
-								)}
-							</div>
-							<div className='flex flex-col'>
-								<p className='text-sm font-normal font-mono uppercase'>
-									Status
-								</p>
-								<p className='typography-h4'>
-									{endpoint.enabled ? 'Active' : 'Disabled'}
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
+			<section className='flex items-center gap-4'>
+				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+						<GlobeIcon className='h-7 w-7' />
+					</div>
+					<div className='flex flex-col'>
+						<p className='text-sm font-normal font-mono uppercase'>
+							Success Rate
+						</p>
+						<p className='typography-h4'>
+							{healthMetrics.successRate}%
+						</p>
+					</div>
+				</div>
+				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+						<Clock className='h-7 w-7' />
+					</div>
+					<div className='flex flex-col'>
+						<p className='text-sm font-normal font-mono uppercase'>
+							Avg Response Time
+						</p>
+						<p className='typography-h4'>
+							{healthMetrics.avgResponseTime}ms
+						</p>
+					</div>
+				</div>
+				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+						{endpoint.enabled ? (
+							<CheckCircle2 className='h-7 w-7 text-green-500' />
+						) : (
+							<XCircle className='h-7 w-7 text-red-500' />
+						)}
+					</div>
+					<div className='flex flex-col'>
+						<p className='text-sm font-normal font-mono uppercase'>
+							Status
+						</p>
+						<p className='typography-h4'>
+							{endpoint.enabled ? 'Active' : 'Disabled'}
+						</p>
+					</div>
+				</div>
 			</section>
 
 			<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
@@ -383,7 +371,7 @@ export default function EndpointDetail({
 					</div>
 				</PageHeader>
 				<Separator />
-				<CardContent className='px-6 py-4 gap-4 flex flex-col'>
+				<CardContent className='p-4 gap-4 flex flex-col'>
 					<div>
 						<h4 className='font-medium mb-2'>URL</h4>
 						<p className='font-mono text-sm bg-muted px-3 py-2 rounded'>
@@ -486,10 +474,10 @@ export default function EndpointDetail({
 				>
 					<span className='text-sm text-muted-foreground'>{`${logs.total} logs`}</span>
 					<Button
-						variant='outline'
-						size='sm'
+						className='gap-2 rounded ml-2'
 						onClick={() => fetchLogs(currentPage)}
-						className='gap-2 rounded'
+						size='sm'
+						variant='outline'
 					>
 						<RefreshCw className='h-4 w-4' />
 						Refresh
@@ -513,7 +501,7 @@ export default function EndpointDetail({
 								{logs.logs.map((log: any) => (
 									<div
 										key={log.id}
-										className='flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors'
+										className='flex items-center justify-between p-4 hover:bg-muted/30 transition-colors'
 									>
 										<div className='flex items-center gap-4 min-w-0'>
 											<Badge
@@ -558,7 +546,7 @@ export default function EndpointDetail({
 
 							{/* Pagination */}
 							{totalPages > 1 && (
-								<div className='flex items-center justify-end px-6 py-4 border-t border-border'>
+								<div className='flex items-center justify-end p-4 border-t border-border'>
 									<Pagination className='flex justify-end'>
 										<PaginationContent>
 											<PaginationItem>

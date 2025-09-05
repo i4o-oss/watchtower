@@ -137,7 +137,7 @@ export function IncidentForm({
 							e.preventDefault()
 							form.handleSubmit()
 						}}
-						className='p-6 space-y-6'
+						className='p-4 space-y-4'
 					>
 						{error && (
 							<Alert variant='destructive'>

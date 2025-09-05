@@ -312,7 +312,9 @@ export default function LogViewer({ loaderData }: Route.ComponentProps) {
 		const url = URL.createObjectURL(dataBlob)
 		const link = document.createElement('a')
 		link.href = url
-		link.download = `watchtower-logs-${new Date().toISOString().split('T')[0]}.json`
+		link.download = `watchtower-logs-${
+			new Date().toISOString().split('T')[0]
+		}.json`
 		document.body.appendChild(link)
 		link.click()
 		document.body.removeChild(link)
@@ -324,7 +326,11 @@ export default function LogViewer({ loaderData }: Route.ComponentProps) {
 		if (!endpoint) return
 
 		const title = `${endpoint.name} - ${log.error || 'Service Failure'}`
-		const description = `Automated incident created from monitoring log.\n\nEndpoint: ${endpoint.name}\nURL: ${endpoint.url}\nError: ${log.error || 'Unknown error'}\nStatus Code: ${log.status_code || 'N/A'}\nTimestamp: ${log.timestamp}`
+		const description = `Automated incident created from monitoring log.\n\nEndpoint: ${
+			endpoint.name
+		}\nURL: ${endpoint.url}\nError: ${
+			log.error || 'Unknown error'
+		}\nStatus Code: ${log.status_code || 'N/A'}\nTimestamp: ${log.timestamp}`
 
 		// Navigate to incident creation with pre-filled data
 		const params = new URLSearchParams({
@@ -674,7 +680,9 @@ export default function LogViewer({ loaderData }: Route.ComponentProps) {
 															{log.status_code && (
 																<Badge
 																	variant='outline'
-																	className={`font-mono text-xs ${getStatusCodeColor(log.status_code)}`}
+																	className={`font-mono text-xs ${getStatusCodeColor(
+																		log.status_code,
+																	)}`}
 																>
 																	{
 																		log.status_code
@@ -854,7 +862,7 @@ export default function LogViewer({ loaderData }: Route.ComponentProps) {
 				open={!!selectedLog}
 				onOpenChange={() => setSelectedLog(null)}
 			>
-				<DialogContent className='max-w-4xl max-h-[80vh] overflow-y-auto'>
+				<DialogContent className='max-w-5xl max-h-[80vh] overflow-y-auto'>
 					{selectedLog && (
 						<>
 							<DialogHeader>

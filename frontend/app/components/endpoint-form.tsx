@@ -127,7 +127,7 @@ export function EndpointForm({
 							e.preventDefault()
 							form.handleSubmit()
 						}}
-						className='p-6 space-y-6'
+						className='p-4 space-y-4'
 					>
 						{error && (
 							<Alert variant='destructive'>
@@ -436,7 +436,7 @@ export function EndpointForm({
 							)}
 						</form.Field>
 
-						<div className='flex flex-col sm:flex-row justify-center sm:justify-between gap-4 pt-8 border-t border-border/50'>
+						<div className='flex flex-col sm:flex-row justify-center sm:justify-between'>
 							<form.Field name='enabled'>
 								{(field) => (
 									<div className='flex items-center space-x-2'>
