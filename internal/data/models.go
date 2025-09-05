@@ -421,7 +421,7 @@ func (db *DB) GetIncidentsWithPagination(page, limit int, status string, severit
 
 	// Apply pagination with preloading
 	offset := (page - 1) * limit
-	err := query.Preload("Creator").Order("created_at DESC").Offset(offset).Limit(limit).Find(&incidents).Error
+	err := query.Preload("Creator").Preload("EndpointIncidents.Endpoint").Order("created_at DESC").Offset(offset).Limit(limit).Find(&incidents).Error
 
 	return incidents, total, err
 }

@@ -340,11 +340,14 @@ export default function IncidentDetail({
 	}
 
 	const getAffectedEndpoints = () => {
-		if (!incident.endpoint_ids || incident.endpoint_ids.length === 0)
-			return []
-		return endpoints.filter((endpoint: any) =>
-			incident.endpoint_ids.includes(endpoint.id),
+		if (
+			!incident.endpoint_incidents ||
+			incident.endpoint_incidents.length === 0
 		)
+			return []
+		return incident.endpoint_incidents
+			.map((ei: any) => ei.endpoint)
+			.filter(Boolean)
 	}
 
 	// Calculate key metrics for stats section

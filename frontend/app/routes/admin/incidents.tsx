@@ -323,7 +323,19 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 	}
 
 	const getAffectedServicesCount = (incident: any) => {
-		return incident.endpoint_ids?.length || 0
+		return incident.endpoint_incidents?.length || 0
+	}
+
+	const getAffectedServicesNames = (incident: any) => {
+		if (
+			!incident.endpoint_incidents ||
+			incident.endpoint_incidents.length === 0
+		) {
+			return []
+		}
+		return incident.endpoint_incidents.map(
+			(ei: any) => ei.endpoint?.name || 'Unknown Service',
+		)
 	}
 
 	const getSeverityBadge = (severity: string) => {
@@ -490,18 +502,44 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 													{getAffectedServicesCount(
 														incident,
 													) > 0 && (
-														<span>
+														<div className='flex items-center gap-1 flex-wrap'>
+															{getAffectedServicesNames(
+																incident,
+															)
+																.slice(0, 2)
+																.map(
+																	(
+																		serviceName: string,
+																		index: number,
+																	) => (
+																		<Badge
+																			key={
+																				index
+																			}
+																			variant='outline'
+																			className='text-xs'
+																		>
+																			{
+																				serviceName
+																			}
+																		</Badge>
+																	),
+																)}
 															{getAffectedServicesCount(
 																incident,
-															)}{' '}
-															service
-															{getAffectedServicesCount(
-																incident,
-															) !== 1
-																? 's'
-																: ''}{' '}
-															affected
-														</span>
+															) > 2 && (
+																<Badge
+																	variant='outline'
+																	className='text-xs'
+																>
+																	+
+																	{getAffectedServicesCount(
+																		incident,
+																	) - 2}{' '}
+																	more
+																</Badge>
+															)}
+														</div>
 													)}
 												</div>
 												{incident.description && (
@@ -714,6 +752,53 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 																	)}
 																	{getSeverityBadge(
 																		incident.severity,
+																	)}
+																	{getAffectedServicesCount(
+																		incident,
+																	) > 0 && (
+																		<div className='flex items-center gap-1 flex-wrap'>
+																			{getAffectedServicesNames(
+																				incident,
+																			)
+																				.slice(
+																					0,
+																					3,
+																				)
+																				.map(
+																					(
+																						serviceName: string,
+																						index: number,
+																					) => (
+																						<Badge
+																							key={
+																								index
+																							}
+																							variant='outline'
+																							className='text-xs'
+																						>
+																							{
+																								serviceName
+																							}
+																						</Badge>
+																					),
+																				)}
+																			{getAffectedServicesCount(
+																				incident,
+																			) >
+																				3 && (
+																				<Badge
+																					variant='outline'
+																					className='text-xs'
+																				>
+																					+
+																					{getAffectedServicesCount(
+																						incident,
+																					) -
+																						3}{' '}
+																					more
+																				</Badge>
+																			)}
+																		</div>
 																	)}
 																</div>
 
