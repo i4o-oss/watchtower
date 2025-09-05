@@ -244,10 +244,10 @@ export default function EndpointDetail({
 	return (
 		<main className='flex flex-col gap-4'>
 			{/* Quick Stats - Similar to /admin route */}
-			<section className='flex items-center gap-4'>
+			<section className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
-					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-						<GlobeIcon className='h-7 w-7' />
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent/50 rounded-lg'>
+						<GlobeIcon className='h-7 w-7 text-blue-500' />
 					</div>
 					<div className='flex flex-col'>
 						<p className='text-sm font-normal font-mono uppercase'>
@@ -259,8 +259,8 @@ export default function EndpointDetail({
 					</div>
 				</div>
 				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
-					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-						<Clock className='h-7 w-7' />
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent/50 rounded-lg'>
+						<Clock className='h-7 w-7 text-purple-500' />
 					</div>
 					<div className='flex flex-col'>
 						<p className='text-sm font-normal font-mono uppercase'>
@@ -272,7 +272,7 @@ export default function EndpointDetail({
 					</div>
 				</div>
 				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
-					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent/50 rounded-lg'>
 						{endpoint.enabled ? (
 							<CheckCircle2 className='h-7 w-7 text-green-500' />
 						) : (

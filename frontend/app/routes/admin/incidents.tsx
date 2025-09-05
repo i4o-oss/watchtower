@@ -406,10 +406,10 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 		<>
 			<main className='flex flex-col gap-4'>
 				{/* Quick Stats Section - Similar to /admin/endpoints/[id] pattern */}
-				<section className='flex items-center gap-4'>
+				<section className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 					<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
-						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-							<AlertTriangleIcon className='h-7 w-7' />
+						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent/50 rounded-lg'>
+							<AlertTriangleIcon className='h-7 w-7 text-yellow-500' />
 						</div>
 						<div className='flex flex-col'>
 							<p className='text-sm font-normal font-mono uppercase'>
@@ -421,8 +421,8 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 						</div>
 					</div>
 					<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
-						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-							<TrendingUp className='h-7 w-7' />
+						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent/50 rounded-lg'>
+							<TrendingUp className='h-7 w-7 text-green-500' />
 						</div>
 						<div className='flex flex-col'>
 							<p className='text-sm font-normal font-mono uppercase'>
@@ -432,8 +432,8 @@ export default function AdminIncidents({ loaderData }: Route.ComponentProps) {
 						</div>
 					</div>
 					<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
-						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded-lg'>
-							<Clock className='h-7 w-7' />
+						<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent/50 rounded-lg'>
+							<Clock className='h-7 w-7 text-purple-500' />
 						</div>
 						<div className='flex flex-col'>
 							<p className='text-sm font-normal font-mono uppercase'>

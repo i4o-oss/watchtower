@@ -237,10 +237,10 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 	return (
 		<main className='flex flex-col gap-4'>
 			{/* Quick Stats */}
-			<section className='flex items-center gap-4'>
+			<section className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
-					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
-						<GlobeIcon className='h-7 w-7' />
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent/50 rounded'>
+						<GlobeIcon className='h-7 w-7 text-blue-500' />
 					</div>
 					<div className='flex flex-col'>
 						<p className='text-sm font-normal font-mono uppercase'>
@@ -250,8 +250,8 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</div>
 				</div>
 				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
-					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
-						<CircleXIcon className='h-7 w-7' />
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent/50 rounded'>
+						<CircleXIcon className='h-7 w-7 text-red-500' />
 					</div>
 					<div className='flex flex-col'>
 						<p className='text-sm font-normal font-mono uppercase'>
@@ -261,8 +261,8 @@ export default function AdminIndex({ loaderData }: Route.ComponentProps) {
 					</div>
 				</div>
 				<div className='flex-1 flex items-center gap-4 p-4 border border-border rounded'>
-					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent rounded'>
-						<AlertTriangleIcon className='h-7 w-7' />
+					<div className='w-14 h-14 flex justify-center items-center p-2 bg-accent/50 rounded'>
+						<AlertTriangleIcon className='h-7 w-7 text-yellow-500' />
 					</div>
 					<div className='flex flex-col'>
 						<p className='text-sm font-normal font-mono uppercase'>
