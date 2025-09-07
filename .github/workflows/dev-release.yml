@@ -40,7 +40,7 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
-          type=raw,value=latest-dev,enable={{is_default_branch}}
+          type=raw,value=latest-dev,enable=${{ github.ref == 'refs/heads/dev' }}
           type=ref,event=pr,suffix=-dev
 
     - name: Build and push Docker image

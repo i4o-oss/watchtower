@@ -41,8 +41,16 @@ jobs:
       - name: Detect next version
         id: version
         run: |
-          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          NEXT_VERSION=$(svu next 2>/dev/null || echo "")
+          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$CURRENT_VERSION" ]; then
+            # First release - default to v0.1.0
+            NEXT_VERSION="v0.1.0"
+            CURRENT_VERSION="v0.0.0"
+            echo "First release detected, using v0.1.0"
+          else
+            NEXT_VERSION=$(svu next 2>/dev/null || echo "")
+          fi
           
           echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
