@@ -1,4 +1,4 @@
-name: Docker Development Build
+name: Dev Branch Release
 
 # This workflow handles development builds on dev branch
 # Production builds are handled by release.yml workflow on main branch
