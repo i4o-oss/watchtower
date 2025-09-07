@@ -7,10 +7,10 @@ Open source status page and monitor
 ### Docker Deployment
 ```bash
 # Latest stable release
-docker pull i4o-oss/watchtower:latest
+docker pull 0xi4o/watchtower:latest
 
-# Development version  
-docker pull i4o-oss/watchtower:latest-dev
+# Development version
+docker pull 0xi4o/watchtower:latest-dev
 ```
 
 ## 📖 Development & Release Process

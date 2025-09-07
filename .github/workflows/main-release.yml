@@ -4,11 +4,11 @@ name: Main Branch Release
 # It automatically creates version tags and releases
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: i4o-oss/watchtower
+  IMAGE_NAME: 0xi4o/watchtower
 
 permissions:
   contents: write
@@ -17,7 +17,7 @@ permissions:
 jobs:
   version-and-release:
     runs-on: ubuntu-latest
-    
+
     steps:
       # Checkout with full history for version detection
       - name: Checkout
@@ -42,7 +42,7 @@ jobs:
         id: version
         run: |
           CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
+
           if [ -z "$CURRENT_VERSION" ]; then
             # First release - default to v0.1.0
             NEXT_VERSION="v0.1.0"
@@ -51,10 +51,10 @@ jobs:
           else
             NEXT_VERSION=$(svu next 2>/dev/null || echo "")
           fi
-          
+
           echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
-          
+
           if [ -z "$NEXT_VERSION" ] || [ "$NEXT_VERSION" = "$CURRENT_VERSION" ]; then
             echo "should_release=false" >> $GITHUB_OUTPUT
             echo "No version bump needed. Current: $CURRENT_VERSION"
@@ -68,7 +68,7 @@ jobs:
         if: steps.version.outputs.should_release == 'true'
         run: |
           echo "Generating changelog for ${{ steps.version.outputs.next_version }}..."
-          
+
           # Create changelog entry from conventional commits
           git log ${{ steps.version.outputs.current_version }}..HEAD \
             --pretty=format:"- %s" \
@@ -83,13 +83,13 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           # Create annotated tag
           git tag -a "${{ steps.version.outputs.next_version }}" -m "Release ${{ steps.version.outputs.next_version }}"
-          
+
           # Push the tag
           git push origin "${{ steps.version.outputs.next_version }}"
-          
+
           echo "Created and pushed tag: ${{ steps.version.outputs.next_version }}"
 
       # Set up Docker Buildx
@@ -111,9 +111,9 @@ jobs:
         if: steps.version.outputs.should_release == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: 'frontend/package-lock.json'
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
 
       # Build and push Docker image with version tags
       - name: Build and push Docker image
@@ -147,17 +147,17 @@ jobs:
           name: Watchtower ${{ steps.version.outputs.next_version }}
           body: |
             ## Watchtower ${{ steps.version.outputs.next_version }}
-            
+
             Welcome to this new release of Watchtower! 🎉
 
             ### 🐳 Docker Installation
-            
+
             ```bash
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.next_version }}
             ```
-            
+
             ### 🐙 Docker Compose
-            
+
             Update your `docker-compose.yml`:
             ```yaml
             services:
@@ -171,9 +171,9 @@ jobs:
             $(cat /tmp/changelog.md || echo "- See commit history for changes")
 
             ---
-            
+
             **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.current_version }}...${{ steps.version.outputs.next_version }}
-            
+
             Don't forget to update your Docker deployments! 🚀
           draft: false
           prerelease: false
