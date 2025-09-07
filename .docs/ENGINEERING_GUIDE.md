@@ -2107,78 +2107,107 @@ Monitor security-related metrics:
 
 ## Development Workflows
 
-### Feature Development Workflow
+### Release Workflow Setup (One Time Only)
 
-1. **Create Feature Branch**:
-   ```bash
-   git checkout -b feature/endpoint-groups
-   ```
+#### Docker Hub Secrets (Required)
+1. Go to GitHub → Settings → Secrets and variables → Actions
+2. Add these secrets:
+   - `DOCKERHUB_USERNAME` - Your Docker Hub username
+   - `DOCKERHUB_TOKEN` - Docker Hub access token (not password!)
+     - Get token at: https://hub.docker.com/settings/security
+     - Click "New Access Token", give it a name, copy the token
 
-2. **Backend Development**:
-   ```bash
-   # Make changes to Go code
-   # Add tests for new functionality
-   just test
-   
-   # Test monitoring engine integration if applicable
-   just test-monitoring
-   
-   # Update database schema if needed
-   just db-migrate-create add_endpoint_groups
-   # Edit migration file
-   just db-migrate-up
-   
-   # Test with running monitoring engine
-   just dev # Runs API server with integrated monitoring
-   ```
+### Feature Development & Release Process
 
-3. **Frontend Development**:
-   ```bash
-   cd frontend
-   # Make changes to React code
-   # Test in browser
-   npm run dev
-   ```
+#### 1. Feature Development
+```bash
+# Create feature branch from dev
+git checkout dev
+git pull origin dev
+git checkout -b feature/my-awesome-feature
 
-4. **Integration Testing**:
-   ```bash
-   # Start full stack with integrated monitoring
-   just dev
-   
-   # Test monitoring integration:
-   # 1. Create endpoint via admin API
-   # 2. Verify it appears in admin UI immediately (SSE)
-   # 3. Check monitoring starts automatically (logs)
-   # 4. Verify status updates appear in real-time
-   
-   # Test API endpoints
-   curl -X POST localhost:8080/api/v1/admin/endpoints \
-     -H "Content-Type: application/json" \
-     -d '{"name":"test","url":"https://example.com","enabled":true}'
-   
-   # Verify UI updates in real-time
-   # Open admin dashboard and watch for live updates
-   ```
+# Make your changes with conventional commits
+git add .
+git commit -m "feat: add webhook notifications"
+git commit -m "fix: resolve edge case in monitoring"
 
-5. **Code Review**:
-   ```bash
-   # Format code
-   just fmt
-   
-   # Run linters
-   just lint
-   
-   # Run all tests
-   just test
-   
-   # Create PR
-   git push origin feature/endpoint-groups
-   ```
+# Push and create PR to dev branch
+git push origin feature/my-awesome-feature
+# → Create PR: feature/my-awesome-feature → dev
+```
+
+#### 2. Push Dev Image to Docker Hub
+```bash
+# After PR is merged to dev branch, this automatically triggers:
+# - GitHub Action builds image
+# - Pushes to: i4o-oss/watchtower:latest-dev
+
+# Test the dev image
+docker pull i4o-oss/watchtower:latest-dev
+```
+
+#### 3. Release New Version (Main Branch)
+```bash
+# After testing dev image, merge dev to main
+git checkout main
+git pull origin main
+git merge dev  # or merge via PR
+
+# This automatically triggers:
+# - Detects version from commits (or v0.1.0 for first release)
+# - Creates version tag (e.g., v1.2.3)
+# - Builds Docker image
+# - Pushes to Docker Hub with tags:
+#   - i4o-oss/watchtower:v1.2.3
+#   - i4o-oss/watchtower:latest
+# - Creates GitHub release
+```
+
+#### 4. Manual First Release (If Needed)
+```bash
+# Only if you want to set a specific first version instead of v0.1.0
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+### Docker Images You Get
+- **Dev testing**: `i4o-oss/watchtower:latest-dev` 
+- **Production**: `i4o-oss/watchtower:latest` or `i4o-oss/watchtower:v1.2.3`
+
+### Commit Message Format (for version bumping)
+```bash
+# Patch version: 1.2.3 → 1.2.4
+git commit -m "fix: resolve authentication bug"
+
+# Minor version: 1.2.3 → 1.3.0  
+git commit -m "feat: add webhook notifications"
+
+# Major version: 1.2.3 → 2.0.0
+git commit -m "feat!: breaking API changes"
+```
+
+### Local Development Commands
+```bash
+# Install release tools
+./scripts/install-deps.sh
+
+# Preview next version
+./scripts/version.sh preview
+
+# Start development server
+just dev
+
+# Run tests
+just test
+
+# Format and lint
+just fmt
+just lint
+```
 
 ### Debugging Workflow
 
 #### Backend Debugging
-
 1. **Enable Debug Logging**:
    ```go
    // In main.go
@@ -2191,26 +2220,14 @@ Monitor security-related metrics:
    db.Logger = logger.Default.LogMode(logger.Info)
    ```
 
-3. **Performance Profiling**:
-   ```go
-   import _ "net/http/pprof"
-   
-   go func() {
-       log.Println(http.ListenAndServe("localhost:6060", nil))
-   }()
-   ```
-
 #### Frontend Debugging
-
 1. **React DevTools**: Install browser extension
 2. **Console Logging**: Strategic console.log statements
 3. **Network Tab**: Monitor API calls
-4. **Performance Tab**: Identify rendering issues
 
 ### Database Management
 
 #### Migration Workflow
-
 1. **Create Migration**:
    ```bash
    just db-migrate-create feature_name
@@ -2220,30 +2237,29 @@ Monitor security-related metrics:
    ```sql
    -- +goose Up
    ALTER TABLE endpoints ADD COLUMN group_id UUID;
-   CREATE INDEX idx_endpoints_group ON endpoints(group_id);
    
    -- +goose Down
-   DROP INDEX idx_endpoints_group;
    ALTER TABLE endpoints DROP COLUMN group_id;
    ```
 
 3. **Test Migration**:
    ```bash
    just db-migrate-up
-   just db-migrate-down
-   just db-migrate-up
    ```
 
-#### Data Seeding
+### Troubleshooting
 
-For development and testing:
+**No release created after merging to main?**
+- Check your commit messages use `feat:` or `fix:` format
+- For first release, it will automatically use v0.1.0
 
-```sql
--- Insert test data
-INSERT INTO endpoints (name, url, method, interval_seconds) VALUES
-('Google', 'https://google.com', 'GET', 300),
-('GitHub API', 'https://api.github.com', 'GET', 600),
-('Local Service', 'http://localhost:3000/health', 'GET', 60);
+**No dev image building?**
+- Check GitHub Actions secrets are configured
+- Verify you pushed to `dev` branch
+
+**Need to see what version would be created?**
+```bash
+./scripts/version.sh preview
 ```
 
 ---
