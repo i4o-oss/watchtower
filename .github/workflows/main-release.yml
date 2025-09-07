@@ -133,11 +133,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.next_version }}
-          name: Watchtower ${{ steps.version.outputs.next_version }}
+          name: ${{ steps.version.outputs.next_version }}
           body: |
-            ## Watchtower ${{ steps.version.outputs.next_version }}
-
             Welcome to this new release of Watchtower! 🎉
+
+            ## Usage
 
             ### 🐳 Docker Installation
 
@@ -154,17 +154,7 @@ jobs:
                 image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.next_version }}
                 # ... rest of your config
             ```
-
-            ### 📝 Changes
-
-            $(cat /tmp/changelog.md || echo "- See commit history for changes")
-
-            ---
-
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.current_version }}...${{ steps.version.outputs.next_version }}
-
-            Don't forget to update your Docker deployments! 🚀
-          draft: false
+          draft: true
           prerelease: false
           generate_release_notes: true
 
