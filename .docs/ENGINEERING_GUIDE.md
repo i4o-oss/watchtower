@@ -211,7 +211,7 @@ watchtower/
    ```bash
    # Backend dependencies
    go mod download
-   
+
    # Frontend dependencies
    cd frontend && npm install
    # OR using Bun (faster)
@@ -228,7 +228,7 @@ watchtower/
    ```bash
    # Start PostgreSQL (via Docker)
    docker-compose up -d postgres
-   
+
    # Run migrations
    just db-migrate-up
    ```
@@ -237,7 +237,7 @@ watchtower/
    ```bash
    # Start both frontend and backend
    just dev
-   
+
    # Or separately:
    just server-dev    # Backend on :8080
    just frontend-dev  # Frontend on :3000
@@ -454,17 +454,17 @@ func (app *Application) createEndpoint(w http.ResponseWriter, r *http.Request) {
         // Handle error
         return
     }
-    
+
     // 2. Broadcast real-time update via SSE
     app.sseHub.BroadcastEndpointUpdate("endpoint_created", endpoint)
-    
+
     // 3. Add to monitoring engine immediately
     if app.monitoringEngine != nil && app.monitoringEngine.IsRunning() {
         if err := app.monitoringEngine.AddEndpoint(endpoint); err != nil {
             app.logger.Error("Error adding endpoint to monitoring", "err", err)
         }
     }
-    
+
     app.writeJSON(w, http.StatusCreated, endpoint)
 }
 ```
@@ -582,7 +582,7 @@ export function useSSE(events: SSEEventConfig, options: SSEOptions = {}) {
 // In any component that needs real-time updates
 export default function AdminEndpoints() {
     const [endpoints, setEndpoints] = useState(initialData)
-    
+
     // Use SSE hook for real-time updates
     useSSE({
         endpoint_created: (event) => {
@@ -591,7 +591,7 @@ export default function AdminEndpoints() {
         },
         endpoint_updated: (event) => {
             const updatedEndpoint = JSON.parse(event.data)
-            setEndpoints(prev => 
+            setEndpoints(prev =>
                 prev.map(ep => ep.id === updatedEndpoint.id ? updatedEndpoint : ep)
             )
         },
@@ -685,12 +685,12 @@ func (db *DB) GetEnabledEndpoints() ([]Endpoint, error) {
 func (db *DB) GetRecentLogs(hours int, limit int) ([]MonitoringLog, error) {
     var logs []MonitoringLog
     cutoff := time.Now().Add(-time.Duration(hours) * time.Hour)
-    
+
     err := db.conn.Where("timestamp > ?", cutoff).
         Order("timestamp DESC").
         Limit(limit).
         Find(&logs).Error
-    
+
     return logs, err
 }
 ```
@@ -781,19 +781,19 @@ CACHE_ENABLED=true  # Required to enable Redis
 ```go
 func (cdb *CachedDB) GetUserByEmail(email string) (*User, error) {
     key := fmt.Sprintf(cache.CacheKeyUserByEmail, email)
-    
+
     // Try cache first
     var user User
     if err := cdb.cache.Get(key, &user); err == nil {
         return &user, nil
     }
-    
+
     // Cache miss, get from database and cache result
     user_ptr, err := cdb.DB.GetUserByEmail(email)
     if err != nil {
         return nil, err
     }
-    
+
     cdb.cache.Set(key, *user_ptr, cache.CacheExpireLong)
     return user_ptr, nil
 }
@@ -804,12 +804,12 @@ func (cdb *CachedDB) GetUserByEmail(email string) (*User, error) {
 func (cdb *CachedDB) GetMonitoringLogsWithPagination(page, limit, hours int, endpointID *uuid.UUID, success *bool) ([]MonitoringLog, int64, error) {
     // Only cache if hours <= 24 (current day data)
     shouldCache := hours <= 24
-    
+
     if shouldCache {
         // Try cache first, fall back to database
         // Cache result with 24h TTL
     }
-    
+
     // Always fetch from database for longer periods
     return cdb.DB.GetMonitoringLogsWithPagination(page, limit, hours, endpointID, success)
 }
@@ -833,13 +833,13 @@ const (
     // User caching
     CacheKeyUser        = "user:%s"
     CacheKeyUserByEmail = "user:email:%s"
-    
+
     // Monitoring logs caching (current day only)
     CacheKeyMonitoringLogs = "monitoring_logs:page:%d:limit:%d:hours:%d:endpoint:%s:success:%v"
-    
+
     // Rate limiting
     CacheKeyRateLimit = "rate_limit:%s:%s" // IP:endpoint
-    
+
     // Session caching
     CacheKeySession = "session:%s"
 )
@@ -879,10 +879,10 @@ const (
     CacheExpireMedium   = 15 * time.Minute  // For semi-static data
     CacheExpireLong     = 1 * time.Hour     // For static data (users)
     CacheExpireVeryLong = 24 * time.Hour    // For very static data (monitoring logs)
-    
+
     // Rate limiting
     RateLimitExpire = 1 * time.Minute
-    
+
     // Session expiration
     SessionExpire = 24 * time.Hour
 )
@@ -1062,13 +1062,13 @@ func (app *Application) RequireAuth(next http.Handler) http.Handler {
             http.Error(w, "Authentication required", http.StatusUnauthorized)
             return
         }
-        
+
         user, err := app.getUserFromSession(sessionID)
         if err != nil {
             http.Error(w, "Invalid session", http.StatusUnauthorized)
             return
         }
-        
+
         // Add user to context
         ctx := context.WithValue(r.Context(), "user", user)
         next.ServeHTTP(w, r.WithContext(ctx))
@@ -1381,11 +1381,11 @@ frontend/app/
 // Use clientLoader instead of useEffect for initial data loading
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     await requireAuth('/login')
-    
+
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
     const url = new URL(request.url)
     const timeRange = url.searchParams.get('timeRange') || '24'
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/v1/admin/monitoring-logs?hours=${timeRange}`)
         return response.ok ? response.json() : { logs: [] }
@@ -1406,13 +1406,13 @@ export default function MonitoringRoute({ loaderData }: Route.ComponentProps) {
 // Use URL search params for filters (bookmarkable, shareable)
 export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
     const [searchParams, setSearchParams] = useSearchParams()
-    
+
     // Get filter values from URL
     const searchTerm = searchParams.get('search') || ''
     const statusFilter = searchParams.get('status') || 'all'
     const endpointFilter = searchParams.get('endpoint') || 'all'
     const timeRange = searchParams.get('timeRange') || '24'
-    
+
     // Helper to update URL params
     const updateFilter = (key: string, value: string) => {
         const newParams = new URLSearchParams(searchParams)
@@ -1423,7 +1423,7 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
         }
         setSearchParams(newParams, { replace: true })
     }
-    
+
     // Use in form controls
     return (
         <div>
@@ -1466,32 +1466,32 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
 export default function AdminEndpoints() {
     const [endpoints, setEndpoints] = useState(initialEndpoints)
     const [total, setTotal] = useState(initialTotal)
-    
+
     // Real-time updates via Server-Sent Events
     useEffect(() => {
         const eventSource = new EventSource(`${API_BASE_URL}/api/v1/events`, {
             withCredentials: true,
         })
-        
+
         eventSource.addEventListener('endpoint_created', (event) => {
             const newEndpoint = JSON.parse(event.data)
             setEndpoints(prev => [...prev, newEndpoint])
             setTotal(prev => prev + 1)
         })
-        
+
         eventSource.addEventListener('endpoint_updated', (event) => {
             const updatedEndpoint = JSON.parse(event.data)
-            setEndpoints(prev => 
+            setEndpoints(prev =>
                 prev.map(ep => ep.id === updatedEndpoint.id ? updatedEndpoint : ep)
             )
         })
-        
+
         eventSource.addEventListener('endpoint_deleted', (event) => {
             const deletedEndpoint = JSON.parse(event.data)
             setEndpoints(prev => prev.filter(ep => ep.id !== deletedEndpoint.id))
             setTotal(prev => prev - 1)
         })
-        
+
         return () => eventSource.close()
     }, [])
 }
@@ -1507,13 +1507,13 @@ export default function AdminEndpoints() {
 ```typescript
 useEffect(() => {
     const eventSource = new EventSource('/api/v1/events')
-    
+
     eventSource.addEventListener('status_update', (event) => {
         const data = JSON.parse(event.data)
         // Update status displays in real-time
         fetchStatus() // Refresh current status
     })
-    
+
     return () => eventSource.close()
 }, [])
 ```
@@ -1541,9 +1541,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  
+
   // ... implementation
-  
+
   return (
     <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
       {children}
@@ -1561,13 +1561,13 @@ The frontend implements automatic routing logic for the admin-only registration 
 export async function clientLoader() {
   // Check if registration is allowed (no users exist)
   const registrationAllowed = await checkRegistrationStatus()
-  
+
   // If registration is allowed, it means no users exist yet
   // Redirect to registration page for initial setup
   if (registrationAllowed) {
     throw redirect('/register')
   }
-  
+
   // Continue with normal status page loading...
 }
 
@@ -1575,12 +1575,12 @@ export async function clientLoader() {
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   // Check if registration is allowed
   const registrationAllowed = await checkRegistrationStatus()
-  
+
   // If registration is not allowed, show blocked message
   if (!registrationAllowed) {
     return { registrationBlocked: true }
   }
-  
+
   // If registration is allowed, check if user is already authenticated
   await requireGuest('/')
   return { registrationBlocked: false }
@@ -1588,12 +1588,12 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 
 export default function Register() {
   const { registrationBlocked } = useLoaderData<typeof clientLoader>()
-  
+
   // Show different UI based on registration status
   if (registrationBlocked) {
     return <RegistrationBlockedMessage />
   }
-  
+
   return <RegistrationForm />
 }
 ```
@@ -1613,11 +1613,11 @@ Centralized API client with error handling:
 // lib/api.ts
 class ApiClient {
   private baseURL: string;
-  
+
   constructor(baseURL: string) {
     this.baseURL = baseURL;
   }
-  
+
   async request<T>(
     endpoint: string,
     options: RequestOptions = {}
@@ -1630,19 +1630,19 @@ class ApiClient {
         ...options.headers,
       },
     });
-    
+
     if (!response.ok) {
       throw new ApiError(response.status, await response.text());
     }
-    
+
     return response.json();
   }
-  
+
   // Specific methods
   async getEndpoints(): Promise<Endpoint[]> {
     return this.request<Endpoint[]>('/api/admin/endpoints');
   }
-  
+
   async createEndpoint(data: CreateEndpointData): Promise<Endpoint> {
     return this.request<Endpoint>('/api/admin/endpoints', {
       method: 'POST',
@@ -1676,7 +1676,7 @@ func TestUser_HashPassword(t *testing.T) {
         Username: "testuser",
         Password: "plaintext",
     }
-    
+
     err := user.HashPassword()
     assert.NoError(t, err)
     assert.NotEqual(t, "plaintext", user.Password)
@@ -1692,13 +1692,13 @@ func TestHTTPClient_ExecuteRequest_Success(t *testing.T) {
         w.Write([]byte(`{"status": "ok"}`))
     }))
     defer server.Close()
-    
+
     client := NewHTTPClient(HTTPClientConfig{})
     endpoint := &data.Endpoint{
         URL:    server.URL,
         Method: "GET",
     }
-    
+
     response, err := client.ExecuteRequest(endpoint)
     assert.NoError(t, err)
     assert.Equal(t, http.StatusOK, response.StatusCode)
@@ -1788,7 +1788,7 @@ Click the button above to deploy Watchtower to Railway in under 5 minutes.
 When you deploy using the Railway button:
 
 - ✅ **Watchtower Application** - Complete monitoring application
-- ✅ **PostgreSQL Database** - Managed database for storing endpoints and monitoring data  
+- ✅ **PostgreSQL Database** - Managed database for storing endpoints and monitoring data
 - ✅ **Redis Cache** - Managed Redis for improved performance
 - ✅ **HTTPS & SSL** - Automatic SSL certificates and HTTPS
 - ✅ **Custom Domain Support** - Optional custom domain configuration
@@ -1807,7 +1807,7 @@ When you deploy using the Railway button:
 Railway automatically configures these variables:
 
 - `DATABASE_URL` - PostgreSQL connection (auto-generated)
-- `REDIS_URL` - Redis connection (auto-generated)  
+- `REDIS_URL` - Redis connection (auto-generated)
 - `JWT_SECRET` - Authentication secret (auto-generated)
 - `SESSION_SECRET` - Session secret (auto-generated)
 - `PORT` - Application port (auto-configured)
@@ -1852,7 +1852,7 @@ docker run -d \
   -e DATABASE_URL=your_postgres_url \
   -e JWT_SECRET=your_jwt_secret \
   -e SESSION_SECRET=your_session_secret \
-  i4o-oss/watchtower:latest
+  0xi4o/watchtower:latest
 ```
 
 #### Docker Configuration
@@ -1882,7 +1882,7 @@ CMD ["./watchtower"]
 
 **Required**:
 - `DATABASE_URL` - PostgreSQL connection string
-- `JWT_SECRET` - Secret key for JWT tokens (32+ characters)  
+- `JWT_SECRET` - Secret key for JWT tokens (32+ characters)
 - `SESSION_SECRET` - Secret key for sessions (32+ characters)
 
 **Optional**:
@@ -1911,7 +1911,7 @@ services:
       - DB_HOST=postgres
       - REDIS_URL=redis://redis:6379
       - ENV=production
-    
+
   postgres:
     image: postgres:15
     environment:
@@ -1920,10 +1920,10 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    
+
   redis:
     image: redis:7-alpine
-    
+
 volumes:
   postgres_data:
 ```
@@ -1952,7 +1952,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -1963,31 +1963,31 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version: 1.21
-    
+
     - name: Run tests
       run: |
         go test -v ./...
         go test -race ./...
-    
+
     - name: Build
       run: go build -v ./...
-  
+
   deploy:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Deploy to Railway
       uses: railwayapp/railway-deploy@v1
       with:
@@ -2140,10 +2140,10 @@ git push origin feature/my-awesome-feature
 ```bash
 # After PR is merged to dev branch, this automatically triggers:
 # - GitHub Action builds image
-# - Pushes to: i4o-oss/watchtower:latest-dev
+# - Pushes to: 0xi4o/watchtower:latest-dev
 
 # Test the dev image
-docker pull i4o-oss/watchtower:latest-dev
+docker pull 0xi4o/watchtower:latest-dev
 ```
 
 #### 3. Release New Version (Main Branch)
@@ -2158,8 +2158,8 @@ git merge dev  # or merge via PR
 # - Creates version tag (e.g., v1.2.3)
 # - Builds Docker image
 # - Pushes to Docker Hub with tags:
-#   - i4o-oss/watchtower:v1.2.3
-#   - i4o-oss/watchtower:latest
+#   - 0xi4o/watchtower:v1.2.3
+#   - 0xi4o/watchtower:latest
 # - Creates GitHub release
 ```
 
@@ -2171,15 +2171,15 @@ git push origin v1.0.0
 ```
 
 ### Docker Images You Get
-- **Dev testing**: `i4o-oss/watchtower:latest-dev` 
-- **Production**: `i4o-oss/watchtower:latest` or `i4o-oss/watchtower:v1.2.3`
+- **Dev testing**: `0xi4o/watchtower:latest-dev`
+- **Production**: `0xi4o/watchtower:latest` or `0xi4o/watchtower:v1.2.3`
 
 ### Commit Message Format (for version bumping)
 ```bash
 # Patch version: 1.2.3 → 1.2.4
 git commit -m "fix: resolve authentication bug"
 
-# Minor version: 1.2.3 → 1.3.0  
+# Minor version: 1.2.3 → 1.3.0
 git commit -m "feat: add webhook notifications"
 
 # Major version: 1.2.3 → 2.0.0
@@ -2237,7 +2237,7 @@ just lint
    ```sql
    -- +goose Up
    ALTER TABLE endpoints ADD COLUMN group_id UUID;
-   
+
    -- +goose Down
    ALTER TABLE endpoints DROP COLUMN group_id;
    ```
@@ -2323,7 +2323,7 @@ func (e *engine) monitorEndpoint(endpoint *data.Endpoint) error {
             Err:      err,
         }
     }
-    
+
     if err := e.saveMonitoringLog(endpoint, response); err != nil {
         return &MonitoringError{
             Op:       "save_log",
@@ -2331,7 +2331,7 @@ func (e *engine) monitorEndpoint(endpoint *data.Endpoint) error {
             Err:      err,
         }
     }
-    
+
     return nil
 }
 ```
@@ -2356,7 +2356,7 @@ func (wp *WorkerPool) Start() {
 
 func (wp *WorkerPool) worker() {
     defer wp.wg.Done()
-    
+
     for {
         select {
         case job := <-wp.jobChan:
@@ -2388,18 +2388,18 @@ export const EndpointList: React.FC<EndpointListProps> = ({
 }) => {
   // Hooks at the top
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  
+
   // Event handlers
   const handleSelect = useCallback((endpoint: Endpoint) => {
     setSelectedId(endpoint.id);
     onEndpointSelect(endpoint);
   }, [onEndpointSelect]);
-  
+
   // Early returns
   if (loading) {
     return <LoadingSpinner />;
   }
-  
+
   // Main render
   return (
     <div className="endpoint-list">
@@ -2423,7 +2423,7 @@ export const useEndpoints = () => {
   const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const fetchEndpoints = useCallback(async () => {
     try {
       setLoading(true);
@@ -2436,11 +2436,11 @@ export const useEndpoints = () => {
       setLoading(false);
     }
   }, []);
-  
+
   useEffect(() => {
     fetchEndpoints();
   }, [fetchEndpoints]);
-  
+
   return {
     endpoints,
     loading,
@@ -2517,7 +2517,7 @@ type Endpoint struct {
     Enabled         bool         `gorm:"not null;default:true" json:"enabled"`
     CreatedAt       time.Time    `json:"created_at"`
     UpdatedAt       time.Time    `json:"updated_at"`
-    
+
     // Relationships
     MonitoringLogs  []MonitoringLog `gorm:"foreignKey:EndpointID" json:"-"`
 }
@@ -2655,12 +2655,12 @@ CREATE INDEX idx_monitoring_logs_endpoint_id ON monitoring_logs(endpoint_id);
 // Use database query optimization
 func (db *DB) GetRecentLogs(hours int) ([]MonitoringLog, error) {
     var logs []MonitoringLog
-    
+
     // Use prepared statement
     stmt := db.conn.Where("timestamp > ?", time.Now().Add(-time.Duration(hours)*time.Hour)).
         Order("timestamp DESC").
         Limit(1000)
-    
+
     return logs, stmt.Find(&logs).Error
 }
 ```
@@ -3014,7 +3014,7 @@ data: {
   "timestamp": "2024-01-15T10:30:00Z"
 }
 
-// Incident update event  
+// Incident update event
 data: {
   "id": "550e8400-e29b-41d4-a716-446655440001",
   "title": "API Response Delays",
@@ -3410,7 +3410,7 @@ This guide covers deploying Watchtower in various environments including local d
 ### Prerequisites
 
 - **Go**: 1.21 or later
-- **Node.js**: 18 or later  
+- **Node.js**: 18 or later
 - **PostgreSQL**: 13 or later
 - **Docker**: 20.10 or later (for containerized deployment)
 
@@ -3450,7 +3450,7 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```bash
 # Generate secure secrets (Linux/macOS)
 openssl rand -hex 32  # Use for JWT_SECRET
-openssl rand -hex 32  # Use for SESSION_SECRET  
+openssl rand -hex 32  # Use for SESSION_SECRET
 openssl rand -hex 32  # Use for CSRF_SECRET
 
 # Windows PowerShell
@@ -3700,7 +3700,7 @@ sudo nano /etc/nginx/sites-available/watchtower
 server {
     listen 80;
     server_name your-domain.com;
-    
+
     # Redirect HTTP to HTTPS
     return 301 https://$server_name$request_uri;
 }
@@ -3708,17 +3708,17 @@ server {
 server {
     listen 443 ssl http2;
     server_name your-domain.com;
-    
+
     # SSL Configuration
     ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-    
+
     # Security headers
     add_header X-Frame-Options DENY;
     add_header X-Content-Type-Options nosniff;
     add_header X-XSS-Protection "1; mode=block";
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
-    
+
     # Frontend static files
     location / {
         root /var/www/html;
@@ -3726,7 +3726,7 @@ server {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
-    
+
     # API proxy
     location /api/ {
         proxy_pass http://localhost:8080;
@@ -3738,7 +3738,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        
+
         # SSE support
         proxy_buffering off;
         proxy_read_timeout 24h;
@@ -3889,9 +3889,9 @@ curl -N -H "Accept: text/event-stream" http://localhost:8080/api/v1/events
 ```bash
 # Check database performance
 sudo -u postgres psql watchtower -c "
-SELECT query, calls, total_time, mean_time 
-FROM pg_stat_statements 
-ORDER BY total_time DESC 
+SELECT query, calls, total_time, mean_time
+FROM pg_stat_statements
+ORDER BY total_time DESC
 LIMIT 10;
 "
 
@@ -3950,8 +3950,8 @@ sudo tail -f /var/log/postgresql/postgresql-13-main.log
 
 ```sql
 -- Create additional indexes for performance
-CREATE INDEX CONCURRENTLY idx_monitoring_logs_timestamp_endpoint 
-ON monitoring_logs (timestamp DESC, endpoint_id) 
+CREATE INDEX CONCURRENTLY idx_monitoring_logs_timestamp_endpoint
+ON monitoring_logs (timestamp DESC, endpoint_id)
 WHERE timestamp > NOW() - INTERVAL '90 days';
 
 -- Analyze table statistics

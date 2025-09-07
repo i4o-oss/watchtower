@@ -8,16 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Docker Images
 
 Docker images are available at:
-- **Docker Hub**: [`i4o-oss/watchtower`](https://hub.docker.com/r/i4o-oss/watchtower)
+- **Docker Hub**: [`0xi4o/watchtower`](https://hub.docker.com/r/0xi4o/watchtower)
 
 ### Installation
 
 ```bash
 # Latest release
-docker pull i4o-oss/watchtower:latest
+docker pull 0xi4o/watchtower:latest
 
 # Specific version
-docker pull i4o-oss/watchtower:v1.0.0
+docker pull 0xi4o/watchtower:v1.0.0
 ```
 
 ---
