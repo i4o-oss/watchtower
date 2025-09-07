@@ -1,117 +1,53 @@
-version: '3.8'
-
-# Development Docker Compose configuration
-# For production, use: docker-compose -f docker-compose.prod.yml up
+name: watchtower
 
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: watchtower-postgres-dev
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: watchtower_dev
-      POSTGRES_USER: watchtower
-      POSTGRES_PASSWORD: watchtower_password
-      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
+      - postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U watchtower -d watchtower_dev"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
       timeout: 5s
-      retries: 3
-      start_period: 10s
-    restart: unless-stopped
-    networks:
-      - watchtower-network
+      retries: 5
 
-  # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: watchtower-redis-dev
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    env_file:
+      - .env
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
-      - redis_dev_data:/data
+      - redis-data:/data
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 5s
       timeout: 3s
-      retries: 3
-      start_period: 10s
-    restart: unless-stopped
-    networks:
-      - watchtower-network
+      retries: 5
 
-  # Watchtower Application
-  watchtower:
+  app:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.dev
-      target: development
-    container_name: watchtower-app-dev
-    env_file:
-      - .env.example
-    environment:
-      # Development overrides
-      GO_ENV: development
-      LOG_LEVEL: debug
-      
-      # Database configuration (override for container networking)
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: watchtower_dev
-      DB_USER: watchtower
-      DB_PASSWORD: watchtower_password
-      DB_SSLMODE: disable
-      
-      # Redis configuration (override for container networking)
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
-      REDIS_DB: 0
-      
-      # Development settings
-      PORT: 3000
-      JWT_SECRET: dev-jwt-secret-not-for-production
-      SESSION_SECRET: dev-session-secret-not-for-production
-      RATE_LIMIT_ENABLED: false
-      
-    volumes:
-      # Mount source code for hot reloading
-      - .:/app
-      - /app/frontend/node_modules
-      - go_mod_cache:/go/pkg/mod
+      dockerfile: docker/Dockerfile
     ports:
-      - "3000:3000"
-      - "8080:8080"  # Frontend dev server
+      - "${PORT}:${PORT}"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: >
-      sh -c "
-        echo 'Starting development server...' &&
-        go mod download &&
-        air -c .air.toml
-      "
-    restart: unless-stopped
-    networks:
-      - watchtower-network
+    env_file:
+      - .env
 
 volumes:
-  postgres_dev_data:
-    driver: local
-  redis_dev_data:
-    driver: local
-  go_mod_cache:
-    driver: local
-
-networks:
-  watchtower-network:
-    driver: bridge
+  postgres-data:
+  redis-data:

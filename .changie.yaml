@@ -8,8 +8,8 @@ headerPath: header.tpl.md
 changelogPath: CHANGELOG.md
 versionExt: md
 versionFormat: '## {{.Version}} - {{.Time.Format "2006-01-02"}}'
-kindFormat: '### {{.Kind}}'
-changeFormat: '- {{.Body}} {{with .Issue}}([#{{.}}](https://github.com/i4o-oss/watchtower/issues/{{.}})){{end}}'
+kindFormat: "### {{.Kind}}"
+changeFormat: "- {{.Body}} {{with .Issue}}([#{{.}}](https://github.com/i4o-oss/watchtower/issues/{{.}})){{end}}"
 
 # Version settings
 versionHeaderPath: ""
@@ -20,38 +20,38 @@ kinds:
   - label: "🚀 New Features"
     key: "added"
     auto: "feat"
-  
+
   - label: "🐛 Bug Fixes"
     key: "fixed"
     auto: "fix"
-  
+
   - label: "⚡ Performance Improvements"
     key: "performance"
     auto: "perf"
-  
+
   - label: "🔒 Security"
     key: "security"
     auto: "security"
-  
+
   - label: "📚 Documentation"
     key: "docs"
     auto: "docs"
     skipGlobalChoices: true
-  
+
   - label: "🧹 Maintenance"
     key: "maintenance"
     auto: "chore"
     skipGlobalChoices: true
-  
+
   - label: "🔄 Refactoring"
     key: "refactor"
     auto: "refactor"
     skipGlobalChoices: true
-  
+
   - label: "🗑️ Deprecated"
     key: "deprecated"
     skipGlobalChoices: true
-  
+
   - label: "❌ Removed"
     key: "removed"
     skipGlobalChoices: true
@@ -62,11 +62,11 @@ custom:
     label: Author
     type: string
     minLength: 3
-  
+
   - key: Issue
     label: GitHub Issue
     type: int
-    
+
   - key: PR
     label: Pull Request
     type: int
@@ -75,11 +75,11 @@ custom:
 replacements:
   - path: body
     find: '/^(feat|fix|perf|docs|chore|refactor|security)(\(.+?\))?: (.+)/'
-    replace: '$3'
+    replace: "$3"
 
 # Project settings
-projectName: Watchtower
-githubURL: https://github.com/i4o-oss/watchtower
+# projectName: Watchtower
+# githubURL: https://github.com/i4o-oss/watchtower
 
 # Environment settings
-envPrefix: 'CHANGIE_'
+envPrefix: "CHANGIE_"

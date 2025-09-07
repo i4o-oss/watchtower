@@ -27,24 +27,24 @@ dockers:
 # GitHub release configuration
 release:
   github:
-    owner: i4o-oss
+    owner: 0xi4o
     name: watchtower
   draft: false
   prerelease: auto
   mode: replace
   header: |
     ## Watchtower {{.Tag}}
-    
+
     Welcome to this new release of Watchtower! 🎉
 
     ### Docker Installation
-    
+
     ```bash
     docker pull {{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:{{.Version}}
     ```
-    
+
     ### Docker Compose
-    
+
     Update your `docker-compose.yml`:
     ```yaml
     services:
@@ -55,9 +55,9 @@ release:
 
   footer: |
     **Full Changelog**: https://github.com/i4o-oss/watchtower/compare/{{.PreviousTag}}...{{.Tag}}
-    
+
     ---
-    
+
     Don't forget to update your Docker deployments! 🚀
 
 # Changelog configuration - will be populated by changie
@@ -66,27 +66,27 @@ changelog:
   sort: asc
   abbrev: 0
   groups:
-    - title: 'New Features'
+    - title: "New Features"
       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
       order: 0
-    - title: 'Bug Fixes'
+    - title: "Bug Fixes"
       regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
       order: 1
-    - title: 'Performance Improvements'
+    - title: "Performance Improvements"
       regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
       order: 2
-    - title: 'Documentation Updates'
+    - title: "Documentation Updates"
       regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
       order: 3
-    - title: 'Other Changes'
+    - title: "Other Changes"
       order: 999
   filters:
     exclude:
-      - '^docs:'
+      - "^docs:"
       - typo
-      - '^test:'
-      - '^ci:'
-      - '^chore:'
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
       - Merge pull request
       - Merge remote-tracking branch
       - Merge branch
@@ -94,9 +94,9 @@ changelog:
 # Archive configuration (disabled since we're Docker-only)
 archives:
   - id: disabled
-    name_template: 'disabled'
+    name_template: "disabled"
     files:
-      - 'none*'
+      - "none*"
 
 # Checksum configuration (disabled for Docker-only)
 checksum:
@@ -108,4 +108,4 @@ snapshot:
 
 # Metadata for the release
 metadata:
-  mod_timestamp: '{{ .CommitTimestamp }}'
+  mod_timestamp: "{{ .CommitTimestamp }}"
