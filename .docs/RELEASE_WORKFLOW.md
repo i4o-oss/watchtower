@@ -105,7 +105,7 @@ BREAKING CHANGE: API endpoints have been restructured"
 - **Purpose**: Testing and validation
 
 ### Production Images
-- **Tags**: 
+- **Tags**:
   - `i4o-oss/watchtower:v1.2.3` (exact version)
   - `i4o-oss/watchtower:latest` (latest release)
 - **When**: Pushed to `main` branch (with version bump)
@@ -113,7 +113,7 @@ BREAKING CHANGE: API endpoints have been restructured"
 
 ## 🔧 GitHub Actions Workflows
 
-### 1. Development Build (`.github/workflows/docker-build.yml`)
+### 1. Development Build (`.github/workflows/dev-release.yml`)
 - **Trigger**: Push/PR to `dev` branch
 - **Action**: Build and push `latest-dev` image
 - **Platform**: linux/amd64
