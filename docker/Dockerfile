@@ -1,5 +1,5 @@
 # Simple Dockerfile for Watchtower
-FROM node:22-alpine AS frontend-builder
+FROM node:24-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -19,7 +19,7 @@ ENV VITE_API_BASE_URL=http://localhost:3000
 RUN bun run build
 
 # Go build stage
-FROM golang:1.24.2-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
