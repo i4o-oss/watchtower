@@ -95,18 +95,18 @@ export function PasswordStrengthIndicator({ password }: { password: string }) {
 
 	const strengthConfig = {
 		weak: {
-			color: 'var(--error-red)',
-			bg: 'var(--error-red)/10',
+			color: 'var(--color-red-500)',
+			bg: 'var(--color-red-500)/10',
 			text: 'Weak',
 		},
 		medium: {
-			color: 'var(--warning-amber)',
-			bg: 'var(--warning-amber)/10',
+			color: 'var(--color-amber-500)',
+			bg: 'var(--color-amber-500)/10',
 			text: 'Medium',
 		},
 		strong: {
-			color: 'var(--success-green)',
-			bg: 'var(--success-green)/10',
+			color: 'var(--color-green-500)',
+			bg: 'var(--color-green-500)/10',
 			text: 'Strong',
 		},
 	}
@@ -146,7 +146,7 @@ export function PasswordStrengthIndicator({ password }: { password: string }) {
 							className='w-3 h-3 rounded-full flex items-center justify-center'
 							style={{
 								backgroundColor: req.met
-									? 'var(--success-green)'
+									? 'var(--color-green-500)'
 									: 'transparent',
 								border: req.met
 									? 'none'

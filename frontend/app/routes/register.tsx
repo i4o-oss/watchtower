@@ -23,12 +23,7 @@ import {
 import { Alert, AlertDescription } from '~/components/ui/alert'
 import { Eye, EyeOff } from 'lucide-react'
 import { requireGuest, useAuth, checkRegistrationStatus } from '~/lib/auth'
-import {
-	validators,
-	combineValidators,
-	FieldError,
-	PasswordStrengthIndicator,
-} from '~/lib/form-utils'
+import { validators, combineValidators, FieldError } from '~/lib/form-utils'
 
 export function meta() {
 	return [
@@ -266,10 +261,6 @@ export default function Register() {
 											)}
 										</Button>
 									</div>
-
-									<PasswordStrengthIndicator
-										password={field.state.value}
-									/>
 
 									<FieldError
 										errors={field.state.meta.errors}
