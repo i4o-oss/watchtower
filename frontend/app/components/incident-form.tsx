@@ -9,6 +9,7 @@ import { Textarea } from '~/components/ui/textarea'
 import { Badge } from '~/components/ui/badge'
 import { Switch } from '~/components/ui/switch'
 import { Checkbox } from '~/components/ui/checkbox'
+import { ToggleGroup, ToggleGroupItem } from '~/components/ui/toggle-group'
 import {
 	Select,
 	SelectContent,
@@ -372,48 +373,22 @@ export function IncidentForm({
 											Affected Services
 										</Label>
 										<div className='max-h-48 overflow-y-auto'>
-											<div className='space-y-2'>
+											<ToggleGroup
+												type='multiple'
+												value={field.state.value}
+												onValueChange={(value) =>
+													field.handleChange(value)
+												}
+												className='flex-col items-stretch w-full space-y-2'
+											>
 												{endpoints.map(
 													(endpoint: any) => (
-														<div
+														<ToggleGroupItem
 															key={endpoint.id}
-															className='flex items-center space-x-3 py-2 rounded hover:bg-muted cursor-pointer'
+															value={endpoint.id}
+															className='flex items-center justify-between p-3 h-auto data-[state=on]:bg-accent data-[state=on]:border-accent-foreground/20 border border-border rounded-md hover:bg-muted/50 transition-colors'
 														>
-															<Checkbox
-																checked={field.state.value.includes(
-																	endpoint.id,
-																)}
-																onCheckedChange={(
-																	checked,
-																) => {
-																	const currentIds =
-																		field
-																			.state
-																			.value ||
-																		[]
-																	if (
-																		checked
-																	) {
-																		field.handleChange(
-																			[
-																				...currentIds,
-																				endpoint.id,
-																			],
-																		)
-																	} else {
-																		field.handleChange(
-																			currentIds.filter(
-																				(
-																					id: string,
-																				) =>
-																					id !==
-																					endpoint.id,
-																			),
-																		)
-																	}
-																}}
-															/>
-															<div className='flex-1'>
+															<div className='flex-1 text-left'>
 																<div className='font-medium'>
 																	{
 																		endpoint.name
@@ -427,15 +402,15 @@ export function IncidentForm({
 															</div>
 															<Badge
 																variant='outline'
-																className='text-xs'
+																className='text-xs ml-3'
 															>
 																{endpoint.status ||
 																	'Unknown'}
 															</Badge>
-														</div>
+														</ToggleGroupItem>
 													),
 												)}
-											</div>
+											</ToggleGroup>
 										</div>
 									</div>
 								)}
