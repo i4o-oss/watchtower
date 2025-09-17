@@ -271,6 +271,89 @@ func (app *Application) getPublicIncidents(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(response)
 }
 
+// getPublicIncidentHistory returns paginated incident history for the status page
+func (app *Application) getPublicIncidentHistory(w http.ResponseWriter, r *http.Request) {
+	// Parse pagination parameters
+	page := 1
+	limit := 10 // Default limit for history
+
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		if parsedPage, err := strconv.Atoi(pageStr); err == nil && parsedPage > 0 {
+			page = parsedPage
+		}
+	}
+
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 50 {
+			limit = parsedLimit
+		}
+	}
+
+	// Get all incidents with pagination (including resolved ones for history)
+	incidents, total, err := app.db.GetIncidentsWithPagination(page, limit, "", "")
+	if err != nil {
+		app.logger.Error("failed to get incident history", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	summaries := make([]IncidentSummary, 0, len(incidents))
+	for _, incident := range incidents {
+		// Get affected services for this incident
+		affectedServices := make([]string, 0)
+		if len(incident.EndpointIncidents) > 0 {
+			for _, ei := range incident.EndpointIncidents {
+				if ei.Endpoint != nil {
+					affectedServices = append(affectedServices, ei.Endpoint.Name)
+				}
+			}
+		}
+
+		summary := IncidentSummary{
+			ID:          incident.ID.String(),
+			Title:       incident.Title,
+			Description: incident.Description,
+			Status:      incident.Status,
+			Severity:    incident.Severity,
+			StartTime:   incident.StartTime,
+			EndTime:     incident.EndTime,
+			Services:    affectedServices,
+		}
+
+		summaries = append(summaries, summary)
+	}
+
+	// Create paginated response
+	response := struct {
+		Incidents  []IncidentSummary `json:"incidents"`
+		Pagination struct {
+			Page       int   `json:"page"`
+			Limit      int   `json:"limit"`
+			Total      int64 `json:"total"`
+			TotalPages int   `json:"total_pages"`
+		} `json:"pagination"`
+		LastUpdated time.Time `json:"last_updated"`
+	}{
+		Incidents: summaries,
+		Pagination: struct {
+			Page       int   `json:"page"`
+			Limit      int   `json:"limit"`
+			Total      int64 `json:"total"`
+			TotalPages int   `json:"total_pages"`
+		}{
+			Page:       page,
+			Limit:      limit,
+			Total:      total,
+			TotalPages: int((total + int64(limit) - 1) / int64(limit)),
+		},
+		LastUpdated: time.Now(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "max-age=300") // Cache for 5 minutes (longer for history)
+	json.NewEncoder(w).Encode(response)
+}
+
 // calculateUptime calculates uptime percentage for an endpoint over the specified number of days
 func (app *Application) calculateUptime(endpointID uuid.UUID, days int) float64 {
 	// Get monitoring logs for the specified period

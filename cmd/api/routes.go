@@ -34,6 +34,7 @@ func (app *Application) routes() http.Handler {
 			r.Get("/status", app.getPublicStatus)
 			r.Get("/uptime/{endpoint_id}", app.getUptimeData)
 			r.Get("/incidents", app.getPublicIncidents)
+			r.Get("/incident-history", app.getPublicIncidentHistory)
 			r.Get("/auth/registration-status", app.registrationStatus)
 		})
 

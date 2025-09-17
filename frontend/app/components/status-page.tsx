@@ -5,7 +5,6 @@ import {
 	Bell,
 	Calendar,
 	CheckCircle,
-	ChevronRight,
 	Clock,
 	ExternalLink,
 	Megaphone,
@@ -107,6 +106,17 @@ interface IncidentSummary {
 
 interface IncidentsResponse {
 	incidents: IncidentSummary[]
+	last_updated: string
+}
+
+interface IncidentHistoryResponse {
+	incidents: IncidentSummary[]
+	pagination: {
+		page: number
+		limit: number
+		total: number
+		total_pages: number
+	}
 	last_updated: string
 }
 
@@ -550,6 +560,357 @@ function UptimeGraph({
 	)
 }
 
+// Incident History component with inline timelines
+function IncidentHistorySection({
+	incidentHistory,
+	loadingHistory,
+	incidentHistoryPage,
+	setIncidentHistoryPage,
+	fetchIncidentHistory,
+}: {
+	incidentHistory: IncidentHistoryResponse | null
+	loadingHistory: boolean
+	incidentHistoryPage: number
+	setIncidentHistoryPage: (page: number) => void
+	fetchIncidentHistory: (page: number) => void
+}) {
+	const [timelines, setTimelines] = useState<Record<string, any[]>>({})
+	const [loadingTimelines, setLoadingTimelines] = useState<Set<string>>(
+		new Set(),
+	)
+
+	// Auto-load timelines for all incidents when they're available
+	useEffect(() => {
+		if (incidentHistory && incidentHistory.incidents.length > 0) {
+			incidentHistory.incidents.forEach(async (incident) => {
+				if (
+					!timelines[incident.id] &&
+					!loadingTimelines.has(incident.id)
+				) {
+					setLoadingTimelines((prev) =>
+						new Set(prev).add(incident.id),
+					)
+
+					try {
+						const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+						const response = await fetch(
+							`${API_BASE_URL}/api/v1/admin/incidents/${incident.id}/timeline`,
+							{
+								method: 'GET',
+								credentials: 'include',
+								headers: { 'Content-Type': 'application/json' },
+							},
+						)
+
+						if (response.ok) {
+							const data = await response.json()
+							setTimelines((prev) => ({
+								...prev,
+								[incident.id]: data.timeline || [],
+							}))
+						}
+					} catch (error) {
+						console.error('Error loading timeline:', error)
+					} finally {
+						setLoadingTimelines((prev) => {
+							const newSet = new Set(prev)
+							newSet.delete(incident.id)
+							return newSet
+						})
+					}
+				}
+			})
+		}
+	}, [incidentHistory, timelines, loadingTimelines])
+
+	const getTimelineIcon = (eventType: string) => {
+		switch (eventType) {
+			case 'created':
+				return <Calendar className='h-4 w-4 text-green-600' />
+			case 'update':
+				return <Megaphone className='h-4 w-4 text-blue-600' />
+			default:
+				return <Calendar className='h-4 w-4 text-gray-600' />
+		}
+	}
+
+	const getBadgeVariant = (eventType: string) => {
+		switch (eventType) {
+			case 'created':
+				return 'outline'
+			case 'update':
+				return 'default'
+			default:
+				return 'outline'
+		}
+	}
+
+	const getEventTitle = (entry: any) => {
+		switch (entry.event_type) {
+			case 'created':
+				return 'Incident Created'
+			case 'update':
+				return 'Update'
+			default:
+				return 'Timeline Event'
+		}
+	}
+
+	return (
+		<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
+			<PageHeader
+				title='Incident History'
+				description='Recent incidents and their resolution status'
+			/>
+			<Separator />
+			<CardContent className='p-0 border-none shadow-none rounded-none'>
+				{loadingHistory ? (
+					<div className='p-4 space-y-4'>
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div key={i} className='animate-pulse'>
+								<div className='h-4 bg-muted rounded w-3/4 mb-2' />
+								<div className='h-3 bg-muted rounded w-1/2 mb-2' />
+								<div className='h-3 bg-muted rounded w-full' />
+							</div>
+						))}
+					</div>
+				) : incidentHistory && incidentHistory.incidents.length > 0 ? (
+					<>
+						<div className='space-y-6'>
+							{incidentHistory.incidents.map((incident) => {
+								const timeline = timelines[incident.id] || []
+								const isLoadingTimeline = loadingTimelines.has(
+									incident.id,
+								)
+
+								// Group incidents by date
+								const incidentDate = new Date(
+									incident.start_time,
+								).toLocaleDateString('en-US', {
+									weekday: 'long',
+									year: 'numeric',
+									month: 'long',
+									day: 'numeric',
+								})
+
+								return (
+									<div
+										key={incident.id}
+										className='p-6 border border-border rounded-lg bg-card'
+									>
+										{/* Date header */}
+										<div className='mb-4'>
+											<h3 className='text-lg font-semibold text-muted-foreground'>
+												{incidentDate}
+											</h3>
+										</div>
+
+										{/* Incident header */}
+										<div className='mb-4'>
+											<div className='flex items-center space-x-2 mb-3'>
+												<Badge
+													variant={
+														incident.status ===
+														'resolved'
+															? 'secondary'
+															: 'destructive'
+													}
+													className='text-xs'
+												>
+													{incident.status}
+												</Badge>
+												<Badge
+													variant='outline'
+													className='text-xs'
+												>
+													{incident.severity}
+												</Badge>
+											</div>
+											<h4 className='text-xl font-semibold mb-2'>
+												{incident.title}
+											</h4>
+											<p className='text-muted-foreground mb-3'>
+												{incident.description}
+											</p>
+											{incident.affected_services.length >
+												0 && (
+												<div className='flex flex-wrap gap-2'>
+													<span className='text-sm text-muted-foreground'>
+														Affected services:
+													</span>
+													{incident.affected_services.map(
+														(service, index) => (
+															<Badge
+																key={index}
+																variant='outline'
+																className='text-xs'
+															>
+																{service}
+															</Badge>
+														),
+													)}
+												</div>
+											)}
+										</div>
+
+										{/* Timeline - always visible */}
+										<div className='pl-4 border-l-2 border-border'>
+											<h5 className='font-medium mb-4 text-sm'>
+												Timeline
+											</h5>
+											{isLoadingTimeline ? (
+												<div className='flex items-center gap-2 py-4 text-muted-foreground'>
+													<RefreshCw className='h-4 w-4 animate-spin' />
+													Loading timeline...
+												</div>
+											) : timeline.length === 0 ? (
+												<div className='py-4 text-muted-foreground text-sm'>
+													No timeline entries found
+												</div>
+											) : (
+												<div className='space-y-0'>
+													{timeline.map(
+														(entry, index) => {
+															const isLast =
+																index ===
+																timeline.length -
+																	1
+
+															return (
+																<div
+																	key={
+																		entry.id
+																	}
+																	className={`flex gap-4 relative ${!isLast ? 'pb-4' : ''}`}
+																>
+																	<div className='w-6 h-6 rounded-full bg-background border-2 border-border flex items-center justify-center relative z-10'>
+																		{getTimelineIcon(
+																			entry.event_type,
+																		)}
+																	</div>
+																	{!isLast && (
+																		<div className='absolute left-3 top-6 bottom-0 w-0.5 bg-border' />
+																	)}
+																	<div className='flex-1 min-w-0'>
+																		<div className='flex items-center gap-2 mb-1'>
+																			<span className='font-medium text-sm'>
+																				{getEventTitle(
+																					entry,
+																				)}
+																			</span>
+																			<Badge
+																				className='font-mono text-xs'
+																				variant={getBadgeVariant(
+																					entry.event_type,
+																				)}
+																			>
+																				{entry.event_type.replace(
+																					'_',
+																					' ',
+																				)}
+																			</Badge>
+																		</div>
+																		{entry.message &&
+																			entry.event_type ===
+																				'update' && (
+																				<p className='text-sm mb-2 bg-muted p-3 rounded text-foreground'>
+																					{
+																						entry.message
+																					}
+																				</p>
+																			)}
+																		<p className='text-xs text-muted-foreground font-mono'>
+																			{new Date(
+																				entry.created_at,
+																			).toLocaleString()}
+																			{entry.user_id &&
+																				' • System'}
+																		</p>
+																	</div>
+																</div>
+															)
+														},
+													)}
+												</div>
+											)}
+										</div>
+									</div>
+								)
+							})}
+						</div>
+
+						{/* Pagination */}
+						{incidentHistory.pagination.total_pages > 1 && (
+							<div className='flex items-center justify-between p-4 border-t'>
+								<div className='text-sm text-muted-foreground'>
+									Showing{' '}
+									{(incidentHistory.pagination.page - 1) *
+										incidentHistory.pagination.limit +
+										1}{' '}
+									to{' '}
+									{Math.min(
+										incidentHistory.pagination.page *
+											incidentHistory.pagination.limit,
+										incidentHistory.pagination.total,
+									)}{' '}
+									of {incidentHistory.pagination.total}{' '}
+									incidents
+								</div>
+								<div className='flex items-center space-x-2'>
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => {
+											const newPage =
+												incidentHistoryPage - 1
+											setIncidentHistoryPage(newPage)
+											fetchIncidentHistory(newPage)
+										}}
+										disabled={incidentHistoryPage <= 1}
+									>
+										Previous
+									</Button>
+									<span className='text-sm text-muted-foreground'>
+										Page {incidentHistoryPage} of{' '}
+										{incidentHistory.pagination.total_pages}
+									</span>
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => {
+											const newPage =
+												incidentHistoryPage + 1
+											setIncidentHistoryPage(newPage)
+											fetchIncidentHistory(newPage)
+										}}
+										disabled={
+											incidentHistoryPage >=
+											incidentHistory.pagination
+												.total_pages
+										}
+									>
+										Next
+									</Button>
+								</div>
+							</div>
+						)}
+					</>
+				) : (
+					<div className='text-center py-8 text-muted-foreground'>
+						<CheckCircle className='h-8 w-8 text-emerald-500 mx-auto mb-3' />
+						<h3 className='font-semibold mb-2'>
+							No incidents reported
+						</h3>
+						<p className='text-sm'>
+							All systems have been operating normally.
+						</p>
+					</div>
+				)}
+			</CardContent>
+		</PageContent>
+	)
+}
+
 // Main status page component with precise specifications
 export function StatusPage({
 	initialData,
@@ -565,7 +926,11 @@ export function StatusPage({
 	const [incidents, setIncidents] = useState<IncidentsResponse | null>(
 		initialData?.incidents || null,
 	)
+	const [incidentHistory, setIncidentHistory] =
+		useState<IncidentHistoryResponse | null>(null)
+	const [incidentHistoryPage, setIncidentHistoryPage] = useState(1)
 	const [loading, setLoading] = useState(!initialData?.status)
+	const [loadingHistory, setLoadingHistory] = useState(true)
 	const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 	const [selectedIncident, setSelectedIncident] =
 		useState<IncidentSummary | null>(null)
@@ -596,6 +961,26 @@ export function StatusPage({
 			console.error('Failed to fetch status:', error)
 		} finally {
 			setLoading(false)
+		}
+	}, [])
+
+	// Fetch incident history data
+	const fetchIncidentHistory = useCallback(async (page = 1) => {
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+		try {
+			setLoadingHistory(true)
+			const response = await fetch(
+				`${API_BASE_URL}/api/v1/incident-history?page=${page}&limit=10`,
+			)
+
+			if (response.ok) {
+				const historyData = await response.json()
+				setIncidentHistory(historyData)
+			}
+		} catch (error) {
+			console.error('Failed to fetch incident history:', error)
+		} finally {
+			setLoadingHistory(false)
 		}
 	}, [])
 
@@ -630,7 +1015,9 @@ export function StatusPage({
 		if (!initialData?.status) {
 			fetchStatus()
 		}
-	}, [initialData?.status, fetchStatus])
+		// Always fetch incident history since it's not in initial data
+		fetchIncidentHistory(1)
+	}, [initialData?.status, fetchStatus, fetchIncidentHistory])
 
 	// Load timeline when incident is selected
 	useEffect(() => {
@@ -1184,83 +1571,13 @@ export function StatusPage({
 							</PageContent>
 
 							{/* Incident History */}
-							<PageContent className='flex flex-grow gap-0 p-0 overflow-hidden rounded shadow-none'>
-								<PageHeader
-									title='Incident History'
-									description='Recent incidents and their resolution status'
-								/>
-								<Separator />
-								<CardContent className='p-0 border-none shadow-none rounded-none'>
-									{incidents &&
-									incidents.incidents.length > 0 ? (
-										<div className='divide-y divide-border'>
-											{incidents.incidents
-												.slice(0, 5)
-												.map((incident) => (
-													<div
-														key={incident.id}
-														className='flex items-center justify-between p-4'
-													>
-														<div className='flex-1'>
-															<div className='flex items-center space-x-2 mb-2'>
-																<Badge
-																	variant={
-																		incident.status ===
-																		'resolved'
-																			? 'secondary'
-																			: 'destructive'
-																	}
-																	className='text-xs'
-																>
-																	{
-																		incident.status
-																	}
-																</Badge>
-																<span className='text-sm text-muted-foreground'>
-																	{new Date(
-																		incident.start_time,
-																	).toLocaleDateString()}
-																</span>
-															</div>
-															<h4 className='font-semibold mb-2'>
-																{incident.title}
-															</h4>
-															<p className='text-muted-foreground text-sm'>
-																{
-																	incident.description
-																}
-															</p>
-														</div>
-														<Button
-															onClick={() =>
-																setSelectedIncident(
-																	incident,
-																)
-															}
-															className='cursor-pointer'
-															size='sm'
-															variant='ghost'
-														>
-															View
-															<ChevronRight className='h-4 w-4' />
-														</Button>
-													</div>
-												))}
-										</div>
-									) : (
-										<div className='text-center py-8 text-muted-foreground'>
-											<CheckCircle className='h-8 w-8 text-emerald-500 mx-auto mb-3' />
-											<h3 className='font-semibold mb-2'>
-												No incidents reported
-											</h3>
-											<p className='text-sm'>
-												All systems have been operating
-												normally.
-											</p>
-										</div>
-									)}
-								</CardContent>
-							</PageContent>
+							<IncidentHistorySection
+								incidentHistory={incidentHistory}
+								loadingHistory={loadingHistory}
+								incidentHistoryPage={incidentHistoryPage}
+								setIncidentHistoryPage={setIncidentHistoryPage}
+								fetchIncidentHistory={fetchIncidentHistory}
+							/>
 						</div>
 
 						{/* Incident Detail Modal */}
