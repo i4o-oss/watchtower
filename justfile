@@ -55,7 +55,7 @@ serve:
 
 
 tidy:
-    cd {{FRONTEND_DIR}} && bun i
+    bun i
     @go mod tidy
 
 # Test commands
