@@ -135,15 +135,12 @@ export default function Register() {
 
 	return (
 		<div className='min-h-screen flex items-center justify-center px-4'>
-			<Card className='w-full max-w-[400px]'>
-				<CardHeader className='space-y-1 text-center'>
+			<Card className='w-full max-w-[400px] rounded-md'>
+				<CardHeader className='space-y-1 text-left'>
 					<CardTitle>Set up your Watchtower</CardTitle>
 					<CardDescription>
-						Create your admin account to get started monitoring
+						Create an admin account to start monitoring
 					</CardDescription>
-					<div className='text-xs text-muted-foreground mt-2'>
-						Step 1 of 3
-					</div>
 				</CardHeader>
 				<CardContent>
 					<form
@@ -366,7 +363,7 @@ export default function Register() {
 						</Button>
 					</form>
 
-					<div className='mt-6 text-center text-xs text-muted-foreground'>
+					<div className='mt-6 text-left text-xs text-muted-foreground'>
 						Already have an account?{' '}
 						<Link
 							to='/login'
